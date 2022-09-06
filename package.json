@@ -112,10 +112,10 @@
                 "id": "go",
                 "configuration": "./language-configuration/language-configuration.go.json"
             },
-			{
-				"id": "blade",
-				"configuration": "./language-configuration/language-configuration.php.json"
-			}
+            {
+                "id": "blade",
+                "configuration": "./language-configuration/language-configuration.php.json"
+            }
         ],
         "keybindings": [
             {
