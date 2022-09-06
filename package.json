@@ -1,6 +1,6 @@
 {
-    "name": "auto-comment-blocks",
-    "displayName": "Auto Comment Blocks",
+    "name": "automatic-comment-blocks",
+    "displayName": "Automatic Comment Blocks",
     "description": "Provides block comment completion for Javadoc-style multi-line comments and single-line comment blocks for most officially supported languages.",
     "version": "1.0.2",
     "publisher": "ycodetech",
