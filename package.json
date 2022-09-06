@@ -2,12 +2,12 @@
     "name": "auto-comment-blocks",
     "displayName": "Auto Comment Blocks",
     "description": "Provides block comment completion for Javadoc-style multi-line comments and single-line comment blocks for most officially supported languages.",
-    "version": "1.0.1",
-    "publisher": "kevinkyang",
-    "homepage": "https://github.com/kevinkyang/auto-comment-blocks",
+    "version": "1.0.2",
+    "publisher": "studocwho",
+    "homepage": "https://github.com/ycodetech/auto-comment-blocks",
     "repository": {
         "type": "git",
-        "url": "https://github.com/kevinkyang/auto-comment-blocks.git"
+        "url": "https://github.com/ycodetech/auto-comment-blocks.git"
     },
     "license": "SEE LICENSE IN LICENSE",
     "icon": "img/icon.png",
@@ -111,7 +111,11 @@
             {
                 "id": "go",
                 "configuration": "./language-configuration/language-configuration.go.json"
-            }
+            },
+			{
+				"id": "blade",
+				"configuration": "./language-configuration/language-configuration.php.json"
+			}
         ],
         "keybindings": [
             {
