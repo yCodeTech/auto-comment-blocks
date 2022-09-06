@@ -13,6 +13,8 @@
     "php",
     "rust",
     "scss",
-    "swift"
+    "swift",
+    "blade",
+    "javascript"
   ]
 }
