@@ -2,6 +2,8 @@
 
 Provides block comment completion for Javadoc-style multi-line comments and single-line comment blocks for most officially supported languages.
 
+This is a fork of the original by [kevb34ns](https://github.com/kevb34ns/auto-comment-blocks) with some additional language support.
+
 ## MAJOR CHANGES IN 1.0 UPDATE (Please Read)
 
 A lot has changed in this update. Please open issues for any bugs you encounter.
