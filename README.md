@@ -32,7 +32,7 @@ You can insert single line comment blocks for languages with `//`, `#`, or `;` s
 
 | Comment Style | Language Support |
 | ------- | ------- |
-| `/** */` | C, C++, C#, CSS, Go, Groovy, Java, Less, Objective C/C++, PHP, Sass, Rust, Swift |
+| `/** */` | C, C++, C#, CSS, Go, Groovy, Java, Less, Objective C/C++, PHP, Sass, Rust, Swift, Blade (PHP) |
 | `/*! */` | C, C++ |
 | `//`, `///` | C, C++, C#, F#, Go, Groovy, Java, JavaScript, Less, Objective C/C++, PHP, Rust, Sass, Swift, TypeScript |
 | `#` | CoffeeScript, Dockerfile, Makefile, Perl, PowerShell, Python, R, Ruby, YAML |
@@ -61,6 +61,9 @@ Reload the extension after changing any settings.
 Please create an issue in the [repository](https://github.com/kevinkyang/auto-comment-blocks/issues) if you find any bugs, or have questions or feature requests.
 
 ## Release Notes
+
+### 1.0.2
+- Added support for PHP Blade.
 
 ### 1.0.0
 - Add multi-line comment support for Less, Objective-C/C++, and Swift.
