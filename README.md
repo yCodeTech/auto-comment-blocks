@@ -1,4 +1,4 @@
-# Auto Comment Blocks
+# Automatic Comment Blocks
 
 Provides block comment completion for Javadoc-style multi-line comments and single-line comment blocks for most officially supported languages.
 
