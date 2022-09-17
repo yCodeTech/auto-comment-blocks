@@ -1,4 +1,4 @@
 out
 node_modules
 package-lock.json
-automatic-comment-blocks-1.0.2.vsix
+*.vsix
