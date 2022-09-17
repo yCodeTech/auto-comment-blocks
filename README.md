@@ -4,6 +4,15 @@ Provides block comment completion for Javadoc-style multi-line comments and sing
 
 This is a fork of the original by [kevb34ns](https://github.com/kevb34ns/auto-comment-blocks) with some additional language support.
 
+## MAJOR CHANGES IN 1.0.3 UPDATE (Please Read)
+
+- Added support for JavaScript and TypeScript multiline block comments.
+- Added support for Blade to use blade's handlebar comments as well as the multiline block comments.
+- Added support for protocol buffers.
+- Added support for `//!` comments.
+- Added support for csharp.
+- Updated the support for `/*! */` comments and including the `!` on every line.
+
 ## MAJOR CHANGES IN 1.0 UPDATE (Please Read)
 
 A lot has changed in this update. Please open issues for any bugs you encounter.
@@ -23,7 +32,7 @@ This feature has not changed, but support has now been added for Less, Objective
 Type `/**` to start a block comment, then hit the Enter key, and the extension will close the block. While inside the comment block, the extension will insert an asterisk at the start of every new line, and align the comment, respecting indentation.
 
 ### QDoc-style (Qt) comment blocks
-Use `/*!` in C/C++ files to start a QDoc comment block.
+Use `/*!` in all file types that support the normal `/*` comments to start a QDoc comment block.
 
 ### New: "single-line" block comments
 You can insert single line comment blocks for languages with `//`, `#`, or `;` style single line comments. Press `Shift+Enter` while on a commented line to insert a new commented line with the same level of indentation. See the Settings section for issues and more options.
@@ -32,9 +41,8 @@ You can insert single line comment blocks for languages with `//`, `#`, or `;` s
 
 | Comment Style | Language Support |
 | ------- | ------- |
-| `/** */` | C, C++, C#, CSS, Go, Groovy, Java, Less, Objective C/C++, PHP, Sass, Rust, Swift, Blade (PHP) |
-| `/*! */` | C, C++ |
-| `//`, `///` | C, C++, C#, F#, Go, Groovy, Java, JavaScript, Less, Objective C/C++, PHP, Rust, Sass, Swift, TypeScript |
+| `/** */`, `/*! */` | Blade, C, C++, C#, CSS, Go, Groovy, Java, JavaScript, Less, Objective C/C++, PHP, Proto, Proto3, Rust, SCSS/Sass Swift, Typescript |
+| `//`, `///` | Blade, C, C++, C#, F#, Go, Groovy, Java, JavaScript, Less, Objective C/C++, PHP, Rust, SCSS/Sass, Swift, TypeScript |
 | `#` | CoffeeScript, Dockerfile, Makefile, Perl, PowerShell, Python, R, Ruby, YAML |
 | `;` | Clojure |
 
@@ -61,6 +69,15 @@ Reload the extension after changing any settings.
 Please create an issue in the [repository](https://github.com/kevinkyang/auto-comment-blocks/issues) if you find any bugs, or have questions or feature requests.
 
 ## Release Notes
+
+### 1.0.3
+- Added support for JavaScript and TypeScript multiline block comments - a pull request by a-stewart for the original plugin. Fixes issue #27.
+- Created a new language config file for Blade to use blade's comments as well as the multiline block comments
+- Updated various language config files to reflect a pull request by a-stewart for the original plugin.
+- Added support for protocol buffers - a pull request by jun-sheaf for the original plugin.
+- Added support for `//!` comments - a pull request by Lucretiel for the original plugin and fixes the issue #25
+- Added support for csharp (using the cpp config file) - Fixes the issue #41.
+- Updated the support for `/*! */` comments and including the `!` on every line.
 
 ### 1.0.2
 - Added support for PHP Blade.

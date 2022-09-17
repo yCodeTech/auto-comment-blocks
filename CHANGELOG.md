@@ -2,6 +2,15 @@
 All notable changes to this extension will be documented in this file.
 
 <!--Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.-->
+## [1.0.3]
+- Added support for JavaScript and TypeScript multiline block comments - a pull request by a-stewart for the original plugin. Fixes issue #27.
+- Created a new language config file for Blade to use blade's comments as well as the multiline block comments
+- Updated various language config files to reflect a pull request by a-stewart for the original plugin.
+- Added support for protocol buffers - a pull request by jun-sheaf for the original plugin.
+- Added support for `//!` comments - a pull request by Lucretiel for the original plugin and fixes the issue #25
+- Added support for csharp (using the cpp config file) - Fixes the issue #41.
+- Updated the support for `/*! */` comments and including the `!` on every line.
+
 ## [1.0.2]
 - Added support for PHP Blade.
 

@@ -2,7 +2,7 @@
     "name": "automatic-comment-blocks",
     "displayName": "Automatic Comment Blocks",
     "description": "Provides block comment completion for Javadoc-style multi-line comments and single-line comment blocks for most officially supported languages.",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "publisher": "ycodetech",
     "homepage": "https://github.com/ycodetech/auto-comment-blocks",
     "repository": {
@@ -66,12 +66,16 @@
         "languages": [
             {
                 "id": "c",
-                "configuration": "./language-configuration/language-configuration.c.json"
+                "configuration": "./language-configuration/language-configuration.cpp.json"
             },
             {
                 "id": "cpp",
                 "configuration": "./language-configuration/language-configuration.cpp.json"
             },
+			{
+				"id": "csharp",
+				"configuration": "./language-configuration/language-configuration.cpp.json"
+			},
             {
                 "id": "css",
                 "configuration": "./language-configuration/language-configuration.css.json"
@@ -114,7 +118,7 @@
             },
             {
                 "id": "blade",
-                "configuration": "./language-configuration/language-configuration.php.json"
+                "configuration": "./language-configuration/language-configuration.blade.json"
             }
         ],
         "keybindings": [

@@ -1,6 +1,6 @@
 {
 	"comments": {
-		"blockComment": ["/*", "*/"],
+		"blockComment": ["/*", "*/", "/*!"],
 		"lineComment": "//"
 	},
 	"brackets": [
@@ -14,7 +14,8 @@
 		{ "open": "(", "close": ")", "notIn": ["string", "comment"] },
 		{ "open": "\"", "close": "\"", "notIn": ["string", "comment"] },
 		{ "open": "'", "close": "'", "notIn": ["string", "comment"] },
-    { "open": "/**", "close": " */", "notIn": ["string"] }
+		{ "open": "/**", "close": " */", "notIn": ["string"] },
+		{ "open": "/*!", "close": " */", "notIn": ["string"] }
 	],
 	"surroundingPairs": [
 		["{", "}"],
@@ -22,5 +23,11 @@
 		["(", ")"],
 		["\"", "\""],
 		["'", "'"]
-	]
+	],
+	"folding": {
+		"markers": {
+			"start": "^\\s*\\/\\*\\s*#region\\b\\s*(.*?)\\s*\\*\\/",
+			"end": "^\\s*\\/\\*\\s*#endregion\\b.*\\*\\/"
+		}
+	}
 }
