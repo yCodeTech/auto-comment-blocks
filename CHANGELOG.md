@@ -3,12 +3,12 @@ All notable changes to this extension will be documented in this file.
 
 <!--Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.-->
 ## [1.0.3]
-- Added support for JavaScript and TypeScript multiline block comments - a pull request by a-stewart for the original plugin. Fixes issue #27.
+- Added support for JavaScript and TypeScript multiline block comments - a [pull request by a-stewart](https://github.com/kevb34ns/auto-comment-blocks/pull/35) for the original plugin. Fixes issue kevb34ns/auto-comment-blocks#27.
 - Created a new language config file for Blade to use blade's comments as well as the multiline block comments
-- Updated various language config files to reflect a pull request by a-stewart for the original plugin.
-- Added support for protocol buffers - a pull request by jun-sheaf for the original plugin.
-- Added support for `//!` comments - a pull request by Lucretiel for the original plugin and fixes the issue #25
-- Added support for csharp (using the cpp config file) - Fixes the issue #41.
+- Updated various language config files to reflect a [pull request by a-stewart](https://github.com/kevb34ns/auto-comment-blocks/pull/37) for the original plugin.
+- Added support for protocol buffers - a [pull request by jun-sheaf](https://github.com/kevb34ns/auto-comment-blocks/pull/30) for the original plugin.
+- Added support for `//!` comments - a [pull request by Lucretiel](https://github.com/kevb34ns/auto-comment-blocks/pull/29) for the original plugin and fixes the issue kevb34ns/auto-comment-blocks#25
+- Added support for csharp(c#) (using the cpp(c++) config file) - Fixes the issue kevb34ns/auto-comment-blocks#41.
 - Updated the support for `/*! */` comments and including the `!` on every line.
 
 ## [1.0.2]
