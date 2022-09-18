@@ -1,10 +1,12 @@
 # Automatic Comment Blocks
 
-Provides block comment completion for Javadoc-style multi-line comments and single-line comment blocks for most officially supported languages.
+A VScode extension that provides block comment completion for Javadoc-style multi-line comments and single-line comment blocks for most officially supported languages.
 
 This is a fork of the original by [kevb34ns](https://github.com/kevb34ns/auto-comment-blocks) with some additional language support.
 
 View the [Changelog](/CHANGELOG.md) for more detailed changes/additions/removals.
+
+View the extension on [VScode Marketplace](https://marketplace.visualstudio.com/items?itemName=yCodeTech.automatic-comment-blocks).
 
 ## MAJOR CHANGES IN 1.0.3 UPDATE (Please Read)
 
