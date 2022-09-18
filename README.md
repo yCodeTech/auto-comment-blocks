@@ -4,6 +4,8 @@ Provides block comment completion for Javadoc-style multi-line comments and sing
 
 This is a fork of the original by [kevb34ns](https://github.com/kevb34ns/auto-comment-blocks) with some additional language support.
 
+View the [Changelog](/CHANGELOG.md) for more detailed changes/additions/removals.
+
 ## MAJOR CHANGES IN 1.0.3 UPDATE (Please Read)
 
 - Added support for JavaScript and TypeScript multiline block comments.
