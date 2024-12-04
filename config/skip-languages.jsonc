@@ -1,0 +1,17 @@
+// Languages to skip, like plaintext, etc. because they don't have any configuration
+// properties that we are interested in.
+// The idea taken from the _getLanguagesToSkip() function from this StackOverflow answer
+// https://stackoverflow.com/a/72988011/2358222
+{
+	"languages": [
+		"log",
+		"Log",
+		"search-result",
+		"plaintext",
+		"scminput",
+		"properties",
+		"csv",
+		"tsv",
+		"excel"
+	]
+}
