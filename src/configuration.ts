@@ -1,6 +1,6 @@
 "use strict";
+/* https://code.visualstudio.com/api/language-extensions/language-configuration-guide */
 
-import {Disposable, ExtensionContext, LanguageConfiguration, TextEditor, TextEditorEdit, commands, languages, workspace} from "vscode";
 import * as vscode from "vscode";
 import * as fs from "node:fs";
 import * as jsonc from "jsonc-parser";
@@ -19,9 +19,13 @@ export class Configuration {
 	private readonly slashStyleBlocks: string = "slashStyleBlocks";
 	private readonly hashStyleBlocks: string = "hashStyleBlocks";
 	private readonly semicolonStyleBlocks: string = "semicolonStyleBlocks";
+	private readonly multiLineStyleBlocks: string = "multiLineStyleBlocks";
 	private readonly disabledLanguages: string = "disabledLanguages";
+	private readonly overrideDefaultLanguageMultiLineComments: string = "overrideDefaultLanguageMultiLineComments";
 
 	private disabledLanguageList: string[] = this.getConfiguration().get<string[]>(this.disabledLanguages);
+
+	private overriddenLangMultiLineCommentList: string[] = this.getConfiguration().get<string[]>(this.overrideDefaultLanguageMultiLineComments);
 
 	/**
 	 * A key:value Map object of supported language IDs and their single line style comments.
@@ -69,7 +73,13 @@ export class Configuration {
 		console.log(this.singleLineBlocksMap);
 	}
 
-	configureCommentBlocks(context: ExtensionContext) {
+	/**
+	 * Configure the comment blocks.
+	 *
+	 * @param {vscode.ExtensionContext} context The context of the extension.
+	 * @returns {vscode.Disposable[]}
+	 */
+	configureCommentBlocks(context: vscode.ExtensionContext) {
 		const disposables: vscode.Disposable[] = [];
 
 		// Set language configurations
@@ -98,6 +108,8 @@ export class Configuration {
 
 	/**
 	 * Register some VSCode commands.
+	 *
+	 * @returns {vscode.Disposable[]}
 	 */
 	public registerCommands() {
 		const singleLineBlockCommand = vscode.commands.registerTextEditorCommand(this.singleLineBlockCommand, (textEditor, edit, args) => {
@@ -170,12 +182,19 @@ export class Configuration {
 	}
 
 	/**
-	 * Get extension configuration.
+	 * Get extension user configuration settings.
+	 *
+	 * @returns {vscode.WorkspaceConfiguration}
 	 */
 	public getConfiguration(): vscode.WorkspaceConfiguration {
 		return vscode.workspace.getConfiguration(this.getExtensionNames().name, null);
 	}
 
+	/**
+	 * Is the language ID disabled?
+	 * @param {string} langId Language ID
+	 * @returns {boolean}
+	 */
 	public isLangIdDisabled(langId: string): boolean {
 		return this.disabledLanguageList.includes(langId);
 	}
@@ -193,7 +212,8 @@ export class Configuration {
 	}
 
 	/**
-	 * Find all language config files from vscode installed extensions (built-in and 3rd party).
+	 * Find all language config file paths from vscode installed extensions
+	 * (built-in and 3rd party).
 	 */
 	private findAllLanguageConfigFilePaths() {
 		// Loop through all installed extensions, including built-in extensions
@@ -311,14 +331,27 @@ export class Configuration {
 		fs.writeFileSync(filepath, JSON.stringify(data, null, "\t"));
 	}
 
-	private getMultiLineLanguages(): Array<string> {
-		return multiLineConfig["languages"];
+	/**
+	 * Get the multi-line languages from the Map.
+	 *
+	 * @returns {string[]} An array of language ID strings.
+	 */
+	private getMultiLineLanguages(): string[] {
+		return this.multiLineBlocksMap.get("languages");
 	}
 
-	private getSingleLineLanguages() {
+	/**
+	 * Get the single-line languages and styles.
+	 *
+	 * @returns {Map<string, string>} The Map of the languages and styles.
+	 */
+	private getSingleLineLanguages(): Map<string, string> {
 		return this.singleLineBlocksMap;
 	}
 
+	/**
+	 * Set the multi-line comments language definitions.
+	 */
 	private setMultiLineCommentLanguageDefinitions() {
 		let langArray = [];
 
@@ -353,6 +386,9 @@ export class Configuration {
 		this.writeCommentLanguageDefinitionsToJsonFile();
 	}
 
+	/**
+	 * Set the single-line comments language definitions.
+	 */
 	private setSingleLineCommentLanguageDefinitions() {
 		let style: string;
 
@@ -441,9 +477,19 @@ export class Configuration {
 		this.writeJsonFile(this.multiLineLangDefinitionFilePath, Object.fromEntries(this.multiLineBlocksMap));
 	}
 
-	private setLanguageConfiguration(langId: string, multiLine?: boolean, singleLineStyle?: string): Disposable {
-		const internalLangConfig = this.getLanguageConfig(langId);
-		const defaultMultiLineConfig = this.readJsonFile(`${__dirname}/../../config/default-multi-line-config.json`);
+	/**
+	 * Merge the internal configs with the default multi-line config if required, and
+	 * set vscode to use the language configuration.
+	 *
+	 * @param {string} langId Language ID
+	 * @param {boolean} multiLine Determine's whether to set the language for multi-line comments.
+	 * @param {string} singleLineStyle The style of the single-line comment.
+	 * @returns {vscode.Disposable}
+	 */
+	private setLanguageConfiguration(langId: string, multiLine?: boolean, singleLineStyle?: string): vscode.Disposable {
+		const internalLangConfig: vscode.LanguageConfiguration = this.getLanguageConfig(langId);
+		const defaultMultiLineConfig: any = this.readJsonFile(`${__dirname}/../../config/default-multi-line-config.json`);
+		console.log(typeof defaultMultiLineConfig);
 
 		let langConfig = {...internalLangConfig};
 
@@ -475,10 +521,17 @@ export class Configuration {
 
 		console.log(langId, langConfig);
 
-		return languages.setLanguageConfiguration(langId, langConfig);
+		return vscode.languages.setLanguageConfiguration(langId, langConfig);
 	}
 
-	private mergeConfigAutoClosingPairs(defaultLangConfig, internalLangConfig) {
+	/**
+	 * Merge the internal config AutoClosingPairs with the default config, removing any duplicates.
+	 *
+	 * @param {any} defaultLangConfig Default multi-line comments config.
+	 * @param {vscode.LanguageConfiguration} internalLangConfig Internal language config from vscode extensions.
+	 * @returns {vscode.AutoClosingPair[]}
+	 */
+	private mergeConfigAutoClosingPairs(defaultLangConfig, internalLangConfig: vscode.LanguageConfiguration) {
 		const defaultAutoClosing = defaultLangConfig.autoClosingPairs;
 		const internalAutoClosing = internalLangConfig?.autoClosingPairs ?? [];
 
@@ -497,6 +550,14 @@ export class Configuration {
 
 		return merged;
 	}
+
+	/**
+	 * Merge the internal config onEnterRules with the default config, removing any duplicates.
+	 *
+	 * @param {any} defaultOnEnterRules Default onEnterRules.
+	 * @param {vscode.LanguageConfiguration} internalLangConfig Internal language config from vscode extensions.
+	 * @returns {vscode.OnEnterRule[]}
+	 */
 	private mergeConfigOnEnterRules(defaultOnEnterRules, internalLangConfig) {
 		const internalOnEnterRules = internalLangConfig?.onEnterRules ?? [];
 
@@ -516,6 +577,12 @@ export class Configuration {
 		return merged;
 	}
 
+	/**
+	 * The keyboard binding event handler for the single line blocks on shift+enter.
+	 *
+	 * @param {vscode.TextEditor} textEditor The text editor.
+	 * @param {vscode.TextEditorEdit} edit The text editor edits.
+	 */
 	private handleSingleLineBlock(textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit) {
 		let langId = textEditor.document.languageId;
 		var style = this.singleLineBlocksMap.get(langId);
@@ -559,9 +626,10 @@ export class Configuration {
 	}
 
 	/**
-	 * The keyboard binding handler to change between the multi-line block comments for
+	 * The keyboard binding event handler to change between the multi-line block comments for
 	 * blade `{{--  --}}` and normal `<!-- -->`
-	 * @param textEditor The editor
+	 *
+	 * @param {vscode.TextEditor} textEditor The text editor.
 	 */
 	private handleChangeBladeMultiLineBlock(textEditor: vscode.TextEditor) {
 		let langId = textEditor.document.languageId;
