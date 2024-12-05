@@ -1,23 +1,36 @@
-export const config = {
+{
 	"languages": [
 		"blade",
 		"c",
 		"cpp",
+		"cpp_embedded_latex",
 		"csharp",
 		"css",
+		"cuda-cpp",
+		"dart",
 		"go",
 		"groovy",
+		"hlsl",
+		"html",
 		"java",
 		"javascript",
+		"javascriptreact",
+		"json",
+		"jsonc",
+		"jsonl",
 		"less",
 		"objective-c",
 		"objective-cpp",
 		"php",
-		"proto",
 		"proto3",
 		"rust",
+		"sass",
 		"scss",
+		"shaderlab",
+		"snippets",
+		"sql",
 		"swift",
-		"typescript"
+		"typescript",
+		"typescriptreact"
 	]
 }

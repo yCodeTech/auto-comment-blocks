@@ -3,10 +3,10 @@
 import {Disposable, ExtensionContext, LanguageConfiguration, TextEditor, TextEditorEdit, commands, languages, workspace} from "vscode";
 import * as vscode from "vscode";
 import * as fs from "node:fs";
+import * as jsonc from "jsonc-parser";
+import * as path from "path";
 
 import {Rules} from "./rules";
-import {config as singleLineConfig} from "./single-line-configuration";
-import {config as multiLineConfig} from "./multi-line-configuration";
 
 export class Configuration {
 	/**************
@@ -31,16 +31,50 @@ export class Configuration {
 	 */
 	private singleLineBlocksMap: Map<string, string> = new Map();
 
+	/**
+	 * A Map object of an array of supported language IDs for multi line block comments.
+	 *
+	 * @property {string} key - "languages"
+	 * @property {string[]} value - Array of language IDs.
+	 */
+	private multiLineBlocksMap: Map<string, string[]> = new Map();
+
+	private readonly singleLineLangDefinitionFilePath = `${__dirname}/../../auto-generated-language-definitions/single-line-languages.json`;
+
+	private readonly multiLineLangDefinitionFilePath = `${__dirname}/../../auto-generated-language-definitions/multi-line-languages.json`;
+
+	/**
+	 * A key:value Map object of language IDs and their config file paths.
+	 */
+	private languageConfigFilePaths = new Map<string, string>();
+
+	/**
+	 * A key:value Map object of language IDs and their configs.
+	 */
+	private readonly languageConfigs = new Map<string, vscode.LanguageConfiguration>();
+
 	/***********
 	 * Methods *
 	 ***********/
+
+	public constructor() {
+		this.findAllLanguageConfigFilePaths();
+		console.log(this.languageConfigFilePaths);
+		this.setLanguageConfigDefinitions();
+		console.log("language configs", this.languageConfigs);
+
+		this.setMultiLineCommentLanguageDefinitions();
+		console.log(this.multiLineBlocksMap);
+		this.setSingleLineCommentLanguageDefinitions();
+		console.log(this.singleLineBlocksMap);
+	}
 
 	configureCommentBlocks(context: ExtensionContext) {
 		const disposables: vscode.Disposable[] = [];
 
 		// Set language configurations
-		this.getSingleLineLanguages();
-		let multiLineLangs = this.getMultiLineLanguages();
+		const singleLineLangs = this.getSingleLineLanguages();
+		const multiLineLangs = this.getMultiLineLanguages();
 
 		// Setup the single line languages.
 		for (let [langId, style] of this.singleLineBlocksMap) {
@@ -146,21 +180,212 @@ export class Configuration {
 		return this.disabledLanguageList.includes(langId);
 	}
 
+	/**
+	 * Get an array of languages to skip, like plaintext, that don't have comment syntax
+	 *
+	 * Idea from this StackOverflow answer https://stackoverflow.com/a/72988011/2358222
+	 *
+	 * @returns {string[]}
+	 */
+	private getLanguagesToSkip(): string[] {
+		const json = this.readJsonFile(`${__dirname}/../../config/skip-languages.jsonc`);
+		return json.languages;
+	}
+
+	/**
+	 * Find all language config files from vscode installed extensions (built-in and 3rd party).
+	 */
+	private findAllLanguageConfigFilePaths() {
+		// Loop through all installed extensions, including built-in extensions
+		for (let extension of vscode.extensions.all) {
+			const packageJSON = extension.packageJSON;
+
+			// If an extension package.json has "contributes" key,
+			// AND the contributes object has "languages" key...
+			if (Object.hasOwn(packageJSON, "contributes") && Object.hasOwn(packageJSON.contributes, "languages")) {
+				// Loop through the languages...
+				for (let language of packageJSON.contributes.languages) {
+					// Get the languages to skip.
+					let skipLangs = this.getLanguagesToSkip();
+
+					// If skipLangs doesn't include the language ID,
+					// AND the language object has "configuration" key...
+					if (!skipLangs?.includes(language.id) && Object.hasOwn(language, "configuration")) {
+						// Join the extension path with the configuration path.
+						let configPath = path.join(extension.extensionPath, language.configuration);
+						// Set the language ID and config path into the languageConfigFilePaths Map.
+						this.languageConfigFilePaths.set(language.id, configPath);
+					}
+				}
+			}
+		}
+
+		// Set the languageConfigFilePaths to a new map with all the languages sorted in
+		// ascending order,for sanity reasons.
+		this.languageConfigFilePaths = new Map([...this.languageConfigFilePaths].sort());
+	}
+
+	/**
+	 * Set the language config definitions.
+	 */
+	private setLanguageConfigDefinitions() {
+		this.languageConfigFilePaths.forEach((filepath, langId) => {
+			const config = this.readJsonFile(filepath);
+
+			// If the config JSON has more than 0 keys (ie. not empty)
+			if (Object.keys(config).length > 0) {
+				/**
+				 * Change all autoClosingPairs items that are using the simpler syntax
+				 * (array instead of object) into the object with open and close keys.
+				 * Prevents vscode from failing quietly and not changing the editor language
+				 * properly, which makes the open file become unresponsive when changing tabs.
+				 */
+
+				// If config has key autoClosingPairs...
+				if (Object.hasOwn(config, "autoClosingPairs")) {
+					// Define a new array as the new AutoClosingPair.
+					const autoClosingPairsArray: vscode.AutoClosingPair[] = [];
+					// Loop through the config's autoClosingPairs...
+					config.autoClosingPairs.forEach((item) => {
+						// If the item is an array...
+						if (Array.isArray(item)) {
+							// Create a new object with the 1st array element [0] as the
+							// value of the open key, and the 2nd element [1] as the value
+							// of the close key.
+							const autoClosingPairsObj = {open: item[0], close: item[1]};
+							// Push the object into the new array.
+							autoClosingPairsArray.push(autoClosingPairsObj);
+						}
+						// Otherwise, the item is an object, so just push it into the array.
+						else {
+							autoClosingPairsArray.push(item);
+						}
+					});
+
+					// Add the new array to the config's autoClosingPairs key.
+					config.autoClosingPairs = autoClosingPairsArray;
+				}
+
+				// Set the language configs into the Map.
+				this.languageConfigs.set(langId, config);
+			}
+		});
+	}
+
+	/**
+	 * Get the config of the specified language.
+	 *
+	 * @param langId Language ID
+	 * @returns {vscode.LanguageConfiguration | undefined}
+	 */
+	private getLanguageConfig(langId: string) {
+		if (this.languageConfigs.has(langId)) {
+			return this.languageConfigs.get(langId);
+		}
+		// If no config exists for this language, back out and leave the language unsupported
+		else {
+			return undefined;
+		}
+	}
+
+	/**
+	 * Read the file and parse the JSON.
+	 *
+	 * @param {string} filepath The path of the file.
+	 * @returns The file content.
+	 */
+	private readJsonFile(filepath: string): any {
+		return jsonc.parse(fs.readFileSync(filepath).toString());
+	}
+
+	/**
+	 * Read the file and parse the JSON.
+	 *
+	 * @param {string} filepath The path of the file.
+	 * @param {any} data The data to write into the file.
+	 * @returns The file content.
+	 */
+	private writeJsonFile(filepath: string, data: any): any {
+		// Write the updated JSON back into the file and add tab indentation
+		// to make it easier to read.
+		fs.writeFileSync(filepath, JSON.stringify(data, null, "\t"));
+	}
+
 	private getMultiLineLanguages(): Array<string> {
 		return multiLineConfig["languages"];
 	}
 
 	private getSingleLineLanguages() {
-		let commentStyles = Object.keys(singleLineConfig);
-		for (let key of commentStyles) {
-			for (let langId of singleLineConfig[key]) {
-				if (!this.isLangIdDisabled(langId)) {
-					this.singleLineBlocksMap.set(langId, key);
+		return this.singleLineBlocksMap;
+	}
+
+	private setMultiLineCommentLanguageDefinitions() {
+		let langArray = [];
+
+		this.languageConfigs.forEach((config: any, langId: string) => {
+			// If the config object has own property of comments AND the comments key has
+			// own property of blockComment...
+			if (Object.hasOwn(config, "comments") && Object.hasOwn(config.comments, "blockComment")) {
+				// If the blockComment array includes the multi line start of "/*"...
+				if (config.comments.blockComment.includes("/*")) {
+					// console.log(langId, config.comments);
+
+					// If Language ID isn't already in the langArray...
+					if (!langArray.includes(langId)) {
+						langArray.push(langId);
+					}
 				}
+			}
+		});
+
+		const multiLineStyleBlocksLangs = this.getConfiguration().get<string[]>(this.multiLineStyleBlocks);
+
+		for (let langId of multiLineStyleBlocksLangs) {
+			if (langId && langId.length > 0 && !langArray.includes(langId)) {
+				langArray.push(langId);
 			}
 		}
 
-		// get user-customized langIds for this key and add to the map
+		// Set the language array into the multiLineBlockMap, sorted in ascending order,
+		// for sanity reasons.
+		this.multiLineBlocksMap.set("languages", langArray.sort());
+
+		this.writeCommentLanguageDefinitionsToJsonFile();
+	}
+
+	private setSingleLineCommentLanguageDefinitions() {
+		let style: string;
+
+		this.languageConfigs.forEach((config: any, langId: string) => {
+			// console.log(langId, config.comments.lineComment);
+			let style: string = "";
+
+			// If the config object has own property of comments AND the comments key has
+			// own property of lineComment...
+			if (Object.hasOwn(config, "comments") && Object.hasOwn(config.comments, "lineComment")) {
+				// If the lineComment is "//"...
+				if (config.comments.lineComment === "//") {
+					style = "//";
+				}
+				// If the lineComment is "#"...
+				else if (config.comments.lineComment === "#") {
+					style = "#";
+				}
+				// If the lineComment includes a ";" (; or ;;)...
+				else if (config.comments.lineComment.includes(";")) {
+					style = ";";
+				}
+
+				// If style any empty string, (i.e. not an unsupported single line
+				// comment like bat's @rem)...
+				if (style != "") {
+					// Set the langId and it's style into the Map.
+					this.singleLineBlocksMap.set(langId, style);
+				}
+			}
+		});
+
+		// Get user-customized langIds for the //-style and add to the map.
 		let customSlashLangs = this.getConfiguration().get<string[]>(this.slashStyleBlocks);
 		for (let langId of customSlashLangs) {
 			if (langId && langId.length > 0) {
@@ -168,6 +393,7 @@ export class Configuration {
 			}
 		}
 
+		// Get user-customized langIds for the #-style and add to the map.
 		let customHashLangs = this.getConfiguration().get<string[]>(this.hashStyleBlocks);
 		for (let langId of customHashLangs) {
 			if (langId && langId.length > 0) {
@@ -175,24 +401,68 @@ export class Configuration {
 			}
 		}
 
+		// Get user-customized langIds for the ;-style and add to the map.
 		let customSemicolonLangs = this.getConfiguration().get<string[]>(this.semicolonStyleBlocks);
 		for (let langId of customSemicolonLangs) {
 			if (langId && langId.length > 0) {
 				this.singleLineBlocksMap.set(langId, ";");
 			}
 		}
+
+		// Set the singleLineBlockMap to a new map with all the languages sorted in ascending order,
+		// for sanity reasons.
+		this.singleLineBlocksMap = new Map([...this.singleLineBlocksMap].sort());
+
+		this.writeCommentLanguageDefinitionsToJsonFile();
+	}
+
+	/**
+	 * Write Comment Language Definitions to the respective JSON file:
+	 * either multi-line-languages.json, or single-line-languages.json.
+	 */
+	private writeCommentLanguageDefinitionsToJsonFile() {
+		// Convert a key:value Map into an key:array object, while reversing/switching the
+		// keys and values. The Map's values are now the keys of the object and the Map's keys
+		// are now added as the values of the array.
+		// e.g. From `Map {apacheconf => #, c => //, clojure => ;, coffeescript => #, cpp => //, …}`
+		// to `{"#": ["apacheconf", "coffeescript", ...], "//": ["c", "cpp", ...],
+		// ";": ["clojure", ...]}`
+		//
+		// Code from this StackOverflow answer https://stackoverflow.com/a/45728850/2358222
+		const reverseMapping = (m: Map<string, string>): object => {
+			const o = Object.fromEntries(m);
+
+			return Object.keys(o).reduce((r, k) => Object.assign(r, {[o[k]]: (r[o[k]] || []).concat(k)}), {});
+		};
+
+		// Write the into the single-line-languages.json file.
+		this.writeJsonFile(this.singleLineLangDefinitionFilePath, reverseMapping(this.singleLineBlocksMap));
+		// Write the into the multi-line-languages.json file.
+		this.writeJsonFile(this.multiLineLangDefinitionFilePath, Object.fromEntries(this.multiLineBlocksMap));
 	}
 
 	private setLanguageConfiguration(langId: string, multiLine?: boolean, singleLineStyle?: string): Disposable {
-		var langConfig: LanguageConfiguration = {
-			onEnterRules: [],
-		};
+		const internalLangConfig = this.getLanguageConfig(langId);
+		const defaultMultiLineConfig = this.readJsonFile(`${__dirname}/../../config/default-multi-line-config.json`);
+
+		let langConfig = {...internalLangConfig};
 
 		if (multiLine) {
-			langConfig.onEnterRules = langConfig.onEnterRules.concat(Rules.multilineEnterRules);
+			langConfig.autoClosingPairs = this.mergeConfigAutoClosingPairs(defaultMultiLineConfig, internalLangConfig);
+
+			// Add the multi-line onEnter rules to the langConfig.
+			langConfig.onEnterRules = this.mergeConfigOnEnterRules(Rules.multilineEnterRules, internalLangConfig);
+
+			/**
+			 * Get the user settings/configuration and set the blade or html comments accordingly.
+			 */
+			if (langId === "blade") {
+				langConfig.comments.blockComment = this.setBladeComments(this.getConfiguration().get("bladeOverrideComments"), true);
+			}
 		}
 
 		let isOnEnter = this.getConfiguration().get<boolean>(this.singleLineBlockOnEnter);
+
 		if (isOnEnter && singleLineStyle) {
 			if (singleLineStyle === "//") {
 				langConfig.onEnterRules = langConfig.onEnterRules.concat(Rules.slashEnterRules);
@@ -203,7 +473,47 @@ export class Configuration {
 			}
 		}
 
+		console.log(langId, langConfig);
+
 		return languages.setLanguageConfiguration(langId, langConfig);
+	}
+
+	private mergeConfigAutoClosingPairs(defaultLangConfig, internalLangConfig) {
+		const defaultAutoClosing = defaultLangConfig.autoClosingPairs;
+		const internalAutoClosing = internalLangConfig?.autoClosingPairs ?? [];
+
+		// Code based on "2023 update" portion of this StackOverflow answer:
+		// https://stackoverflow.com/a/1584377/2358222
+
+		// Copy to avoid side effects.
+		const merged = [...internalAutoClosing];
+		// Loop over the defaultLangConfig autoClosingPairs array...
+		defaultAutoClosing.forEach((item) => {
+			// Test all items in the merged array, and if the defaultAutoClosing item's
+			// opening comment string (item.open) is not already present in one of the
+			// merged array's objects then add the item to the merged array.
+			merged.some((mergedItem) => item.open === mergedItem.open) ? null : merged.push(item);
+		});
+
+		return merged;
+	}
+	private mergeConfigOnEnterRules(defaultOnEnterRules, internalLangConfig) {
+		const internalOnEnterRules = internalLangConfig?.onEnterRules ?? [];
+
+		// Code based on "2023 update" portion of this StackOverflow answer:
+		// https://stackoverflow.com/a/1584377/2358222
+
+		// Copy to avoid side effects.
+		const merged = [...defaultOnEnterRules];
+		// Loop over the defaultLangConfig autoClosingPairs array...
+		internalOnEnterRules.forEach((item) => {
+			// Test all items in the merged array, and if the defaultAutoClosing item's
+			// opening comment string (item.open) is not already present in one of the
+			// merged array's objects then add the item to the merged array.
+			merged.some((mergedItem) => item.beforeText === mergedItem.beforeText) ? null : merged.push(item);
+		});
+
+		return merged;
 	}
 
 	private handleSingleLineBlock(textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit) {
