@@ -1,6 +1,7 @@
 "use strict";
 
 import {Disposable, ExtensionContext, LanguageConfiguration, TextEditor, TextEditorEdit, commands, languages, workspace} from "vscode";
+import * as vscode from "vscode";
 
 import {Rules} from "./rules";
 import {config as singleLineConfig} from "./single-line-configuration";
@@ -106,7 +107,7 @@ export class Configuration {
 		}
 	}
 
-	private handleSingleLineBlock(textEditor: TextEditor, edit: TextEditorEdit) {
+	private handleSingleLineBlock(textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit) {
 		let langId = textEditor.document.languageId;
 		var style = this.singleLineBlocksMap.get(langId);
 		if (style && textEditor.selection.isEmpty) {
@@ -125,6 +126,11 @@ export class Configuration {
 				indentRegex = /#/;
 			} else if (style === ";" && line.text.search(/^\s*;\s*/) !== -1) {
 				indentRegex = /;/;
+
+				// If text is ;;, then change the style from single ; to double ;;.
+				if (line.text.search(/^\s*;;\s*/) !== -1) {
+					style = ";;";
+				}
 			} else {
 				isCommentLine = false;
 			}
