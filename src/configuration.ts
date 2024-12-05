@@ -1,16 +1,14 @@
-'use strict';
+"use strict";
 
-import { Disposable, ExtensionContext, LanguageConfiguration, TextEditor, TextEditorEdit, commands, languages, workspace } from 'vscode';
+import {Disposable, ExtensionContext, LanguageConfiguration, TextEditor, TextEditorEdit, commands, languages, workspace} from "vscode";
 
-import { Rules } from './rules';
-import { config as singleLineConfig } from './single-line-configuration';
-import { config as multiLineConfig } from './multi-line-configuration';
+import {Rules} from "./rules";
+import {config as singleLineConfig} from "./single-line-configuration";
+import {config as multiLineConfig} from "./multi-line-configuration";
 
 export class Configuration {
-
 	private readonly extensionName: string = "auto-comment-blocks";
-	private readonly singleLineBlockCommand: string =
-		"auto-comment-blocks.singleLineBlock";
+	private readonly singleLineBlockCommand: string = "auto-comment-blocks.singleLineBlock";
 
 	private readonly singleLineBlockOnEnter: string = "singleLineBlockOnEnter";
 	private readonly slashStyleBlocks: string = "slashStyleBlocks";
@@ -18,17 +16,14 @@ export class Configuration {
 	private readonly semicolonStyleBlocks: string = "semicolonStyleBlocks";
 	private readonly disabledLanguages: string = "disabledLanguages";
 
-	private disabledLanguageList: string[] =
-		this.getConfiguration().get<string[]>(this.disabledLanguages);
+	private disabledLanguageList: string[] = this.getConfiguration().get<string[]>(this.disabledLanguages);
 	private singleLineBlocksMap: Map<string, string> = new Map();
 
 	private getConfiguration() {
-
 		return workspace.getConfiguration(this.extensionName);
 	}
 
 	private isLangIdDisabled(langId: string) {
-
 		return this.disabledLanguageList.indexOf(langId) !== -1;
 	}
 
@@ -36,31 +31,23 @@ export class Configuration {
 		return multiLineConfig["languages"];
 	}
 
-	private setLanguageConfiguration(langId: string,
-		multiLine?: boolean,
-		singleLineStyle?: string): Disposable {
-
+	private setLanguageConfiguration(langId: string, multiLine?: boolean, singleLineStyle?: string): Disposable {
 		var langConfig: LanguageConfiguration = {
-			onEnterRules: []
+			onEnterRules: [],
 		};
 
 		if (multiLine) {
-			langConfig.onEnterRules =
-				langConfig.onEnterRules.concat(Rules.multilineEnterRules);
+			langConfig.onEnterRules = langConfig.onEnterRules.concat(Rules.multilineEnterRules);
 		}
 
-		let isOnEnter = this.getConfiguration().get<boolean>(
-			this.singleLineBlockOnEnter);
+		let isOnEnter = this.getConfiguration().get<boolean>(this.singleLineBlockOnEnter);
 		if (isOnEnter && singleLineStyle) {
-			if (singleLineStyle === '//') {
-				langConfig.onEnterRules =
-					langConfig.onEnterRules.concat(Rules.slashEnterRules);
-			} else if (singleLineStyle === '#') {
-				langConfig.onEnterRules =
-					langConfig.onEnterRules.concat(Rules.hashEnterRules);
-			} else if (singleLineStyle === ';') {
-				langConfig.onEnterRules =
-					langConfig.onEnterRules.concat(Rules.semicolonEnterRules);
+			if (singleLineStyle === "//") {
+				langConfig.onEnterRules = langConfig.onEnterRules.concat(Rules.slashEnterRules);
+			} else if (singleLineStyle === "#") {
+				langConfig.onEnterRules = langConfig.onEnterRules.concat(Rules.hashEnterRules);
+			} else if (singleLineStyle === ";") {
+				langConfig.onEnterRules = langConfig.onEnterRules.concat(Rules.semicolonEnterRules);
 			}
 		}
 
@@ -78,33 +65,29 @@ export class Configuration {
 		}
 
 		// get user-customized langIds for this key and add to the map
-		let customSlashLangs =
-			this.getConfiguration().get<string[]>(this.slashStyleBlocks);
+		let customSlashLangs = this.getConfiguration().get<string[]>(this.slashStyleBlocks);
 		for (let langId of customSlashLangs) {
 			if (langId && langId.length > 0) {
-				this.singleLineBlocksMap.set(langId, '//');
+				this.singleLineBlocksMap.set(langId, "//");
 			}
 		}
 
-		let customHashLangs =
-			this.getConfiguration().get<string[]>(this.hashStyleBlocks);
+		let customHashLangs = this.getConfiguration().get<string[]>(this.hashStyleBlocks);
 		for (let langId of customHashLangs) {
 			if (langId && langId.length > 0) {
-				this.singleLineBlocksMap.set(langId, '#');
+				this.singleLineBlocksMap.set(langId, "#");
 			}
 		}
 
-		let customSemicolonLangs =
-			this.getConfiguration().get<string[]>(this.semicolonStyleBlocks);
+		let customSemicolonLangs = this.getConfiguration().get<string[]>(this.semicolonStyleBlocks);
 		for (let langId of customSemicolonLangs) {
 			if (langId && langId.length > 0) {
-				this.singleLineBlocksMap.set(langId, ';');
+				this.singleLineBlocksMap.set(langId, ";");
 			}
 		}
 	}
 
 	configureCommentBlocks(context: ExtensionContext) {
-
 		this.getSingleLineLanguages();
 
 		// set language configurations
@@ -116,9 +99,7 @@ export class Configuration {
 		}
 
 		for (let langId of multiLineLangs) {
-			if (!this.singleLineBlocksMap.has(langId) &&
-				!this.isLangIdDisabled(langId)) {
-
+			if (!this.singleLineBlocksMap.has(langId) && !this.isLangIdDisabled(langId)) {
 				let disposable = this.setLanguageConfiguration(langId, true);
 				context.subscriptions.push(disposable);
 			}
@@ -126,28 +107,24 @@ export class Configuration {
 	}
 
 	private handleSingleLineBlock(textEditor: TextEditor, edit: TextEditorEdit) {
-
 		let langId = textEditor.document.languageId;
 		var style = this.singleLineBlocksMap.get(langId);
 		if (style && textEditor.selection.isEmpty) {
 			let line = textEditor.document.lineAt(textEditor.selection.active);
 			let isCommentLine = true;
 			var indentRegex: RegExp;
-			if (style === '//' && line.text.search(/^\s*\/\/\s*/) !== -1) {
+			if (style === "//" && line.text.search(/^\s*\/\/\s*/) !== -1) {
 				indentRegex = /\//;
 				if (line.text.search(/^\s*\/\/\/\s*/) !== -1) {
-					style = '///';
+					style = "///";
 				}
 				if (line.text.search(/^\s*\/\/!\s*/) !== -1) {
-					style = '//!';
+					style = "//!";
 				}
-
-			} else if (style === '#' && line.text.search(/^\s*#\s*/) !== -1) {
+			} else if (style === "#" && line.text.search(/^\s*#\s*/) !== -1) {
 				indentRegex = /#/;
-
-			} else if (style === ';' && line.text.search(/^\s*;\s*/) !== -1) {
+			} else if (style === ";" && line.text.search(/^\s*;\s*/) !== -1) {
 				indentRegex = /;/;
-
 			} else {
 				isCommentLine = false;
 			}
@@ -156,12 +133,10 @@ export class Configuration {
 				return;
 			}
 
-			var indentedNewLine = '\n' +
-				line.text.substring(0, line.text.search(indentRegex));
-			let isOnEnter = this.getConfiguration().get<boolean>(
-				this.singleLineBlockOnEnter);
+			var indentedNewLine = "\n" + line.text.substring(0, line.text.search(indentRegex));
+			let isOnEnter = this.getConfiguration().get<boolean>(this.singleLineBlockOnEnter);
 			if (!isOnEnter) {
-				indentedNewLine += style + ' ';
+				indentedNewLine += style + " ";
 			}
 
 			edit.insert(textEditor.selection.active, indentedNewLine);
@@ -169,10 +144,8 @@ export class Configuration {
 	}
 
 	registerCommands() {
-
-		commands.registerTextEditorCommand(this.singleLineBlockCommand,
-			(textEditor, edit, args) => {
-				this.handleSingleLineBlock(textEditor, edit);
-			})
+		commands.registerTextEditorCommand(this.singleLineBlockCommand, (textEditor, edit, args) => {
+			this.handleSingleLineBlock(textEditor, edit);
+		});
 	}
 }
