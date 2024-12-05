@@ -6,9 +6,13 @@ import {Configuration} from "./configuration";
 
 let configuration = new Configuration();
 
+const disposables: vscode.Disposable[] = [];
+
 export function activate(context: vscode.ExtensionContext) {
-	configuration.configureCommentBlocks(context);
-	configuration.registerCommands();
+	const configureCommentBlocksDisposable = configuration.configureCommentBlocks(context);
+	const registerCommandsDisposable = configuration.registerCommands();
+
+	disposables.push(...configureCommentBlocksDisposable, ...registerCommandsDisposable);
 
 	const extensionNames = configuration.getExtensionNames();
 
@@ -76,7 +80,10 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Called when active editor language is changed, so re-configure the comment blocks.
 	vscode.workspace.onDidOpenTextDocument(() => {
-		configuration.configureCommentBlocks(context);
+		const configureCommentBlocksDisposable = configuration.configureCommentBlocks(context);
+		disposables.push(...configureCommentBlocksDisposable);
 	});
+
+	context.subscriptions.push(...disposables);
 }
 export function deactivate() {}

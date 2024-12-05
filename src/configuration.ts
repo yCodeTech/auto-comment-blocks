@@ -2,14 +2,15 @@
 
 import {Disposable, ExtensionContext, LanguageConfiguration, TextEditor, TextEditorEdit, commands, languages, workspace} from "vscode";
 import * as vscode from "vscode";
+import * as fs from "node:fs";
 
 import {Rules} from "./rules";
 import {config as singleLineConfig} from "./single-line-configuration";
 import {config as multiLineConfig} from "./multi-line-configuration";
 
 export class Configuration {
-	private readonly extensionName: string = "auto-comment-blocks";
 	private readonly singleLineBlockCommand: string = "auto-comment-blocks.singleLineBlock";
+	private readonly changeBladeMultiLineBlockCommand: string = "auto-comment-blocks.changeBladeMultiLineBlock";
 
 	private readonly singleLineBlockOnEnter: string = "singleLineBlockOnEnter";
 	private readonly slashStyleBlocks: string = "slashStyleBlocks";
@@ -20,12 +21,33 @@ export class Configuration {
 	private disabledLanguageList: string[] = this.getConfiguration().get<string[]>(this.disabledLanguages);
 	private singleLineBlocksMap: Map<string, string> = new Map();
 
-	private getConfiguration() {
-		return workspace.getConfiguration(this.extensionName);
+	/**
+	 * Get the names and ids of this extension from package.json.
+	 *
+	 * @returns {object} An object containing the extension id, name, and display name.
+	 */
+	public getExtensionNames() {
+		const packageJSON = JSON.parse(fs.readFileSync(__dirname + "./../../package.json").toString());
+
+		const displayName: string = packageJSON.displayName;
+		const fullname: string = packageJSON.name;
+		const id: string = `${packageJSON.publisher}.${fullname}`;
+
+		let nameParts = fullname.split("-");
+		nameParts[0] = "auto";
+		const name = nameParts.join("-");
+
+		return {id: id, name: name, displayName: displayName};
+	}
+	/**
+	 * Get extension configuration.
+	 */
+	public getConfiguration(): vscode.WorkspaceConfiguration {
+		return vscode.workspace.getConfiguration(this.getExtensionNames().name, null);
 	}
 
-	private isLangIdDisabled(langId: string) {
-		return this.disabledLanguageList.indexOf(langId) !== -1;
+	public isLangIdDisabled(langId: string): boolean {
+		return this.disabledLanguageList.includes(langId);
 	}
 
 	private getMultiLineLanguages(): Array<string> {
@@ -149,9 +171,100 @@ export class Configuration {
 		}
 	}
 
-	registerCommands() {
-		commands.registerTextEditorCommand(this.singleLineBlockCommand, (textEditor, edit, args) => {
+	/**
+	 * The keyboard binding handler to change between the multi-line block comments for
+	 * blade `{{--  --}}` and normal `<!-- -->`
+	 * @param textEditor The editor
+	 */
+	private handleChangeBladeMultiLineBlock(textEditor: vscode.TextEditor) {
+		let langId = textEditor.document.languageId;
+		const extensionNames = this.getExtensionNames();
+
+		// Only carry out function if languageId is blade.
+		if (langId === "blade" && !this.isLangIdDisabled(langId)) {
+			let config = this.getConfiguration();
+			// Read current value
+			let isOverridden = config.get<boolean>("bladeOverrideComments");
+
+			if (isOverridden === false) {
+				// Update to true, globally
+				// [command, new value, global]
+				config.update("bladeOverrideComments", true, true);
+			} else {
+				// Update to false, globally
+				// [command, new value, global]
+				config.update("bladeOverrideComments", false, true);
+			}
+			// Read new value
+			let bladeOverrideComments = config.get<boolean>("bladeOverrideComments");
+
+			// Set the comments for blade language.
+			this.setBladeComments(bladeOverrideComments);
+		}
+		// If langId is blade AND Blade is set as disabled in the settings,
+		// then output a message to the user.
+		else if (langId == "blade" && this.isLangIdDisabled(langId)) {
+			vscode.window.showInformationMessage(
+				`Blade is set as disabled in the "${extensionNames.name}.disabledLanguages" setting. The "${extensionNames.name}.bladeOverrideComments" setting will have no affect.`,
+				"OK"
+			);
+
+			// Set the comments for blade language.
+			this.setBladeComments(false);
+		}
+	}
+
+	/**
+	 * Register some VSCode commands.
+	 */
+	public registerCommands() {
+		const singleLineBlockCommand = vscode.commands.registerTextEditorCommand(this.singleLineBlockCommand, (textEditor, edit, args) => {
 			this.handleSingleLineBlock(textEditor, edit);
 		});
+		const changeBladeMultiLineBlockCommand = vscode.commands.registerTextEditorCommand(
+			this.changeBladeMultiLineBlockCommand,
+			(textEditor, edit, args) => {
+				this.handleChangeBladeMultiLineBlock(textEditor);
+			}
+		);
+		return [singleLineBlockCommand, changeBladeMultiLineBlockCommand];
+	}
+
+	/**
+	 * Sets the block comments for the blade language determined by the user setting.
+	 *
+	 * @param bladeOverrideComments A boolean indicating whether or not the user setting "Blade Override Comments" is enabled.
+	 *
+	 * @param [onStart=false] A boolean indicating whether or not the method was called
+	 * on starting the extension.
+	 * If `true`, it returns the comments, if `false` (default), it sets the comments to
+	 * the language directly.
+	 *
+	 */
+	public setBladeComments(bladeOverrideComments: boolean, onStart: boolean = false): any {
+		// Is enabled AND blade langId is NOT set as disabled...
+		if (bladeOverrideComments === true && !this.isLangIdDisabled("blade")) {
+			if (onStart) {
+				return ["{{--", "--}}"];
+			} else {
+				vscode.languages.setLanguageConfiguration("blade", {
+					comments: {
+						blockComment: ["{{--", "--}}"],
+					},
+				});
+			}
+		}
+		// Is disabled OR blade langId is set as disabled...
+		else if (!bladeOverrideComments || this.isLangIdDisabled("blade")) {
+			if (onStart) {
+				return ["<!--", "-->"];
+			} else {
+				vscode.languages.setLanguageConfiguration("blade", {
+					comments: {
+						blockComment: ["<!--", "-->"],
+					},
+				});
+			}
+		}
 	}
 }
