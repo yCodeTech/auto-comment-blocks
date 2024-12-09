@@ -168,7 +168,7 @@ export class Configuration {
 	}
 
 	/**
-	 * Get extension user configuration settings.
+	 * Get all the extension's configuration settings.
 	 *
 	 * @returns {vscode.WorkspaceConfiguration}
 	 */
@@ -177,12 +177,45 @@ export class Configuration {
 	}
 
 	/**
+	 * Get value of the specified key from the extension's user configuration settings.
+	 *
+	 * @param {string} key The key of the specific setting.
+	 *
+	 * @returns {T} Returns the value of the `key`.
+	 *
+	 * NOTE: Return is typed as `T`, which is a generic type that represents the type that is declared when called (as explained in this StackOverflow answer: https://stackoverflow.com/a/49622066/2358222)
+	 *
+	 * @example ```ts
+	 * this.getConfigurationValue<string[]>("disabledLanguages");
+	 * ```
+	 */
+	public getConfigurationValue<T>(key: string): T {
+		return this.getConfiguration().get<T>(key);
+	}
+
+	/**
+	 * Update value of the specified key from the extension's user configuration settings.
+	 *
+	 * @param {string} key The key of the specific setting.
+
+	 * @param {any} value The value to update the setting with.
+	 *
+	 * @example ```ts
+	 * this.updateConfigurationValue("bladeOverrideComments", true);
+	 * ```
+	 */
+	public updateConfigurationValue(key: string, value: any) {
+		// .update(config key, new value, global)
+		this.getConfiguration().update(key, value, true);
+	}
+
+	/**
 	 * Is the language ID disabled?
 	 * @param {string} langId Language ID
 	 * @returns {boolean}
 	 */
 	public isLangIdDisabled(langId: string): boolean {
-		return this.getConfiguration().get<string[]>("disabledLanguages").includes(langId);
+		return this.getConfigurationValue<string[]>("disabledLanguages").includes(langId);
 	}
 
 	/**
@@ -192,7 +225,7 @@ export class Configuration {
 	 * @returns {boolean}
 	 */
 	private isLangIdMultiLineCommentOverridden(langId: string): boolean {
-		const overriddenList = this.getConfiguration().get<string[]>("overrideDefaultLanguageMultiLineComments");
+		const overriddenList = this.getConfigurationValue<string[]>("overrideDefaultLanguageMultiLineComments");
 
 		return overriddenList.hasOwnProperty(langId);
 	}
@@ -204,7 +237,7 @@ export class Configuration {
 	 * @returns {string}
 	 */
 	private getOverriddenMultiLineComment(langId: string) {
-		const overriddenList = this.getConfiguration().get<string[]>("overrideDefaultLanguageMultiLineComments");
+		const overriddenList = this.getConfigurationValue<string[]>("overrideDefaultLanguageMultiLineComments");
 
 		return overriddenList[langId];
 	}
@@ -381,7 +414,7 @@ export class Configuration {
 			}
 		});
 
-		const multiLineStyleBlocksLangs = this.getConfiguration().get<string[]>("multiLineStyleBlocks");
+		const multiLineStyleBlocksLangs = this.getConfigurationValue<string[]>("multiLineStyleBlocks");
 
 		for (let langId of multiLineStyleBlocksLangs) {
 			if (langId && langId.length > 0 && !langArray.includes(langId)) {
@@ -432,7 +465,7 @@ export class Configuration {
 		});
 
 		// Get user-customized langIds for the //-style and add to the map.
-		let customSlashLangs = this.getConfiguration().get<string[]>("slashStyleBlocks");
+		let customSlashLangs = this.getConfigurationValue<string[]>("slashStyleBlocks");
 		for (let langId of customSlashLangs) {
 			if (langId && langId.length > 0) {
 				this.singleLineBlocksMap.set(langId, "//");
@@ -440,7 +473,7 @@ export class Configuration {
 		}
 
 		// Get user-customized langIds for the #-style and add to the map.
-		let customHashLangs = this.getConfiguration().get<string[]>("hashStyleBlocks");
+		let customHashLangs = this.getConfigurationValue<string[]>("hashStyleBlocks");
 		for (let langId of customHashLangs) {
 			if (langId && langId.length > 0) {
 				this.singleLineBlocksMap.set(langId, "#");
@@ -448,7 +481,7 @@ export class Configuration {
 		}
 
 		// Get user-customized langIds for the ;-style and add to the map.
-		let customSemicolonLangs = this.getConfiguration().get<string[]>("semicolonStyleBlocks");
+		let customSemicolonLangs = this.getConfigurationValue<string[]>("semicolonStyleBlocks");
 		for (let langId of customSemicolonLangs) {
 			if (langId && langId.length > 0) {
 				this.singleLineBlocksMap.set(langId, ";");
@@ -513,11 +546,11 @@ export class Configuration {
 			 * Get the user settings/configuration and set the blade or html comments accordingly.
 			 */
 			if (langId === "blade") {
-				langConfig.comments.blockComment = this.setBladeComments(this.getConfiguration().get("bladeOverrideComments"), true);
+				langConfig.comments.blockComment = this.setBladeComments(this.getConfigurationValue<boolean>("bladeOverrideComments"), true);
 			}
 		}
 
-		let isOnEnter = this.getConfiguration().get<boolean>("singleLineBlockOnEnter");
+		let isOnEnter = this.getConfigurationValue<boolean>("singleLineBlockOnEnter");
 
 		if (isOnEnter && singleLineStyle) {
 			if (singleLineStyle === "//") {
@@ -626,7 +659,7 @@ export class Configuration {
 			}
 
 			var indentedNewLine = "\n" + line.text.substring(0, line.text.search(indentRegex));
-			let isOnEnter = this.getConfiguration().get<boolean>("singleLineBlockOnEnter");
+			let isOnEnter = this.getConfigurationValue<boolean>("singleLineBlockOnEnter");
 			if (!isOnEnter) {
 				indentedNewLine += style + " ";
 			}
@@ -647,21 +680,18 @@ export class Configuration {
 
 		// Only carry out function if languageId is blade.
 		if (langId === "blade" && !this.isLangIdDisabled(langId)) {
-			let config = this.getConfiguration();
 			// Read current value
-			let isOverridden = config.get<boolean>("bladeOverrideComments");
+			let isOverridden = this.getConfigurationValue<boolean>("bladeOverrideComments");
 
 			if (isOverridden === false) {
-				// Update to true, globally
-				// [command, new value, global]
-				config.update("bladeOverrideComments", true, true);
+				// Update to true
+				this.updateConfigurationValue("bladeOverrideComments", true);
 			} else {
-				// Update to false, globally
-				// [command, new value, global]
-				config.update("bladeOverrideComments", false, true);
+				// Update to false
+				this.updateConfigurationValue("bladeOverrideComments", false);
 			}
 			// Read new value
-			let bladeOverrideComments = config.get<boolean>("bladeOverrideComments");
+			let bladeOverrideComments = this.getConfigurationValue<boolean>("bladeOverrideComments");
 
 			// Set the comments for blade language.
 			this.setBladeComments(bladeOverrideComments);
