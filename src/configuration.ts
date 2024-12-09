@@ -12,20 +12,16 @@ export class Configuration {
 	/**************
 	 * Properties *
 	 **************/
-	private readonly singleLineBlockCommand: string = "auto-comment-blocks.singleLineBlock";
-	private readonly changeBladeMultiLineBlockCommand: string = "auto-comment-blocks.changeBladeMultiLineBlock";
 
-	private readonly singleLineBlockOnEnter: string = "singleLineBlockOnEnter";
-	private readonly slashStyleBlocks: string = "slashStyleBlocks";
-	private readonly hashStyleBlocks: string = "hashStyleBlocks";
-	private readonly semicolonStyleBlocks: string = "semicolonStyleBlocks";
-	private readonly multiLineStyleBlocks: string = "multiLineStyleBlocks";
-	private readonly disabledLanguages: string = "disabledLanguages";
-	private readonly overrideDefaultLanguageMultiLineComments: string = "overrideDefaultLanguageMultiLineComments";
+	/**
+	 * A key:value Map object of language IDs and their config file paths.
+	 */
+	private languageConfigFilePaths = new Map<string, string>();
 
-	private disabledLanguageList: string[] = this.getConfiguration().get<string[]>(this.disabledLanguages);
-
-	private overriddenLangMultiLineCommentList: string[] = this.getConfiguration().get<string[]>(this.overrideDefaultLanguageMultiLineComments);
+	/**
+	 * A key:value Map object of language IDs and their configs.
+	 */
+	private readonly languageConfigs = new Map<string, vscode.LanguageConfiguration>();
 
 	/**
 	 * A key:value Map object of supported language IDs and their single line style comments.
@@ -46,16 +42,6 @@ export class Configuration {
 	private readonly singleLineLangDefinitionFilePath = `${__dirname}/../../auto-generated-language-definitions/single-line-languages.json`;
 
 	private readonly multiLineLangDefinitionFilePath = `${__dirname}/../../auto-generated-language-definitions/multi-line-languages.json`;
-
-	/**
-	 * A key:value Map object of language IDs and their config file paths.
-	 */
-	private languageConfigFilePaths = new Map<string, string>();
-
-	/**
-	 * A key:value Map object of language IDs and their configs.
-	 */
-	private readonly languageConfigs = new Map<string, vscode.LanguageConfiguration>();
 
 	/***********
 	 * Methods *
@@ -112,11 +98,11 @@ export class Configuration {
 	 * @returns {vscode.Disposable[]}
 	 */
 	public registerCommands() {
-		const singleLineBlockCommand = vscode.commands.registerTextEditorCommand(this.singleLineBlockCommand, (textEditor, edit, args) => {
+		const singleLineBlockCommand = vscode.commands.registerTextEditorCommand("auto-comment-blocks.singleLineBlock", (textEditor, edit, args) => {
 			this.handleSingleLineBlock(textEditor, edit);
 		});
 		const changeBladeMultiLineBlockCommand = vscode.commands.registerTextEditorCommand(
-			this.changeBladeMultiLineBlockCommand,
+			"auto-comment-blocks.changeBladeMultiLineBlock",
 			(textEditor, edit, args) => {
 				this.handleChangeBladeMultiLineBlock(textEditor);
 			}
@@ -196,7 +182,31 @@ export class Configuration {
 	 * @returns {boolean}
 	 */
 	public isLangIdDisabled(langId: string): boolean {
-		return this.disabledLanguageList.includes(langId);
+		return this.getConfiguration().get<string[]>("disabledLanguages").includes(langId);
+	}
+
+	/**
+	 * Is the multi-line comment overridden for the specified language ID?
+	 *
+	 * @param {string} langId Language ID
+	 * @returns {boolean}
+	 */
+	private isLangIdMultiLineCommentOverridden(langId: string): boolean {
+		const overriddenList = this.getConfiguration().get<string[]>("overrideDefaultLanguageMultiLineComments");
+
+		return overriddenList.hasOwnProperty(langId);
+	}
+
+	/**
+	 * Get the overridden multi-line comment for the specified language ID.
+	 *
+	 * @param {string} langId Language ID
+	 * @returns {string}
+	 */
+	private getOverriddenMultiLineComment(langId: string) {
+		const overriddenList = this.getConfiguration().get<string[]>("overrideDefaultLanguageMultiLineComments");
+
+		return overriddenList[langId];
 	}
 
 	/**
@@ -371,7 +381,7 @@ export class Configuration {
 			}
 		});
 
-		const multiLineStyleBlocksLangs = this.getConfiguration().get<string[]>(this.multiLineStyleBlocks);
+		const multiLineStyleBlocksLangs = this.getConfiguration().get<string[]>("multiLineStyleBlocks");
 
 		for (let langId of multiLineStyleBlocksLangs) {
 			if (langId && langId.length > 0 && !langArray.includes(langId)) {
@@ -422,7 +432,7 @@ export class Configuration {
 		});
 
 		// Get user-customized langIds for the //-style and add to the map.
-		let customSlashLangs = this.getConfiguration().get<string[]>(this.slashStyleBlocks);
+		let customSlashLangs = this.getConfiguration().get<string[]>("slashStyleBlocks");
 		for (let langId of customSlashLangs) {
 			if (langId && langId.length > 0) {
 				this.singleLineBlocksMap.set(langId, "//");
@@ -430,7 +440,7 @@ export class Configuration {
 		}
 
 		// Get user-customized langIds for the #-style and add to the map.
-		let customHashLangs = this.getConfiguration().get<string[]>(this.hashStyleBlocks);
+		let customHashLangs = this.getConfiguration().get<string[]>("hashStyleBlocks");
 		for (let langId of customHashLangs) {
 			if (langId && langId.length > 0) {
 				this.singleLineBlocksMap.set(langId, "#");
@@ -438,7 +448,7 @@ export class Configuration {
 		}
 
 		// Get user-customized langIds for the ;-style and add to the map.
-		let customSemicolonLangs = this.getConfiguration().get<string[]>(this.semicolonStyleBlocks);
+		let customSemicolonLangs = this.getConfiguration().get<string[]>("semicolonStyleBlocks");
 		for (let langId of customSemicolonLangs) {
 			if (langId && langId.length > 0) {
 				this.singleLineBlocksMap.set(langId, ";");
@@ -507,7 +517,7 @@ export class Configuration {
 			}
 		}
 
-		let isOnEnter = this.getConfiguration().get<boolean>(this.singleLineBlockOnEnter);
+		let isOnEnter = this.getConfiguration().get<boolean>("singleLineBlockOnEnter");
 
 		if (isOnEnter && singleLineStyle) {
 			if (singleLineStyle === "//") {
@@ -616,7 +626,7 @@ export class Configuration {
 			}
 
 			var indentedNewLine = "\n" + line.text.substring(0, line.text.search(indentRegex));
-			let isOnEnter = this.getConfiguration().get<boolean>(this.singleLineBlockOnEnter);
+			let isOnEnter = this.getConfiguration().get<boolean>("singleLineBlockOnEnter");
 			if (!isOnEnter) {
 				indentedNewLine += style + " ";
 			}
