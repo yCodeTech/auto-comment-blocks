@@ -79,7 +79,7 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	// Called when active editor language is changed, so re-configure the comment blocks.
-	vscode.workspace.onDidOpenTextDocument(() => {
+	vscode.workspace.onDidChangeTextDocument(() => {
 		const configureCommentBlocksDisposable = configuration.configureCommentBlocks(context);
 		disposables.push(...configureCommentBlocksDisposable);
 	});

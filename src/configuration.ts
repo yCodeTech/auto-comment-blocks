@@ -65,7 +65,7 @@ export class Configuration {
 	 * @param {vscode.ExtensionContext} context The context of the extension.
 	 * @returns {vscode.Disposable[]}
 	 */
-	configureCommentBlocks(context: vscode.ExtensionContext) {
+	public configureCommentBlocks(context: vscode.ExtensionContext) {
 		const disposables: vscode.Disposable[] = [];
 
 		// Set language configurations
@@ -73,18 +73,20 @@ export class Configuration {
 		const multiLineLangs = this.getMultiLineLanguages();
 
 		// Setup the single line languages.
-		for (let [langId, style] of this.singleLineBlocksMap) {
-			// Set a bool if the single line language also supports multi line comments
-			// (ie. the single line language is also present in the multi line map);
-			let multiLine = multiLineLangs.includes(langId);
-			disposables.push(this.setLanguageConfiguration(langId, multiLine, style));
+		for (let [langId, style] of singleLineLangs) {
+			if (!this.isLangIdDisabled(langId)) {
+				// Set a bool if the single line language also supports multi line comments
+				// (ie. the single line language is also present in the multi line map);
+				let multiLine = multiLineLangs.includes(langId);
+				disposables.push(this.setLanguageConfiguration(langId, multiLine, style));
+			}
 		}
 
 		// Setup the multi line languages.
 		for (let langId of multiLineLangs) {
 			// If singleLineLangs doesn't have the langId, AND
 			// the langId isn't set as disabled...
-			if (!this.singleLineBlocksMap.has(langId) && !this.isLangIdDisabled(langId)) {
+			if (!singleLineLangs.has(langId) && !this.isLangIdDisabled(langId)) {
 				disposables.push(this.setLanguageConfiguration(langId, true));
 			}
 		}
@@ -153,7 +155,7 @@ export class Configuration {
 	 *
 	 * @returns {object} An object containing the extension id, name, and display name.
 	 */
-	public getExtensionNames() {
+	public getExtensionNames(): {id: string; name: string; displayName: string} {
 		const packageJSON = JSON.parse(fs.readFileSync(__dirname + "./../../package.json").toString());
 
 		const displayName: string = packageJSON.displayName;
@@ -417,7 +419,10 @@ export class Configuration {
 		const multiLineStyleBlocksLangs = this.getConfigurationValue<string[]>("multiLineStyleBlocks");
 
 		for (let langId of multiLineStyleBlocksLangs) {
-			if (langId && langId.length > 0 && !langArray.includes(langId)) {
+			// If langId is exists (ie. not NULL or empty string) AND
+			// the array doesn't already include langId,
+			// then add it to the array.
+			if (langId && !langArray.includes(langId)) {
 				langArray.push(langId);
 			}
 		}
@@ -532,7 +537,6 @@ export class Configuration {
 	private setLanguageConfiguration(langId: string, multiLine?: boolean, singleLineStyle?: string): vscode.Disposable {
 		const internalLangConfig: vscode.LanguageConfiguration = this.getLanguageConfig(langId);
 		const defaultMultiLineConfig: any = this.readJsonFile(`${__dirname}/../../config/default-multi-line-config.json`);
-		console.log(typeof defaultMultiLineConfig);
 
 		let langConfig = {...internalLangConfig};
 
@@ -541,6 +545,12 @@ export class Configuration {
 
 			// Add the multi-line onEnter rules to the langConfig.
 			langConfig.onEnterRules = this.mergeConfigOnEnterRules(Rules.multilineEnterRules, internalLangConfig);
+
+			// If the default multi-line comments has been overridden for the langId,
+			// add the overridden multi-line comments to the langConfig.
+			if (this.isLangIdMultiLineCommentOverridden(langId)) {
+				langConfig.comments.blockComment[0] = this.getOverriddenMultiLineComment(langId);
+			}
 
 			/**
 			 * Get the user settings/configuration and set the blade or html comments accordingly.
@@ -552,13 +562,57 @@ export class Configuration {
 
 		let isOnEnter = this.getConfigurationValue<boolean>("singleLineBlockOnEnter");
 
+		// Add the single line onEnter rules to the langConfig.
 		if (isOnEnter && singleLineStyle) {
+			// //-style comments
 			if (singleLineStyle === "//") {
-				langConfig.onEnterRules = langConfig.onEnterRules.concat(Rules.slashEnterRules);
-			} else if (singleLineStyle === "#") {
-				langConfig.onEnterRules = langConfig.onEnterRules.concat(Rules.hashEnterRules);
-			} else if (singleLineStyle === ";") {
-				langConfig.onEnterRules = langConfig.onEnterRules.concat(Rules.semicolonEnterRules);
+				// Make sure that langConfig has the key onEnterRules with the optional
+				// chaining operator (?.) before trying to access the array method concat().
+				// If it does exist, concat (combine) the new rules with the langConfig rules.
+				// If it's undefined (doesn't exist), then using the nullish coalescing
+				// operator (??) just assign the new rules.
+				const rules = langConfig.onEnterRules?.concat(Rules.slashEnterRules) ?? Rules.slashEnterRules;
+
+				// Set the rules.
+				langConfig.onEnterRules = rules;
+			}
+			// #-style comments
+			else if (singleLineStyle === "#") {
+				const rules = langConfig.onEnterRules?.concat(Rules.hashEnterRules) ?? Rules.hashEnterRules;
+
+				// Set the rules.
+				langConfig.onEnterRules = rules;
+			}
+			// ;-style comments
+			else if (singleLineStyle === ";") {
+				const rules = langConfig.onEnterRules?.concat(Rules.semicolonEnterRules) ?? Rules.semicolonEnterRules;
+
+				// Set the rules.
+				langConfig.onEnterRules = rules;
+			}
+		}
+
+		// Make sure wordPattern is in RegExp form instead of a string, otherwise vscode errors out:
+		// > TypeError: e.exec is not a function
+		//
+		// The extension won't activate when there's a wordPattern key with a string regex in the config when using `setLanguageConfiguration()`.
+		//
+		// It's unknown why the allowed regex as string causes this, there seems to be a similar, related issue in https://github.com/microsoft/vscode/issues/171194 but was closed as (wrongly?) an invalid issue.
+		//
+		// So we're just changing the string to an actual regex pattern.
+
+		// If langConfig has wordPattern key...
+		if (Object.hasOwn(langConfig, "wordPattern")) {
+			// If wordPattern has pattern key, then it's an object...
+			if (Object.hasOwn(langConfig.wordPattern, "pattern")) {
+				// @ts-ignore: error TS2339: Property 'pattern' does not exist on type 'RegExp'.
+				// Ignoring the next line of code because wordPattern can also be an object with
+				// pattern as a key, eg. wordPattern: {pattern: ""}
+				langConfig.wordPattern = new RegExp(langConfig.wordPattern.pattern);
+			}
+			// Otherwise it's a string.
+			else {
+				langConfig.wordPattern = new RegExp(langConfig.wordPattern);
 			}
 		}
 
