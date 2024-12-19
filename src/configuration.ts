@@ -29,7 +29,7 @@ export class Configuration {
 	 * @property {string} key Language ID.
 	 * @property {string} value Style of line comment.
 	 */
-	private singleLineBlocksMap: Map<string, string> = new Map();
+	private singleLineBlocksMap: Map<string, Map<string, string>> = new Map();
 
 	/**
 	 * A Map object of an array of supported language IDs for multi line block comments.
@@ -57,6 +57,7 @@ export class Configuration {
 		console.log(this.multiLineBlocksMap);
 		this.setSingleLineCommentLanguageDefinitions();
 		console.log(this.singleLineBlocksMap);
+		this.writeCommentLanguageDefinitionsToJsonFile();
 	}
 
 	/**
@@ -68,11 +69,14 @@ export class Configuration {
 	public configureCommentBlocks(context: vscode.ExtensionContext) {
 		const disposables: vscode.Disposable[] = [];
 
-		// Set language configurations
-		const singleLineLangs = this.getSingleLineLanguages();
-		const multiLineLangs = this.getMultiLineLanguages();
+		/**
+		 * Auto-supported languages.
+		 */
 
-		// Setup the single line languages.
+		const singleLineLangs = this.getSingleLineLanguages("supportedLanguages");
+		const multiLineLangs = this.getMultiLineLanguages("supportedLanguages");
+
+		// Setup the auto-supported single line languages.
 		for (let [langId, style] of singleLineLangs) {
 			if (!this.isLangIdDisabled(langId)) {
 				// Set a bool if the single line language also supports multi line comments
@@ -82,11 +86,34 @@ export class Configuration {
 			}
 		}
 
-		// Setup the multi line languages.
+		// Setup the auto-supported multi-line languages.
 		for (let langId of multiLineLangs) {
 			// If singleLineLangs doesn't have the langId, AND
 			// the langId isn't set as disabled...
 			if (!singleLineLangs.has(langId) && !this.isLangIdDisabled(langId)) {
+				disposables.push(this.setLanguageConfiguration(langId, true));
+			}
+		}
+
+		/**
+		 * Custom-supported (unsupported) languages
+		 */
+
+		const customMultiLineLangs = this.getMultiLineLanguages("customSupportedLanguages");
+		const customSingleLineLangs = this.getSingleLineLanguages("customSupportedLanguages");
+
+		// Setup the custom-supported single-line languages, that are otherwise unsupported.
+		for (let [langId, style] of customSingleLineLangs) {
+			// Set a bool if the single line language also supports multi line comments
+			// (ie. the single line language is also present in the multi line map);
+			let multiLine = customMultiLineLangs.includes(langId);
+			disposables.push(this.setLanguageConfiguration(langId, multiLine, style));
+		}
+
+		// Setup the custom-supported multi-line languages, that are otherwise unsupported.
+		for (let langId of customMultiLineLangs) {
+			// If customSingleLineLangs doesn't have the langId
+			if (!customSingleLineLangs.has(langId)) {
 				disposables.push(this.setLanguageConfiguration(langId, true));
 			}
 		}
@@ -379,19 +406,21 @@ export class Configuration {
 	/**
 	 * Get the multi-line languages from the Map.
 	 *
+	 * @param {"supportedLanguages" | "customSupportedLanguages"} key A stringed key, either `"supportedLanguages"` or `"customSupportedLanguages"`
 	 * @returns {string[]} An array of language ID strings.
 	 */
-	private getMultiLineLanguages(): string[] {
-		return this.multiLineBlocksMap.get("languages");
+	private getMultiLineLanguages(key: "supportedLanguages" | "customSupportedLanguages"): string[] {
+		return this.multiLineBlocksMap.get(key);
 	}
 
 	/**
 	 * Get the single-line languages and styles.
 	 *
+	 * @param {"supportedLanguages" | "customSupportedLanguages"} key A stringed key, either `"supportedLanguages"` or `"customSupportedLanguages"`
 	 * @returns {Map<string, string>} The Map of the languages and styles.
 	 */
-	private getSingleLineLanguages(): Map<string, string> {
-		return this.singleLineBlocksMap;
+	private getSingleLineLanguages(key: "supportedLanguages" | "customSupportedLanguages"): Map<string, string> {
+		return this.singleLineBlocksMap.get(key);
 	}
 
 	/**
@@ -416,8 +445,14 @@ export class Configuration {
 			}
 		});
 
+		// Set the supportedLanguages array into the multiLineBlockMap, sorted in ascending order,
+		// for sanity reasons.
+		this.multiLineBlocksMap.set("supportedLanguages", langArray.sort());
+
 		const multiLineStyleBlocksLangs = this.getConfigurationValue<string[]>("multiLineStyleBlocks");
 
+		// Empty the langArray to reuse it.
+		langArray = [];
 		for (let langId of multiLineStyleBlocksLangs) {
 			// If langId is exists (ie. not NULL or empty string) AND
 			// the array doesn't already include langId,
@@ -426,12 +461,9 @@ export class Configuration {
 				langArray.push(langId);
 			}
 		}
-
-		// Set the language array into the multiLineBlockMap, sorted in ascending order,
-		// for sanity reasons.
-		this.multiLineBlocksMap.set("languages", langArray.sort());
-
-		this.writeCommentLanguageDefinitionsToJsonFile();
+		// Set the customSupportedLanguages array into the multiLineBlockMap,
+		// sorted in ascending order, for sanity reasons.
+		this.multiLineBlocksMap.set("customSupportedLanguages", langArray.sort());
 	}
 
 	/**
@@ -439,7 +471,7 @@ export class Configuration {
 	 */
 	private setSingleLineCommentLanguageDefinitions() {
 		let style: string;
-
+		const tempMap: Map<string, string> = new Map();
 		this.languageConfigs.forEach((config: any, langId: string) => {
 			// console.log(langId, config.comments.lineComment);
 			let style: string = "";
@@ -464,16 +496,23 @@ export class Configuration {
 				// comment like bat's @rem)...
 				if (style != "") {
 					// Set the langId and it's style into the Map.
-					this.singleLineBlocksMap.set(langId, style);
+					tempMap.set(langId, style);
 				}
 			}
 		});
+
+		// Set the supportedLanguages tempMap into the singleLineBlocksMap,
+		// sorted in ascending order, for sanity reasons.
+		this.singleLineBlocksMap.set("supportedLanguages", new Map([...tempMap].sort()));
+
+		// Empty the tempMap to reuse it.
+		tempMap.clear();
 
 		// Get user-customized langIds for the //-style and add to the map.
 		let customSlashLangs = this.getConfigurationValue<string[]>("slashStyleBlocks");
 		for (let langId of customSlashLangs) {
 			if (langId && langId.length > 0) {
-				this.singleLineBlocksMap.set(langId, "//");
+				tempMap.set(langId, "//");
 			}
 		}
 
@@ -481,7 +520,7 @@ export class Configuration {
 		let customHashLangs = this.getConfigurationValue<string[]>("hashStyleBlocks");
 		for (let langId of customHashLangs) {
 			if (langId && langId.length > 0) {
-				this.singleLineBlocksMap.set(langId, "#");
+				tempMap.set(langId, "#");
 			}
 		}
 
@@ -489,15 +528,13 @@ export class Configuration {
 		let customSemicolonLangs = this.getConfigurationValue<string[]>("semicolonStyleBlocks");
 		for (let langId of customSemicolonLangs) {
 			if (langId && langId.length > 0) {
-				this.singleLineBlocksMap.set(langId, ";");
+				tempMap.set(langId, ";");
 			}
 		}
 
-		// Set the singleLineBlockMap to a new map with all the languages sorted in ascending order,
-		// for sanity reasons.
-		this.singleLineBlocksMap = new Map([...this.singleLineBlocksMap].sort());
-
-		this.writeCommentLanguageDefinitionsToJsonFile();
+		// Set the customSupportedLanguages tempMap into the singleLineBlocksMap,
+		// sorted in ascending order, for sanity reasons.
+		this.singleLineBlocksMap.set("customSupportedLanguages", new Map([...tempMap].sort()));
 	}
 
 	/**
@@ -505,22 +542,8 @@ export class Configuration {
 	 * either multi-line-languages.json, or single-line-languages.json.
 	 */
 	private writeCommentLanguageDefinitionsToJsonFile() {
-		// Convert a key:value Map into an key:array object, while reversing/switching the
-		// keys and values. The Map's values are now the keys of the object and the Map's keys
-		// are now added as the values of the array.
-		// e.g. From `Map {apacheconf => #, c => //, clojure => ;, coffeescript => #, cpp => //, …}`
-		// to `{"#": ["apacheconf", "coffeescript", ...], "//": ["c", "cpp", ...],
-		// ";": ["clojure", ...]}`
-		//
-		// Code from this StackOverflow answer https://stackoverflow.com/a/45728850/2358222
-		const reverseMapping = (m: Map<string, string>): object => {
-			const o = Object.fromEntries(m);
-
-			return Object.keys(o).reduce((r, k) => Object.assign(r, {[o[k]]: (r[o[k]] || []).concat(k)}), {});
-		};
-
 		// Write the into the single-line-languages.json file.
-		this.writeJsonFile(this.singleLineLangDefinitionFilePath, reverseMapping(this.singleLineBlocksMap));
+		this.writeJsonFile(this.singleLineLangDefinitionFilePath, this.convertMapToReversedObject(this.singleLineBlocksMap));
 		// Write the into the multi-line-languages.json file.
 		this.writeJsonFile(this.multiLineLangDefinitionFilePath, Object.fromEntries(this.multiLineBlocksMap));
 	}
@@ -546,6 +569,10 @@ export class Configuration {
 			// Add the multi-line onEnter rules to the langConfig.
 			langConfig.onEnterRules = this.mergeConfigOnEnterRules(Rules.multilineEnterRules, internalLangConfig);
 
+			// Only assign the default config comments if it doesn't already exist.
+			// (nullish assignment operator ??=)
+			langConfig.comments ??= defaultMultiLineConfig.comments;
+
 			// If the default multi-line comments has been overridden for the langId,
 			// add the overridden multi-line comments to the langConfig.
 			if (this.isLangIdMultiLineCommentOverridden(langId)) {
@@ -560,9 +587,12 @@ export class Configuration {
 			}
 		}
 
+		// FIXME: onEnterRules do not work in any language.
 		let isOnEnter = this.getConfigurationValue<boolean>("singleLineBlockOnEnter");
 
 		// Add the single line onEnter rules to the langConfig.
+		//
+		// If isOnEnter is true AND singleLineStyle isn't false, i.e. a string.
 		if (isOnEnter && singleLineStyle) {
 			// //-style comments
 			if (singleLineStyle === "//") {
@@ -589,6 +619,16 @@ export class Configuration {
 
 				// Set the rules.
 				langConfig.onEnterRules = rules;
+			}
+		}
+		// If isOnEnter is false AND singleLineStyle isn't false, i.e. a string.
+		else if (!isOnEnter && singleLineStyle) {
+			// If langConfig does NOT have a comments key OR
+			// the comments key exists but does NOT have the lineComment key...
+			if (!Object.hasOwn(langConfig, "comments") || !Object.hasOwn(langConfig.comments, "lineComment")) {
+				// Add the singleLineStyle to the lineComments key and make sure any
+				// blockComments aren't overwritten.
+				langConfig.comments = {...langConfig.comments, lineComment: singleLineStyle};
 			}
 		}
 
@@ -627,6 +667,8 @@ export class Configuration {
 	 * @param {any} defaultLangConfig Default multi-line comments config.
 	 * @param {vscode.LanguageConfiguration} internalLangConfig Internal language config from vscode extensions.
 	 * @returns {vscode.AutoClosingPair[]}
+	 *
+	 * TODO: combine this method and mergeConfigOnEnterRules into one method.
 	 */
 	private mergeConfigAutoClosingPairs(defaultLangConfig, internalLangConfig: vscode.LanguageConfiguration) {
 		const defaultAutoClosing = defaultLangConfig.autoClosingPairs;
@@ -654,6 +696,8 @@ export class Configuration {
 	 * @param {any} defaultOnEnterRules Default onEnterRules.
 	 * @param {vscode.LanguageConfiguration} internalLangConfig Internal language config from vscode extensions.
 	 * @returns {vscode.OnEnterRule[]}
+	 *
+	 * TODO: combine this method and mergeConfigAutoClosingPairs into one method.
 	 */
 	private mergeConfigOnEnterRules(defaultOnEnterRules, internalLangConfig) {
 		const internalOnEnterRules = internalLangConfig?.onEnterRules ?? [];
@@ -675,6 +719,77 @@ export class Configuration {
 	}
 
 	/**
+	 * Convert a Map to an object with it's inner Map's keys and values reversed/switched.
+	 *
+	 * Code based on this StackOverflow answer https://stackoverflow.com/a/45728850/2358222
+	 *
+	 * @param {Map<string, Map<string, string>>} m The Map to convert to an object.
+	 * @returns {object} The converted object.
+	 *
+	 * @example
+	 * reverseMapping(
+	 * 	Map {
+	 * 		"supportedLanguages" => Map {
+	 * 			"apacheconf" => "#",
+	 * 			"c" => "//",
+	 * 			"clojure" => ";",
+	 * 			"coffeescript" => "#",
+	 * 			"cpp" => "//",
+	 * 			…
+	 * 		}
+	 * 	}
+	 * );
+	 *
+	 * // Converts to:
+	 *
+	 * {
+	 * 	"supportedLanguages" => {
+	 * 		"#": [
+	 * 			"apacheconf",
+	 * 			"coffeescript",
+	 * 			...
+	 * 		],
+	 * 		"//": [
+	 * 			"c",
+	 * 			"cpp",
+	 * 			...
+	 * 		],
+	 * 		";": [
+	 * 			"clojure",
+	 * 			...
+	 * 		]
+	 * 	}
+	 * }
+	 */
+	private convertMapToReversedObject(m: Map<string, Map<string, string>>): object {
+		const result: any = {};
+
+		// Convert a nested key:value Map from inside another Map into an key:array object,
+		// while reversing/switching the keys and values. The Map's values are now the keys of
+		// the object and the Map's keys are now added as the values of the array. The reversed
+		// object is added to the key of the outerMap.
+
+		// Loop through the outer Map...
+		for (const [key, innerMap] of m.entries()) {
+			// Convert the inner Map to an object
+			const o = Object.fromEntries(innerMap);
+
+			// Reverse the inner object mapping.
+			//
+			// Loop through the object (o) keys, assigns a new object (r) with the value of the
+			// object key (k) as the new key (eg. "//") and the new value is an array of all
+			// the original object keys (o[k]) (eg. "php").
+			// If the key (o[k]) already exists in the new object (r), then just add the
+			// original key to the array, otherwise start a new array ([]) with the original
+			// key as value ( (r[o[k]] || []).concat(k) ).
+			// Add this new reversed object to the result object with the outer map key
+			// as the key.
+			result[key] = Object.keys(o).reduce((r, k) => Object.assign(r, {[o[k]]: (r[o[k]] || []).concat(k)}), {});
+		}
+		return result;
+	}
+
+	/**
 	 * The keyboard binding event handler for the single line blocks on shift+enter.
 	 *
 	 * @param {vscode.TextEditor} textEditor The text editor.
@@ -682,7 +797,13 @@ export class Configuration {
 	 */
 	private handleSingleLineBlock(textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit) {
 		let langId = textEditor.document.languageId;
-		var style = this.singleLineBlocksMap.get(langId);
+		const singleLineLangs = this.getSingleLineLanguages("supportedLanguages");
+		const customSingleLineLangs = this.getSingleLineLanguages("customSupportedLanguages");
+
+		// Get the langId from the auto-supported langs. If it doesn't exist, try getting it from
+		// the custom-supported langs instead.
+		var style = singleLineLangs.get(langId) ?? customSingleLineLangs.get(langId);
+
 		if (style && textEditor.selection.isEmpty) {
 			let line = textEditor.document.lineAt(textEditor.selection.active);
 			let isCommentLine = true;
