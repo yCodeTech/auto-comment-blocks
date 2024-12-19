@@ -564,10 +564,13 @@ export class Configuration {
 		let langConfig = {...internalLangConfig};
 
 		if (multiLine) {
-			langConfig.autoClosingPairs = this.mergeConfigAutoClosingPairs(defaultMultiLineConfig, internalLangConfig);
+			const mergedConfig = this.mergeConfig(defaultMultiLineConfig.autoClosingPairs, Rules.multilineEnterRules, internalLangConfig);
+
+			langConfig.autoClosingPairs = mergedConfig.mergedAutoClosingPairs;
 
 			// Add the multi-line onEnter rules to the langConfig.
-			langConfig.onEnterRules = this.mergeConfigOnEnterRules(Rules.multilineEnterRules, internalLangConfig);
+			langConfig.onEnterRules = mergedConfig.mergedOnEnterRules;
+			console.log(mergedConfig);
 
 			// Only assign the default config comments if it doesn't already exist.
 			// (nullish assignment operator ??=)
@@ -663,59 +666,57 @@ export class Configuration {
 
 	/**
 	 * Merge the internal config AutoClosingPairs with the default config, removing any duplicates.
+	 * And Merge the internal config onEnterRules with the default rules, removing any duplicates.
 	 *
 	 * @param {any} defaultLangConfig Default multi-line comments config.
 	 * @param {vscode.LanguageConfiguration} internalLangConfig Internal language config from vscode extensions.
-	 * @returns {vscode.AutoClosingPair[]}
-	 *
-	 * TODO: combine this method and mergeConfigOnEnterRules into one method.
+	 * @returns {{mergedOnEnterRules: any[]; mergedAutoClosingPairs: vscode.AutoClosingPair[]}} An object with the merged onEnterRules and autoClosingPairs arrays.
 	 */
-	private mergeConfigAutoClosingPairs(defaultLangConfig, internalLangConfig: vscode.LanguageConfiguration) {
-		const defaultAutoClosing = defaultLangConfig.autoClosingPairs;
+	private mergeConfig(
+		defaultAutoClosingPairs,
+		defaultOnEnterRules,
+		internalLangConfig: vscode.LanguageConfiguration
+	): {mergedOnEnterRules: any[]; mergedAutoClosingPairs: vscode.AutoClosingPair[]} {
+		// Get the internal config properties or define an empty array.
 		const internalAutoClosing = internalLangConfig?.autoClosingPairs ?? [];
-
-		// Code based on "2023 update" portion of this StackOverflow answer:
-		// https://stackoverflow.com/a/1584377/2358222
-
-		// Copy to avoid side effects.
-		const merged = [...internalAutoClosing];
-		// Loop over the defaultLangConfig autoClosingPairs array...
-		defaultAutoClosing.forEach((item) => {
-			// Test all items in the merged array, and if the defaultAutoClosing item's
-			// opening comment string (item.open) is not already present in one of the
-			// merged array's objects then add the item to the merged array.
-			merged.some((mergedItem) => item.open === mergedItem.open) ? null : merged.push(item);
-		});
-
-		return merged;
-	}
-
-	/**
-	 * Merge the internal config onEnterRules with the default config, removing any duplicates.
-	 *
-	 * @param {any} defaultOnEnterRules Default onEnterRules.
-	 * @param {vscode.LanguageConfiguration} internalLangConfig Internal language config from vscode extensions.
-	 * @returns {vscode.OnEnterRule[]}
-	 *
-	 * TODO: combine this method and mergeConfigAutoClosingPairs into one method.
-	 */
-	private mergeConfigOnEnterRules(defaultOnEnterRules, internalLangConfig) {
 		const internalOnEnterRules = internalLangConfig?.onEnterRules ?? [];
 
-		// Code based on "2023 update" portion of this StackOverflow answer:
-		// https://stackoverflow.com/a/1584377/2358222
-
-		// Copy to avoid side effects.
-		const merged = [...defaultOnEnterRules];
-		// Loop over the defaultLangConfig autoClosingPairs array...
-		internalOnEnterRules.forEach((item) => {
+		/**
+		 * Merge the arrays and remove any duplicates.
+		 *
+		 * Code based on "2023 update" portion of this StackOverflow answer:
+		 * https://stackoverflow.com/a/1584377/2358222
+		 *
+		 * @param {string} key The key to check against for preventing duplicates.
+		 * @param item The current item in the loop.
+		 * @param merged The array to merge into.
+		 */
+		const merge = (key: string, item: any, merged: any) => {
 			// Test all items in the merged array, and if the defaultAutoClosing item's
 			// opening comment string (item.open) is not already present in one of the
 			// merged array's objects then add the item to the merged array.
-			merged.some((mergedItem) => item.beforeText === mergedItem.beforeText) ? null : merged.push(item);
-		});
+			merged.some((mergedItem) => item[key] === mergedItem[key]) ? null : merged.push(item);
+		};
 
-		return merged;
+		/**
+		 * Merge autoClosingPairs.
+		 */
+
+		// Copy to avoid side effects.
+		const mergedAutoClosingPairs = [...internalAutoClosing];
+		// Loop over the defaultLangConfig autoClosingPairs array...
+		defaultAutoClosingPairs.forEach((item) => merge("open", item, mergedAutoClosingPairs));
+
+		/**
+		 * Merge onEnterRules
+		 */
+
+		// Copy to avoid side effects.
+		const mergedOnEnterRules = [...defaultOnEnterRules];
+
+		internalOnEnterRules.forEach((item) => merge("beforeText", item, mergedOnEnterRules));
+
+		return {mergedOnEnterRules, mergedAutoClosingPairs};
 	}
 
 	/**
