@@ -94,7 +94,7 @@ export class Rules {
 		{
 			// e.g. //    |
 			// (matched // with any amount of spaces before it.)
-			beforeText: /^\s*\/\/(?!\/)/,
+			beforeText: /^\s*\/\/(?!\/|!)/,
 			action: {indentAction: IndentAction.None, appendText: "// "},
 		},
 		{
