@@ -4,5 +4,16 @@
 	"semi": true,
 	"printWidth": 150,
 	"bracketSameLine": true,
-	"bracketSpacing": false
+	"bracketSpacing": false,
+	"overrides": [
+		{
+			"files": [
+				"*.json",
+				"*.jsonc"
+			],
+			"options": {
+				"printWidth": 5
+			}
+		}
+	]
 }
