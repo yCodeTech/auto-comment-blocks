@@ -590,7 +590,7 @@ export class Configuration {
 			}
 		}
 
-		// FIXME: onEnterRules do not work in any language.
+		// FIXME: onEnterRules do not work in these languages: python, c, cpp, cuda-cpp, java, javascript, javascriptreact, php (and blade by extension), sass, scss, typescript, typescriptreact.
 		let isOnEnter = this.getConfigurationValue<boolean>("singleLineBlockOnEnter");
 
 		// Add the single line onEnter rules to the langConfig.
