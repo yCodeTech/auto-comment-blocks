@@ -38,7 +38,7 @@
 				"auto-comment-blocks.singleLineBlockOnEnter": {
 					"type": "boolean",
 					"default": false,
-					"markdownDescription": "If enabled, a new commented line is inserted when Enter is pressed, and single line comments are broken by pressing `Shift + Enter`. If disabled (the default), a commented line is inserted when `Shift + Enter` is pressed, and single line comments are broken by pressing `Enter`."
+					"markdownDescription": "If enabled, a new commented line is inserted when Enter is pressed, and single-line comments are broken by pressing `Shift + Enter`. If disabled (the default), a commented line is inserted when `Shift + Enter` is pressed, and single-line comments are broken by pressing `Enter`."
 				},
 				"auto-comment-blocks.disabledLanguages": {
 					"type": "array",
@@ -48,17 +48,17 @@
 				"auto-comment-blocks.slashStyleBlocks": {
 					"type": "array",
 					"default": [],
-					"markdownDescription": "Add language IDs here to enable `//` and `///`-style single line comment blocks for that language. This allows unsupported languages to have comment completion."
+					"markdownDescription": "Add language IDs here to enable `//` and `///`-style single-line comment blocks for that language. This allows unsupported languages to have comment completion."
 				},
 				"auto-comment-blocks.hashStyleBlocks": {
 					"type": "array",
 					"default": [],
-					"markdownDescription": "Add language IDs here to enable `#`-style single line comment blocks for that language. This allows unsupported languages to have comment completion."
+					"markdownDescription": "Add language IDs here to enable `#`-style single-line comment blocks for that language. This allows unsupported languages to have comment completion."
 				},
 				"auto-comment-blocks.semicolonStyleBlocks": {
 					"type": "array",
 					"default": [],
-					"markdownDescription": "Add language IDs here to enable `;`-style single line comment blocks for that language. This allows unsupported languages to have comment completion."
+					"markdownDescription": "Add language IDs here to enable `;`-style single-line comment blocks for that language. This allows unsupported languages to have comment completion."
 				},
 				"auto-comment-blocks.multiLineStyleBlocks": {
 					"type": "array",
@@ -66,12 +66,12 @@
 						"blade",
 						"html"
 					],
-					"markdownDescription": "Add language IDs here to enable multi line comment blocks support for that language. This allows unsupported languages to have comment completion. The default is `['blade', 'html']`"
+					"markdownDescription": "Add language IDs here to enable multi-line comment blocks support for that language. This allows unsupported languages to have comment completion. The default is `['blade', 'html']`"
 				},
 				"auto-comment-blocks.overrideDefaultLanguageMultiLineComments": {
 					"type": "object",
 					"default": {},
-					"markdownDescription": "A key : value pairing of language IDs and the beginning portion of a multi line comment style, to override the default comment style for the vscode `command editor.action.blockComment` (native Keybinding `shift + alt + a`). eg. `{'php': '/*!'}`"
+					"markdownDescription": "A key : value pairing of language IDs and the beginning portion of a multi-line comment style, to override the default comment style for the vscode `command editor.action.blockComment` (native Keybinding `shift + alt + a`). eg. `{'php': '/*!'}`"
 				},
 				"auto-comment-blocks.bladeOverrideComments": {
 					"scope": "resource",
