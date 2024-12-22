@@ -819,6 +819,9 @@ export class Configuration {
 				}
 			} else if (style === "#" && line.text.search(/^\s*#\s*/) !== -1) {
 				indentRegex = /#/;
+				if (line.text.search(/^\s*##/) !== -1) {
+					style = "##";
+				}
 			} else if (style === ";" && line.text.search(/^\s*;\s*/) !== -1) {
 				indentRegex = /;/;
 

@@ -115,8 +115,14 @@ export class Rules {
 		{
 			// e.g. #   |
 			// (matches # with any amount of spaces before it.)
-			beforeText: /^\s*#/,
+			beforeText: /^\s*#(?!#)/,
 			action: {indentAction: IndentAction.None, appendText: "# "},
+		},
+		{
+			// e.g. ##   |
+			// (matches ## with any amount of spaces before it.)
+			beforeText: /^\s*##/,
+			action: {indentAction: IndentAction.None, appendText: "## "},
 		},
 	];
 
