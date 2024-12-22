@@ -24,7 +24,7 @@ export class Configuration {
 	private readonly languageConfigs = new Map<string, vscode.LanguageConfiguration>();
 
 	/**
-	 * A key:value Map object of supported language IDs and their single line style comments.
+	 * A key:value Map object of supported language IDs and their single-line style comments.
 	 *
 	 * @property {string} key Language ID.
 	 * @property {string} value Style of line comment.
@@ -32,7 +32,7 @@ export class Configuration {
 	private singleLineBlocksMap: Map<string, Map<string, string>> = new Map();
 
 	/**
-	 * A Map object of an array of supported language IDs for multi line block comments.
+	 * A Map object of an array of supported language IDs for multi-line block comments.
 	 *
 	 * @property {string} key - "languages"
 	 * @property {string[]} value - Array of language IDs.
@@ -76,11 +76,11 @@ export class Configuration {
 		const singleLineLangs = this.getSingleLineLanguages("supportedLanguages");
 		const multiLineLangs = this.getMultiLineLanguages("supportedLanguages");
 
-		// Setup the auto-supported single line languages.
+		// Setup the auto-supported single-line languages.
 		for (let [langId, style] of singleLineLangs) {
 			if (!this.isLangIdDisabled(langId)) {
-				// Set a bool if the single line language also supports multi line comments
-				// (ie. the single line language is also present in the multi line map);
+				// Set a bool if the single-line language also supports multi-line comments
+				// (ie. the single-line language is also present in the multi-line map);
 				let multiLine = multiLineLangs.includes(langId);
 				disposables.push(this.setLanguageConfiguration(langId, multiLine, style));
 			}
@@ -104,8 +104,8 @@ export class Configuration {
 
 		// Setup the custom-supported single-line languages, that are otherwise unsupported.
 		for (let [langId, style] of customSingleLineLangs) {
-			// Set a bool if the single line language also supports multi line comments
-			// (ie. the single line language is also present in the multi line map);
+			// Set a bool if the single-line language also supports multi-line comments
+			// (ie. the single-line language is also present in the multi-line map);
 			let multiLine = customMultiLineLangs.includes(langId);
 			disposables.push(this.setLanguageConfiguration(langId, multiLine, style));
 		}
@@ -433,7 +433,7 @@ export class Configuration {
 			// If the config object has own property of comments AND the comments key has
 			// own property of blockComment...
 			if (Object.hasOwn(config, "comments") && Object.hasOwn(config.comments, "blockComment")) {
-				// If the blockComment array includes the multi line start of "/*"...
+				// If the blockComment array includes the multi-line start of "/*"...
 				if (config.comments.blockComment.includes("/*")) {
 					// console.log(langId, config.comments);
 
@@ -492,7 +492,7 @@ export class Configuration {
 					style = ";";
 				}
 
-				// If style any empty string, (i.e. not an unsupported single line
+				// If style any empty string, (i.e. not an unsupported single-line
 				// comment like bat's @rem)...
 				if (style != "") {
 					// Set the langId and it's style into the Map.
@@ -593,7 +593,7 @@ export class Configuration {
 		// FIXME: onEnterRules do not work in these languages: python, c, cpp, cuda-cpp, java, javascript, javascriptreact, php (and blade by extension), sass, scss, typescript, typescriptreact.
 		let isOnEnter = this.getConfigurationValue<boolean>("singleLineBlockOnEnter");
 
-		// Add the single line onEnter rules to the langConfig.
+		// Add the single-line onEnter rules to the langConfig.
 		//
 		// If isOnEnter is true AND singleLineStyle isn't false, i.e. a string.
 		if (isOnEnter && singleLineStyle) {
@@ -791,7 +791,7 @@ export class Configuration {
 	}
 
 	/**
-	 * The keyboard binding event handler for the single line blocks on shift+enter.
+	 * The keyboard binding event handler for the single-line blocks on shift+enter.
 	 *
 	 * @param {vscode.TextEditor} textEditor The text editor.
 	 * @param {vscode.TextEditorEdit} edit The text editor edits.
