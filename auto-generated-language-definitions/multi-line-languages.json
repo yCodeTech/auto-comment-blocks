@@ -1,0 +1,37 @@
+{
+	"supportedLanguages": [
+		"c",
+		"cpp",
+		"cpp_embedded_latex",
+		"csharp",
+		"css",
+		"cuda-cpp",
+		"dart",
+		"go",
+		"groovy",
+		"hlsl",
+		"java",
+		"javascript",
+		"javascriptreact",
+		"json",
+		"jsonc",
+		"jsonl",
+		"less",
+		"objective-c",
+		"objective-cpp",
+		"php",
+		"rust",
+		"sass",
+		"scss",
+		"shaderlab",
+		"snippets",
+		"sql",
+		"swift",
+		"typescript",
+		"typescriptreact"
+	],
+	"customSupportedLanguages": [
+		"blade",
+		"html"
+	]
+}
