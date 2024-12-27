@@ -590,7 +590,6 @@ export class Configuration {
 			}
 		}
 
-		// FIXME: onEnterRules do not work in these languages: python, c, cpp, cuda-cpp, java, javascript, javascriptreact, php (and blade by extension), sass, scss, typescript, typescriptreact.
 		let isOnEnter = this.getConfigurationValue<boolean>("singleLineBlockOnEnter");
 
 		// Add the single-line onEnter rules to the langConfig.
@@ -635,6 +634,28 @@ export class Configuration {
 			}
 		}
 
+		// Reconstruct the regex patterns for the onEnterRules.
+		// This is required because the onEnterRules are not working in some languages.
+		// The issue is that the onEnterRules are not being set correctly, and are not
+		// being used by vscode.
+
+		// Fixes rogue * being inserted on to an empty line when pressing tab when the line
+		// * above is a single-line comment. A rogue * also gets inserted when the any new line after any kind of code except multi-line comments.
+
+		// Check if isOnEnter OR multiline is true.
+		if (isOnEnter || multiLine) {
+			langConfig.onEnterRules.forEach((item) => {
+				// Check if the item has a "beforeText" property and reconstruct its regex pattern.
+				if (Object.hasOwn(item, "beforeText")) {
+					item.beforeText = this.reconstructRegex(item, "beforeText");
+				}
+				// Check if the item has an "afterText" property and reconstruct its regex pattern.
+				if (Object.hasOwn(item, "afterText")) {
+					item.afterText = this.reconstructRegex(item, "afterText");
+				}
+			});
+		}
+
 		// Make sure wordPattern is in RegExp form instead of a string, otherwise vscode errors out:
 		// > TypeError: e.exec is not a function
 		//
@@ -644,19 +665,9 @@ export class Configuration {
 		//
 		// So we're just changing the string to an actual regex pattern.
 
-		// If langConfig has wordPattern key...
+		// If langConfig has a wordPattern key...
 		if (Object.hasOwn(langConfig, "wordPattern")) {
-			// If wordPattern has pattern key, then it's an object...
-			if (Object.hasOwn(langConfig.wordPattern, "pattern")) {
-				// @ts-ignore: error TS2339: Property 'pattern' does not exist on type 'RegExp'.
-				// Ignoring the next line of code because wordPattern can also be an object with
-				// pattern as a key, eg. wordPattern: {pattern: ""}
-				langConfig.wordPattern = new RegExp(langConfig.wordPattern.pattern);
-			}
-			// Otherwise it's a string.
-			else {
-				langConfig.wordPattern = new RegExp(langConfig.wordPattern);
-			}
+			langConfig.wordPattern = this.reconstructRegex(langConfig, "wordPattern");
 		}
 
 		console.log(langId, langConfig);
@@ -717,6 +728,25 @@ export class Configuration {
 		internalOnEnterRules.forEach((item) => merge("beforeText", item, mergedOnEnterRules));
 
 		return {mergedOnEnterRules, mergedAutoClosingPairs};
+	}
+
+	/**
+	 * Reconstruct the regex pattern because vscode doesn't like the regex pattern as a string,
+	 * or some patterns are not working as expected.
+	 *
+	 * @param obj The object
+	 * @param key The key to check in the object
+	 * @returns {RegExp} The reconstructed regex pattern.
+	 */
+	private reconstructRegex(obj: any, key: string) {
+		// If key has a "pattern" key, then it's an object...
+		if (Object.hasOwn(obj[key], "pattern")) {
+			return new RegExp(obj[key].pattern);
+		}
+		// Otherwise it's a string.
+		else {
+			return new RegExp(obj[key]);
+		}
 	}
 
 	/**
@@ -809,24 +839,25 @@ export class Configuration {
 			let line = textEditor.document.lineAt(textEditor.selection.active);
 			let isCommentLine = true;
 			var indentRegex: RegExp;
+
 			if (style === "//" && line.text.search(/^\s*\/\/\s*/) !== -1) {
 				indentRegex = /\//;
-				if (line.text.search(/^\s*\/\/\/\s*/) !== -1) {
+				if (line.text.search(Rules.slashEnterRules[1].beforeText) !== -1) {
 					style = "///";
 				}
-				if (line.text.search(/^\s*\/\/!\s*/) !== -1) {
+				if (line.text.search(Rules.slashEnterRules[2].beforeText) !== -1) {
 					style = "//!";
 				}
 			} else if (style === "#" && line.text.search(/^\s*#\s*/) !== -1) {
 				indentRegex = /#/;
-				if (line.text.search(/^\s*##/) !== -1) {
+				if (line.text.search(Rules.hashEnterRules[1].beforeText) !== -1) {
 					style = "##";
 				}
 			} else if (style === ";" && line.text.search(/^\s*;\s*/) !== -1) {
 				indentRegex = /;/;
 
 				// If text is ;;, then change the style from single ; to double ;;.
-				if (line.text.search(/^\s*;;\s*/) !== -1) {
+				if (line.text.search(Rules.semicolonEnterRules[1].beforeText) !== -1) {
 					style = ";;";
 				}
 			} else {
