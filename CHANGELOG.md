@@ -4,7 +4,15 @@ All notable changes to this extension will be documented in this file.
 
 This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure.
 
-## [1.1.0](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.0) - 2024-22-12
+## [1.1.1 and 1.1.2](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.2) - 2024-12-27
+
+Fixed single-line comments were not inserting new commented lines for any languages when pressing `enter` (when `singleLineBlockOnEnter` was set to true). This is caused by an unknown bug when setting configs with `vscode.languages.setLanguageConfiguration()` and it has regexes in the configs. The regexes weren't been used. By reconstructing the regex before the config is set, it fixes the issue. This also helps when the internal config has some malformed regexes, or regex as strings.
+
+Also, in JavaScript and TypeScript files, pressing tab on an empty line may insert a `*` on that line. Probably the same bug as above, which fixes it. The above regex fix inadvertently fixes [#2](https://github.com/yCodeTech/auto-comment-blocks/issues/2)
+
+Note: v1.1.1 of the extension was released on the marketplace by mistake without a changelog. The official bug fix is [v1.1.2](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.2).
+
+## [1.1.0](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.0) - 2024-12-22
 
 A complete overhaul to enable automatic support for all languages that vscode finds internally (via built-in or 3rd party extensions) that has both a language configuration file, and a comments key in the file.
 
