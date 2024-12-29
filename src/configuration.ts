@@ -549,13 +549,26 @@ export class Configuration {
 	}
 
 	/**
-	 * Merge the internal configs with the default multi-line config if required, and
-	 * set vscode to use the language configuration.
+	 * Sets the language configuration for a given language ID.
 	 *
-	 * @param {string} langId Language ID
-	 * @param {boolean} multiLine Determine's whether to set the language for multi-line comments.
-	 * @param {string} singleLineStyle The style of the single-line comment.
+	 * @param {string} langId - The language ID for which the configuration is being set.
+	 * @param {boolean} multiLine - Optional. If true, sets multi-line comment configuration.
+	 * @param {string} singleLineStyle - Optional. Specifies the style of single-line comments (e.g., "//", "#", ";").
+	 *
 	 * @returns {vscode.Disposable}
+	 *
+	 * This method performs the following tasks:
+	 * - Retrieves the internal language configuration for the specified language ID.
+	 * - Reads the default multi-line configuration from a JSON file.
+	 * - Merges the default multi-line configuration with the internal language configuration if
+	 *   multiLine is `true`.
+	 * - Sets the appropriate comment styles and onEnter rules.
+	 * - Reconstructs regex patterns for onEnterRules, wordPattern, folding markers, and
+	 *   indentation rules to ensure they are in RegExp form.
+	 * - Sets the final language configuration to VScode to use.
+	 *
+	 * Note: This method ensures that the language configuration is correctly set and avoids issues
+	 * with rogue characters being inserted on new lines.
 	 */
 	private setLanguageConfiguration(langId: string, multiLine?: boolean, singleLineStyle?: string): vscode.Disposable {
 		const internalLangConfig: vscode.LanguageConfiguration = this.getLanguageConfig(langId);
@@ -570,7 +583,6 @@ export class Configuration {
 
 			// Add the multi-line onEnter rules to the langConfig.
 			langConfig.onEnterRules = mergedConfig.mergedOnEnterRules;
-			console.log(mergedConfig);
 
 			// Only assign the default config comments if it doesn't already exist.
 			// (nullish assignment operator ??=)
@@ -653,6 +665,10 @@ export class Configuration {
 				if (Object.hasOwn(item, "afterText")) {
 					item.afterText = this.reconstructRegex(item, "afterText");
 				}
+				// Check if the item has an "afterText" property and reconstruct its regex pattern.
+				if (Object.hasOwn(item, "previousLineText")) {
+					item.previousLineText = this.reconstructRegex(item, "previousLineText");
+				}
 			});
 		}
 
@@ -669,6 +685,45 @@ export class Configuration {
 		if (Object.hasOwn(langConfig, "wordPattern")) {
 			langConfig.wordPattern = this.reconstructRegex(langConfig, "wordPattern");
 		}
+		// If langConfig has a folding key...
+		if (Object.hasOwn(langConfig, "folding")) {
+			if (Object.hasOwn(langConfig.folding, "markers")) {
+				langConfig.folding.markers.start = this.reconstructRegex(langConfig.folding.markers, "start");
+
+				langConfig.folding.markers.end = this.reconstructRegex(langConfig.folding.markers, "end");
+			}
+		}
+		// If langConfig has a indentationRules key...
+		if (Object.hasOwn(langConfig, "indentationRules")) {
+			let indentationRules = langConfig.indentationRules;
+
+			// Loop through the indentationRules object...
+			for (let key in indentationRules) {
+				// If the key is "increaseIndentPattern", reconstruct the regex pattern.
+				if (key === "increaseIndentPattern") {
+					indentationRules.increaseIndentPattern = this.reconstructRegex(indentationRules, "increaseIndentPattern");
+				}
+				// If the key is "decreaseIndentPattern", reconstruct the regex pattern.
+				if (key === "decreaseIndentPattern") {
+					indentationRules.decreaseIndentPattern = this.reconstructRegex(indentationRules, "decreaseIndentPattern");
+				}
+				// If the key is "indentNextLinePattern", reconstruct the regex pattern.
+				if (key === "indentNextLinePattern") {
+					indentationRules.indentNextLinePattern = this.reconstructRegex(indentationRules, "indentNextLinePattern");
+				}
+				// If the key is "unIndentedLinePattern", reconstruct the regex pattern.
+				if (key === "unIndentedLinePattern") {
+					indentationRules.unIndentedLinePattern = this.reconstructRegex(indentationRules, "unIndentedLinePattern");
+				}
+			}
+		}
+		// FIX: Pressing `Tab` immediately after breaking out of a comment block, will insert a commented line. - This maybe due to the language not having a proper indentation rule, at least adding indentation rules seems to fix it. More testing needed.
+		// else {
+		// 	langConfig.indentationRules = {
+		// 		increaseIndentPattern: /(^.*\{[^}]*$)/,
+		// 		decreaseIndentPattern: /^\s*\}/
+		// 	}
+		// }
 
 		console.log(langId, langConfig);
 
