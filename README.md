@@ -10,6 +10,8 @@ This is a fork of the original by [kevb34ns](https://github.com/kevb34ns/auto-co
 
 View the extension on [VScode Marketplace](https://marketplace.visualstudio.com/items?itemName=yCodeTech.automatic-comment-blocks).
 
+[Known Issues](#issues)
+
 ---
 
 ### As of [v1.1.0](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.0), this extension now automatically adds language support, and no-longer keeps hardcoded language support...
@@ -93,15 +95,9 @@ Reload the extension after changing any settings.
 
 -   `auto-comment-blocks.bladeOverrideComments`: When enabled, Blade-style block comments will be used in Blade contexts. Ie. `{{--  --}}` comments will be used instead of the HTML `<!-- -->` comments. Keybinding to enable/disable, default `ctrl + shift + m`. If `blade` language ID is set in the disabledLanguages, then the HTML `<!-- -->` comments will be used.
 
-## Issues
+## Known Issues
 
--   Single-line comments using `enter`: if you enable the `singleLineBlockOnEnter` setting, there are a few things to keep in mind:
-
-    -   It seems to work fine for Go, Less, Ruby.
-
-    -   It doesn't work at all for: python, c, cpp, cuda-cpp, java, javascript, javascriptreact, php (and blade), sass, scss, typescript, typescriptreact.
-
-    -   For some languages, including C, C++, Sass - if you press `Tab` immediately after breaking out of a comment block, it will insert a commented line, for some unknown reason.
+-   Single-line comments using `enter`: if you enable the `singleLineBlockOnEnter` setting, for some languages, including C, C++, Sass - pressing `Tab` immediately after breaking out of a comment block, will insert a commented line, for some unknown reason.
 
 -   Sometimes multi-line completion/asterisk insertion doesn't work. The reason is still unknown. It may go away if you reload your workspace.
 

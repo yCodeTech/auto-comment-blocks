@@ -4,6 +4,14 @@ All notable changes to this extension will be documented in this file.
 
 This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure.
 
+## [1.1.3](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.3) - 2024-12-29
+
+Fixed single-line comments onEnter not working when indented.
+
+Single-line comments when indented didn't add new commented lines when pressing `enter`. Due to more regex patterns not been recognised by VScode internally, and therefore doesn't work properly.
+
+Fixed by reconstructing the regexes for the `previousLineText` property. Also reconstructed regexes for the remaining config properties: `folding` and `indentationRules`.
+
 ## [1.1.1 and 1.1.2](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.2) - 2024-12-27
 
 Fixed single-line comments were not inserting new commented lines for any languages when pressing `enter` (when `singleLineBlockOnEnter` was set to true). This is caused by an unknown bug when setting configs with `vscode.languages.setLanguageConfiguration()` and it has regexes in the configs. The regexes weren't been used. By reconstructing the regex before the config is set, it fixes the issue. This also helps when the internal config has some malformed regexes, or regex as strings.
