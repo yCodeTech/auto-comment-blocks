@@ -687,9 +687,12 @@ export class Configuration {
 		}
 		// If langConfig has a folding key...
 		if (Object.hasOwn(langConfig, "folding")) {
+			// @ts-ignore error TS2339: Property 'folding' does not exist on type
 			if (Object.hasOwn(langConfig.folding, "markers")) {
+				// @ts-ignore error TS2339: Property 'folding' does not exist on type
 				langConfig.folding.markers.start = this.reconstructRegex(langConfig.folding.markers, "start");
-
+				
+				// @ts-ignore error TS2339: Property 'folding' does not exist on type
 				langConfig.folding.markers.end = this.reconstructRegex(langConfig.folding.markers, "end");
 			}
 		}
