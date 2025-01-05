@@ -10,7 +10,42 @@ This is a fork of the original by [kevb34ns](https://github.com/kevb34ns/auto-co
 
 View the extension on [VScode Marketplace](https://marketplace.visualstudio.com/items?itemName=yCodeTech.automatic-comment-blocks).
 
-[Known Issues](#issues)
+---
+
+<table>
+<tr align="center">
+<td>
+
+[Major changes in v1.1.0](#major-changes-in-v110)
+
+</td>
+<td>
+
+[Single-line Comment Blocks](#single-line-comment-blocks)
+
+</td>
+<td>
+
+[Multi-line Comment Blocks](#multi-line-comment-blocks)
+
+</td>
+<td>
+
+[Language Support](#language-support)
+
+</td>
+<td>
+
+[Settings](#settings)
+
+</td>
+<td>
+
+[Known Issues](#known-issues)
+
+</td>
+</tr>
+</table>
 
 ---
 
@@ -37,6 +72,8 @@ Most of the officially VScode-supported languages (as defined in the [docs](http
 
 View the [Changelog](/CHANGELOG.md) for more detailed changes/additions/removals.
 
+## Usage
+
 ### Single-line Comment Blocks
 
 You can insert single-line comment blocks for languages that use `//`, `#`, or `;`-styles.
@@ -51,19 +88,19 @@ The Language Support section shows which languages are supported. See the Settin
 
 While inside any style of the multi-line comment blocks, when pressing `enter`, the extension will insert an asterisk (`*`) at the start of every new line, and align the comment, respecting indentation.
 
-### Javadoc-style comment blocks
+#### Javadoc-style comment blocks
 
 Type `/**` to start the Javadoc-style block comment, after typing the 2nd `*`, the extension will auto-close the block.
 
-### QDoc-style (Qt) comment blocks
+#### QDoc-style (Qt) comment blocks
 
 Use `/*!` in all file types that support the normal `/*` comments to start a QDoc comment block; and like the Javadoc-style, the extension will auto-close the block after the `!` is typed.
 
-### New: Normal comment blocks
+#### New: Normal comment blocks
 
 Using the normal comment block `/* */` either typing manually or the native VScode command "Toggle Block Comment" (`editor.action.blockComment`, native keybinding `shift + alt + a`), the block will have the same on enter functionality as described above.
 
-### Language Support
+## Language Support
 
 All auto-supported languages are defined in the auto-generated files found in [auto-generated-language-definitions directory](auto-generated-language-definitions) of the repo. Custom supported languages specified by user settings can also appear in these files.
 
