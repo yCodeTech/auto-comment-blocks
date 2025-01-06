@@ -138,4 +138,4 @@ Reload the extension after changing any settings.
 
 -   Currently, VS Code only allows extensions to overwrite, instead of modify, existing language configurations. This means that this extension may clash with another extension that overwrites the same language configurations, causing one or both not to work. In that case, uninstalling this extension is the only option for now.
 
-Please create an issue in the [repository](https://github.com/kevinkyang/auto-comment-blocks/issues) if you find any bugs, or have questions or feature requests.
+Please [report an issue](https://github.com/yCodeTech/auto-comment-blocks/issues/new) if you find any bugs, or have questions or feature requests.
