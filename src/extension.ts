@@ -1,5 +1,7 @@
 "use strict";
 
+// INFO: How to publish extension: https://code.visualstudio.com/api/working-with-extensions/publishing-extension#publishing-extensions
+
 import * as vscode from "vscode";
 
 import {Configuration} from "./configuration";
@@ -80,67 +82,14 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 		/**
-		 * Multi-line style Block Comments
+		 * Support Unsupported Languages
 		 */
-		if (event.affectsConfiguration(`${extensionName}.multiLineStyleBlocks`)) {
-			vscode.window
-				.showInformationMessage(
-					`The ${extensionName}.multiLineStyleBlocks setting has been changed. Please reload the Extension Host to take effect.`,
-					"Reload"
-				)
-				.then((selection) => {
-					if (selection === "Reload") {
-						vscode.commands.executeCommand("workbench.action.restartExtensionHost");
-					}
-				});
-		}
+		if (event.affectsConfiguration(`${extensionName}.supportUnsupportedLanguages`)) {
+			configuration.updateSingleLineCommentLanguageDefinitions();
 
-		/**
-		 * //-style single-line comments
-		 */
-		if (event.affectsConfiguration(`${extensionName}.slashStyleBlocks`)) {
-			vscode.window
-				.showInformationMessage(
-					`The ${extensionName}.slashStyleBlocks setting has been changed. Please reload the Extension Host to take effect.`,
-					"Reload"
-				)
-				.then((selection) => {
-					if (selection === "Reload") {
-						vscode.commands.executeCommand("workbench.action.restartExtensionHost");
-					}
-				});
-		}
+			const configureCommentBlocksDisposable = configuration.configureCommentBlocks(context);
 
-		/**
-		 * #-style single-line comments
-		 */
-		if (event.affectsConfiguration(`${extensionName}.hashStyleBlocks`)) {
-			vscode.window
-				.showInformationMessage(
-					`The ${extensionName}.hashStyleBlocks setting has been changed. Please reload the Extension Host to take effect.`,
-					"Reload"
-				)
-				.then((selection) => {
-					if (selection === "Reload") {
-						vscode.commands.executeCommand("workbench.action.restartExtensionHost");
-					}
-				});
-		}
-
-		/**
-		 * ;-style single-line comments
-		 */
-		if (event.affectsConfiguration(`${extensionName}.semicolonStyleBlocks`)) {
-			vscode.window
-				.showInformationMessage(
-					`The ${extensionName}.semicolonStyleBlocks setting has been changed. Please reload the Extension Host to take effect.`,
-					"Reload"
-				)
-				.then((selection) => {
-					if (selection === "Reload") {
-						vscode.commands.executeCommand("workbench.action.restartExtensionHost");
-					}
-				});
+			disposables.push(...configureCommentBlocksDisposable);
 		}
 	});
 
