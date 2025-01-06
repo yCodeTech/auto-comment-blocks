@@ -4,6 +4,24 @@ All notable changes to this extension will be documented in this file.
 
 This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure.
 
+## [1.1.4](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.4) - 2025-01-06
+
+#### Fixed:
+
+-   When `singleLineBlockOnEnter` setting is `true`, and when then cursor is in the middle of the text, eg. `// text | text`, the comment would not be continued on the next line when `enter` is pressed. Therefore the text after the cursor would not be a comment on the new line and be classed as code. This makes commenting tedious when keeping it clean and tidy with max line lengths.
+
+    Fixed by adding new regex rules to identify when there is text after the cursor. The rules are now merged and duplicates removed instead of just `concat`ing.
+
+-   Fixed the known issue: if you enable the `singleLineBlockOnEnter` setting, for some languages, including C, C++, Sass - pressing `tab` immediately after breaking out of a comment block, will insert a commented line.
+
+    This seems to only happen in languages without `indentationRules`, so it's fixed by adding default indentation rules with empty strings.
+
+    Note: Using empty strings shouldn't have any side effects, but please [report an issue](https://github.com/yCodeTech/auto-comment-blocks/issues/new?title=Default%20indentation%20empty%20string%20issue) if you have any problems with indentation.
+
+-   Fixed an undocumented change that was part of commit 504ce5b, which changed some regexes within the `handleSingleLineBlock` method to use the default onEnterRules config regexes. This accessed the items using array indexes. However, adding more regex rules breaks this functionality for the `auto-comment-blocks.singleLineBlock` keybinding command and will insert the wrong comment style by accessing the wrong array index.
+
+    Reverted back to hardcoding these regexes instead, to keep them separated.
+
 ## [1.1.3](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.3) - 2024-12-29
 
 Fixed single-line comments onEnter not working when indented.
