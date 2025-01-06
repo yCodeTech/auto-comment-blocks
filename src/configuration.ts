@@ -877,22 +877,22 @@ export class Configuration {
 
 			if (style === "//" && line.text.search(/^\s*\/\/\s*/) !== -1) {
 				indentRegex = /\//;
-				if (line.text.search(Rules.slashEnterRules[1].beforeText) !== -1) {
+				if (line.text.search(/^\s*\/\/\//) !== -1) {
 					style = "///";
 				}
-				if (line.text.search(Rules.slashEnterRules[2].beforeText) !== -1) {
+				if (line.text.search(/^\s*\/\/!/) !== -1) {
 					style = "//!";
 				}
 			} else if (style === "#" && line.text.search(/^\s*#\s*/) !== -1) {
 				indentRegex = /#/;
-				if (line.text.search(Rules.hashEnterRules[1].beforeText) !== -1) {
+				if (line.text.search(/^\s*##/) !== -1) {
 					style = "##";
 				}
 			} else if (style === ";" && line.text.search(/^\s*;\s*/) !== -1) {
 				indentRegex = /;/;
 
 				// If text is ;;, then change the style from single ; to double ;;.
-				if (line.text.search(Rules.semicolonEnterRules[1].beforeText) !== -1) {
+				if (line.text.search(/^\s*;;/) !== -1) {
 					style = ";;";
 				}
 			} else {
