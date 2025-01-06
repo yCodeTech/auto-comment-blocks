@@ -710,13 +710,21 @@ export class Configuration {
 				}
 			}
 		}
-		// FIX: Pressing `Tab` immediately after breaking out of a comment block, will insert a commented line. - This maybe due to the language not having a proper indentation rule, at least adding indentation rules seems to fix it. More testing needed.
-		// else {
-		// 	langConfig.indentationRules = {
-		// 		increaseIndentPattern: /(^.*\{[^}]*$)/,
-		// 		decreaseIndentPattern: /^\s*\}/
-		// 	}
-		// }
+
+		// If langConfig doesn't have an indentationRules key, then we need to add it with
+		// empty strings.
+		//
+		// Prevents a single-line comment being inserted when pressing `tab` after immediately
+		// breaking out of a comment block. Seems to only happen with languages without
+		// indentationRules.
+		else {
+			langConfig.indentationRules = {
+				// @ts-ignore error TS2322: Type 'string' is not assignable to type 'RegExp'.
+				increaseIndentPattern: "",
+				// @ts-ignore error TS2322: Type 'string' is not assignable to type 'RegExp'.
+				decreaseIndentPattern: "",
+			};
+		}
 
 		console.log(langId, langConfig);
 

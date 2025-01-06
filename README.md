@@ -134,8 +134,6 @@ Reload the extension after changing any settings.
 
 ## Known Issues
 
--   Single-line comments using `enter`: if you enable the `singleLineBlockOnEnter` setting, for some languages, including C, C++, Sass - pressing `Tab` immediately after breaking out of a comment block, will insert a commented line, for some unknown reason.
-
 -   Sometimes multi-line completion/asterisk insertion doesn't work. The reason is still unknown. It may go away if you reload your workspace.
 
 -   Currently, VS Code only allows extensions to overwrite, instead of modify, existing language configurations. This means that this extension may clash with another extension that overwrites the same language configurations, causing one or both not to work. In that case, uninstalling this extension is the only option for now.
