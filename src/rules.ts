@@ -97,17 +97,50 @@ export class Rules {
 			beforeText: /^\s*\/\/(?!\/|!)/,
 			action: {indentAction: IndentAction.None, appendText: "// "},
 		},
+		// e.g // text | text
+		// (matches // with any amount of spaces before it; and with text either side of the
+		// cursor.)
+		{
+			beforeText: /^\s*\/\/(?!\/|!).*/,
+			afterText: /^(?!\s*$).+/,
+			action: {
+				indentAction: IndentAction.None,
+				appendText: "// ",
+			},
+		},
 		{
 			// e.g. ///   |
 			// (matches /// with any amount of spaces before it.)
 			beforeText: /^\s*\/\/\//,
 			action: {indentAction: IndentAction.None, appendText: "/// "},
 		},
+		// e.g /// text | text
+		// (matches /// with any amount of spaces before it; and with text either side of the
+		// cursor.)
+		{
+			beforeText: /^\s*\/\/\/.*/,
+			afterText: /^(?!\s*$).+/,
+			action: {
+				indentAction: IndentAction.None,
+				appendText: "/// ",
+			},
+		},
 		{
 			// e.g. //!   |
 			// (matches //! with any amount of spaces before it.)
 			beforeText: /^\s*\/\/!/,
 			action: {indentAction: IndentAction.None, appendText: "//! "},
+		},
+		// e.g //! text | text
+		// (matches //! with any amount of spaces before it; and with text either side of the
+		// cursor.)
+		{
+			beforeText: /^\s*\/\/!/,
+			afterText: /^(?!\s*$).+/,
+			action: {
+				indentAction: IndentAction.None,
+				appendText: "//! ",
+			},
 		},
 	];
 

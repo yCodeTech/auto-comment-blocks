@@ -577,12 +577,14 @@ export class Configuration {
 		let langConfig = {...internalLangConfig};
 
 		if (multiLine) {
-			const mergedConfig = this.mergeConfig(defaultMultiLineConfig.autoClosingPairs, Rules.multilineEnterRules, internalLangConfig);
-
-			langConfig.autoClosingPairs = mergedConfig.mergedAutoClosingPairs;
+			langConfig.autoClosingPairs = this.mergeConfigProperty(
+				defaultMultiLineConfig.autoClosingPairs,
+				internalLangConfig?.autoClosingPairs,
+				"open"
+			);
 
 			// Add the multi-line onEnter rules to the langConfig.
-			langConfig.onEnterRules = mergedConfig.mergedOnEnterRules;
+			langConfig.onEnterRules = this.mergeConfigProperty(Rules.multilineEnterRules, internalLangConfig?.onEnterRules, "beforeText");
 
 			// Only assign the default config comments if it doesn't already exist.
 			// (nullish assignment operator ??=)
@@ -606,33 +608,20 @@ export class Configuration {
 
 		// Add the single-line onEnter rules to the langConfig.
 		//
-		// If isOnEnter is true AND singleLineStyle isn't false, i.e. a string.
+		// If isOnEnter is true AND singleLineStyle isn't false, i.e. is a string,
+		// then merge and set the rules.
 		if (isOnEnter && singleLineStyle) {
 			// //-style comments
 			if (singleLineStyle === "//") {
-				// Make sure that langConfig has the key onEnterRules with the optional
-				// chaining operator (?.) before trying to access the array method concat().
-				// If it does exist, concat (combine) the new rules with the langConfig rules.
-				// If it's undefined (doesn't exist), then using the nullish coalescing
-				// operator (??) just assign the new rules.
-				const rules = langConfig.onEnterRules?.concat(Rules.slashEnterRules) ?? Rules.slashEnterRules;
-
-				// Set the rules.
-				langConfig.onEnterRules = rules;
+				langConfig.onEnterRules = this.mergeConfigProperty(Rules.slashEnterRules, langConfig?.onEnterRules, "beforeText");
 			}
 			// #-style comments
 			else if (singleLineStyle === "#") {
-				const rules = langConfig.onEnterRules?.concat(Rules.hashEnterRules) ?? Rules.hashEnterRules;
-
-				// Set the rules.
-				langConfig.onEnterRules = rules;
+				langConfig.onEnterRules = this.mergeConfigProperty(Rules.hashEnterRules, langConfig?.onEnterRules, "beforeText");
 			}
 			// ;-style comments
 			else if (singleLineStyle === ";") {
-				const rules = langConfig.onEnterRules?.concat(Rules.semicolonEnterRules) ?? Rules.semicolonEnterRules;
-
-				// Set the rules.
-				langConfig.onEnterRules = rules;
+				langConfig.onEnterRules = this.mergeConfigProperty(Rules.semicolonEnterRules, langConfig?.onEnterRules, "beforeText");
 			}
 		}
 		// If isOnEnter is false AND singleLineStyle isn't false, i.e. a string.
@@ -652,7 +641,8 @@ export class Configuration {
 		// being used by vscode.
 
 		// Fixes rogue * being inserted on to an empty line when pressing tab when the line
-		// * above is a single-line comment. A rogue * also gets inserted when the any new line after any kind of code except multi-line comments.
+		// * above is a single-line comment. A rogue * also gets inserted when the any new
+		// line after any kind of code except multi-line comments.
 
 		// Check if isOnEnter OR multiline is true.
 		if (isOnEnter || multiLine) {
@@ -691,7 +681,7 @@ export class Configuration {
 			if (Object.hasOwn(langConfig.folding, "markers")) {
 				// @ts-ignore error TS2339: Property 'folding' does not exist on type
 				langConfig.folding.markers.start = this.reconstructRegex(langConfig.folding.markers, "start");
-				
+
 				// @ts-ignore error TS2339: Property 'folding' does not exist on type
 				langConfig.folding.markers.end = this.reconstructRegex(langConfig.folding.markers, "end");
 			}
@@ -734,58 +724,37 @@ export class Configuration {
 	}
 
 	/**
-	 * Merge the internal config AutoClosingPairs with the default config, removing any duplicates.
-	 * And Merge the internal config onEnterRules with the default rules, removing any duplicates.
+	 * Merges two configuration properties arrays, removing any duplicates based on a
+	 * specified property.
 	 *
-	 * @param {any} defaultLangConfig Default multi-line comments config.
-	 * @param {vscode.LanguageConfiguration} internalLangConfig Internal language config from vscode extensions.
-	 * @returns {{mergedOnEnterRules: any[]; mergedAutoClosingPairs: vscode.AutoClosingPair[]}} An object with the merged onEnterRules and autoClosingPairs arrays.
+	 * @param {any[]} defaultConfigProperty The default configuration property array of objects.
+	 * @param {any[]} internalConfigProperty The internal configuration property array of objects.
+	 * @param {string} objectKey The key within the array item object to check against for preventing duplicates
+	 * @returns {any[]} The merged configuration property array without duplicates.
 	 */
-	private mergeConfig(
-		defaultAutoClosingPairs,
-		defaultOnEnterRules,
-		internalLangConfig: vscode.LanguageConfiguration
-	): {mergedOnEnterRules: any[]; mergedAutoClosingPairs: vscode.AutoClosingPair[]} {
-		// Get the internal config properties or define an empty array.
-		const internalAutoClosing = internalLangConfig?.autoClosingPairs ?? [];
-		const internalOnEnterRules = internalLangConfig?.onEnterRules ?? [];
+	private mergeConfigProperty(defaultConfigProperty: any[], internalConfigProperty: any[], objectKey: string) {
+		// Define an empty array if the internalConfigProperty is undefined.
+		internalConfigProperty ??= [];
+
+		// Copy to avoid side effects.
+		const merged = [...defaultConfigProperty];
 
 		/**
 		 * Merge the arrays and remove any duplicates.
-		 *
-		 * Code based on "2023 update" portion of this StackOverflow answer:
-		 * https://stackoverflow.com/a/1584377/2358222
-		 *
-		 * @param {string} key The key to check against for preventing duplicates.
-		 * @param item The current item in the loop.
-		 * @param merged The array to merge into.
-		 */
-		const merge = (key: string, item: any, merged: any) => {
-			// Test all items in the merged array, and if the defaultAutoClosing item's
-			// opening comment string (item.open) is not already present in one of the
-			// merged array's objects then add the item to the merged array.
-			merged.some((mergedItem) => item[key] === mergedItem[key]) ? null : merged.push(item);
-		};
-
-		/**
-		 * Merge autoClosingPairs.
 		 */
 
-		// Copy to avoid side effects.
-		const mergedAutoClosingPairs = [...internalAutoClosing];
-		// Loop over the defaultLangConfig autoClosingPairs array...
-		defaultAutoClosingPairs.forEach((item) => merge("open", item, mergedAutoClosingPairs));
+		// Loop over the internalConfigProperty array...
+		internalConfigProperty.forEach((item) =>
+			// Test all items in the merged array, and if the item's
+			// key is not already present in one of the merged array's objects then add the item
+			// to the merged array.
+			//
+			// Code based on "2023 update" portion of this StackOverflow answer:
+			// https://stackoverflow.com/a/1584377/2358222
+			merged.some((mergedItem) => item[objectKey] === mergedItem[objectKey]) ? null : merged.push(item)
+		);
 
-		/**
-		 * Merge onEnterRules
-		 */
-
-		// Copy to avoid side effects.
-		const mergedOnEnterRules = [...defaultOnEnterRules];
-
-		internalOnEnterRules.forEach((item) => merge("beforeText", item, mergedOnEnterRules));
-
-		return {mergedOnEnterRules, mergedAutoClosingPairs};
+		return merged;
 	}
 
 	/**
