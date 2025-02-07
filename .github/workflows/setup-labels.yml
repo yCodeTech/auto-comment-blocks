@@ -1,0 +1,21 @@
+name: Setup Labels
+on:
+  create:
+  push:
+permissions:
+  pull-requests: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Setup (and sync) labels - Auto create and update labels for PRs based on a
+      # config file defining the labels.
+      - name: Setup labels
+        uses: julbme/gh-action-manage-label@v1
+        with:
+          # Global config in my profile repo: https://github.com/yCodeTech/yCodeTech
+          from: https://raw.githubusercontent.com/yCodeTech/yCodeTech/refs/heads/master/.github/config/labels.json
+          # Don't delete existing labels that are not in the config file.
+          skip_delete: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
