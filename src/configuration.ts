@@ -183,7 +183,7 @@ export class Configuration {
 	 * @returns {object} An object containing the extension id, name, and display name.
 	 */
 	public getExtensionNames(): {id: string; name: string; displayName: string} {
-		const packageJSON = JSON.parse(fs.readFileSync(__dirname + "./../../package.json").toString());
+		const packageJSON = JSON.parse(fs.readFileSync(__dirname + "/../../package.json").toString());
 
 		const displayName: string = packageJSON.displayName;
 		const fullname: string = packageJSON.name;
