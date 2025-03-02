@@ -4,6 +4,12 @@ All notable changes to this extension will be documented in this file.
 
 This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure.
 
+## [1.1.5](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.5) - 2025-03-02
+
+#### Fixed:
+
+-   Fixes an `ENOENT: no such file or directory` error in [yCodeTech/auto-comment-blocks#4](https://github.com/yCodeTech/auto-comment-blocks/issues/4). When trying to find the extension's package.json. The file path used the current directory `./`, which is redundant while using `__dirname` as well, and certain OS could interpret the file path `/extensions/ycodetech.automatic-comment-blocks-1.1.4/out/src./../../package.json` differently, hence the ENOENT error. Fixed by removing the `.` before the slash.
+
 ## [1.1.4](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.4) - 2025-01-06
 
 #### Fixed:
