@@ -1,3 +1,4 @@
+# Ignore these files and directories when packaging the extension into a .vsix
 .vscode/**
 .vscode-test/**
 out/test/**
@@ -7,3 +8,5 @@ src/**
 .gitignore
 tsconfig.json
 vsc-extension-quickstart.md
+auto-generated-language-definitions
+.github
