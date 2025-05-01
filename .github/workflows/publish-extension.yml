@@ -3,7 +3,7 @@ on:
     tags:
       - "*"
 
-name: Publish Extension to VScode Marketplace
+name: Publish Extension to VS Code Marketplace and Open VSX Registry
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -13,8 +13,14 @@ jobs:
         with:
           node-version: 20
       - run: npm install
-      - name: Publish to Visual Studio Marketplace
-        uses: HaaLeo/publish-vscode-extension@v1.6.2
+      - name: Publish to VS Code Marketplace
+        uses: HaaLeo/publish-vscode-extension@v2
+        id: publishToVsCodeMarketplace
         with:
-          pat: ${{ secrets.VSCODE_EXTENSION_PUBLISH_TO_MARKETPLACE }}
+          pat: ${{ secrets.VS_CODE_MARKETPLACE_TOKEN }}
           registryUrl: https://marketplace.visualstudio.com
+      - name: Publish to Open VSX Registry
+        uses: HaaLeo/publish-vscode-extension@v2
+        with:
+          pat: ${{ secrets.OPEN_VSX_REGISTRY_TOKEN }}
+          extensionFile: ${{ steps.publishToVsCodeMarketplace.outputs.vsixPath }}
