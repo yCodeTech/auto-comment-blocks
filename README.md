@@ -1,14 +1,14 @@
 # Automatic Comment Blocks
 
 <a href="https://marketplace.visualstudio.com/items?itemName=yCodeTech.automatic-comment-blocks"><img alt="Visual Studio Marketplace Version" src="https://img.shields.io/visual-studio-marketplace/v/yCodeTech.automatic-comment-blocks?style=for-the-badge"></a>&nbsp;&nbsp;
-<a href="https://marketplace.visualstudio.com/items?itemName=yCodeTech.automatic-comment-blocks"><img alt="Visual Studio Marketplace Installs" src="https://img.shields.io/visual-studio-marketplace/i/yCodeTech.automatic-comment-blocks?style=for-the-badge">
-</a>
+<a href="https://marketplace.visualstudio.com/items?itemName=yCodeTech.automatic-comment-blocks"><img alt="Visual Studio Marketplace Installs" src="https://img.shields.io/visual-studio-marketplace/i/yCodeTech.automatic-comment-blocks?style=for-the-badge&label=VS%20Code%20Installs"></a>&nbsp;&nbsp;
+<a href="https://open-vsx.org/extension/ycodetech/automatic-comment-blocks"><img alt="Open VSX Registry Installs" src="https://img.shields.io/open-vsx/dt/yCodeTech/automatic-comment-blocks?style=for-the-badge&label=Open%20VSX%20Downloads"></a>
 
 A VScode extension that provides block comment completion for Javadoc-style multi-line comments and single-line comment blocks for most officially supported languages
 
 This is a fork of the original by [kevb34ns](https://github.com/kevb34ns/auto-comment-blocks) with lots of additional support.
 
-View the extension on [VScode Marketplace](https://marketplace.visualstudio.com/items?itemName=yCodeTech.automatic-comment-blocks).
+View the extension on [VScode Marketplace](https://marketplace.visualstudio.com/items?itemName=yCodeTech.automatic-comment-blocks) and on [Open VSX Registry](https://open-vsx.org/extension/ycodetech/automatic-comment-blocks)
 
 ---
 
