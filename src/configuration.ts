@@ -7,11 +7,19 @@ import * as jsonc from "jsonc-parser";
 import * as path from "path";
 
 import {Rules} from "./rules";
+import {Logger} from "./logger";
 
 export class Configuration {
 	/**************
 	 * Properties *
 	 **************/
+
+	/**
+	 * The Logger class instance for logging messages to the Output Channel.
+	 *
+	 * @type {Logger}
+	 */
+	private logger: Logger;
 
 	/**
 	 * A key:value Map object of language IDs and their config file paths.
@@ -49,17 +57,26 @@ export class Configuration {
 	 * Methods *
 	 ***********/
 
-	public constructor() {
+	public constructor(logger: Logger) {
+		this.logger = logger;
+
+		// Always output extension information to channel on activate.
+		const extensionId = this.getExtensionNames().id;
+		this.logger.info(`Extension ID: ${extensionId}.`);
+		this.logger.info(`Extension Version: ${vscode.extensions.getExtension(extensionId)?.packageJSON.version}.`);
+
 		this.findAllLanguageConfigFilePaths();
-		console.log(this.languageConfigFilePaths);
 		this.setLanguageConfigDefinitions();
-		console.log("language configs", this.languageConfigs);
 
 		this.setMultiLineCommentLanguageDefinitions();
-		console.log(this.multiLineBlocksMap);
 		this.setSingleLineCommentLanguageDefinitions();
-		console.log(this.singleLineBlocksMap);
 		this.writeCommentLanguageDefinitionsToJsonFile();
+
+		// Log the objects for debugging purposes.
+		this.logger.debug("The language config filepaths found are:", Object.fromEntries(this.languageConfigFilePaths));
+		this.logger.debug("The language configs found are:", Object.fromEntries(this.languageConfigs));
+		this.logger.debug("The supported languages for multi-line blocks:", Object.fromEntries(this.multiLineBlocksMap));
+		this.logger.debug("The supported languages single-line blocks:", Object.fromEntries(this.singleLineBlocksMap));
 	}
 
 	/**
@@ -734,7 +751,7 @@ export class Configuration {
 			};
 		}
 
-		console.log(langId, langConfig);
+		this.logger.debug(`The language config for ${langId}:`, langConfig);
 
 		return vscode.languages.setLanguageConfiguration(langId, langConfig);
 	}

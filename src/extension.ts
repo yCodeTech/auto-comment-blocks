@@ -3,8 +3,11 @@
 import * as vscode from "vscode";
 
 import {Configuration} from "./configuration";
+import {Logger} from "./logger";
 
-let configuration = new Configuration();
+const logger = new Logger();
+logger.setupOutputChannel();
+let configuration = new Configuration(logger);
 
 const disposables: vscode.Disposable[] = [];
 
@@ -150,10 +153,13 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Called when active editor language is changed, so re-configure the comment blocks.
 	vscode.workspace.onDidOpenTextDocument(() => {
+		logger.info("Active editor language changed, re-configuring comment blocks.");
 		const configureCommentBlocksDisposable = configuration.configureCommentBlocks(context);
 		disposables.push(...configureCommentBlocksDisposable);
 	});
 
 	context.subscriptions.push(...disposables);
 }
-export function deactivate() {}
+export function deactivate() {
+	logger.disposeLogger();
+}
