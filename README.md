@@ -138,4 +138,6 @@ Reload the extension after changing any settings.
 
 -   Currently, VS Code only allows extensions to overwrite, instead of modify, existing language configurations. This means that this extension may clash with another extension that overwrites the same language configurations, causing one or both not to work. In that case, uninstalling this extension is the only option for now.
 
+-   Doesn't work properly on Windows Linux WSL2. VScode API only finds language configs that are installed only on WSL2, and not also on Windows. That means all the normal built-in as well as 3rd party extensions won't have auto comment blocks support in WSL2. (Related issue: [#6](https://github.com/yCodeTech/auto-comment-blocks/issues/6))
+
 Please [report an issue](https://github.com/yCodeTech/auto-comment-blocks/issues/new) if you find any bugs, or have questions or feature requests.
