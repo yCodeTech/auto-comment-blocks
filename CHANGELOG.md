@@ -4,6 +4,30 @@ All notable changes to this extension will be documented in this file.
 
 This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure.
 
+## [1.1.7](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.7) - 2025-06-13
+
+#### Added:
+
+-   Added the ability to log debug information to a dedicated `Auto Comment Blocks` channel in the Output panel. This is to help diagnose issues quicker.
+
+    -   Added new `Logger` class to implement the functionality of the logging info to the Output panel.
+
+        Uses VScode's `OutputChannel` interface under the hood for logging, and creating the dedicated `Auto Comment Blocks` Output channel.
+
+        Using this class we can log `info`, `debug`, and `error` messages to the channel. The `debug` method can output objects and arrays.
+
+    -   Added a call to the new Logger class in the main `extension` file to initialise the logger, and setup the channel.
+
+    -   Added a `info` logger to the `onDidOpenTextDocument` event in the main `extension` file, to make sure we can identify in the Output when the active language has changed before any other debug info is logged.
+
+    -   Added the Logger's `disposeLogger` method call to the `deactivate` method in the main `extension` file.
+
+    -   Added a new private property and a new param in the `constructor` method of the `Configuration` class, to allow the instance of the logger created in the main `extension` file to be carried over without being re-initialised.
+
+    -   Added `info` logs for the extension id and version to the `constructor` method of the `Configuration` class.
+
+    -   Changed all `console.log` to use the new logger.
+
 ## [1.1.6](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.6) - 2025-05-01
 
 #### Added:
