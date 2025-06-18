@@ -23,6 +23,15 @@
 				"useTabs": false,
 				"tabWidth": 2
 			}
+		},
+		{
+			"files": [
+				"*.js",
+				"*.ts"
+			],
+			"options": {
+				"quoteProps": "consistent"
+			}
 		}
 	]
 }
