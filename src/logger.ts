@@ -151,6 +151,10 @@ export class Logger {
 		if (value instanceof RegExp) {
 			return value.toString();
 		}
+		// Convert Map objects to plain objects to allow them to be outputted.
+		else if (value instanceof Map) {
+			return Object.fromEntries(value);
+		}
 
 		return value;
 	}

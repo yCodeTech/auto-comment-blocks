@@ -73,10 +73,10 @@ export class Configuration {
 		this.writeCommentLanguageDefinitionsToJsonFile();
 
 		// Log the objects for debugging purposes.
-		this.logger.debug("The language config filepaths found are:", Object.fromEntries(this.languageConfigFilePaths));
-		this.logger.debug("The language configs found are:", Object.fromEntries(this.languageConfigs));
-		this.logger.debug("The supported languages for multi-line blocks:", Object.fromEntries(this.multiLineBlocksMap));
-		this.logger.debug("The supported languages single-line blocks:", Object.fromEntries(this.singleLineBlocksMap));
+		this.logger.debug("The language config filepaths found are:", this.languageConfigFilePaths);
+		this.logger.debug("The language configs found are:", this.languageConfigs);
+		this.logger.debug("The supported languages for multi-line blocks:", this.multiLineBlocksMap);
+		this.logger.debug("The supported languages single-line blocks:", this.singleLineBlocksMap);
 	}
 
 	/**
