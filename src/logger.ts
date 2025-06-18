@@ -110,10 +110,10 @@ export class Logger {
 		this.outputChannel.appendLine(`["${level}" - ${time}] ${message}`);
 
 		if (meta) {
-			meta = this.formatMeta(message, meta);
+			const data: string = this.formatMeta(message, meta);
 
 			// Output the meta data to the output channel.
-			this.outputChannel.appendLine(meta);
+			this.outputChannel.appendLine(data);
 		}
 	}
 
@@ -127,17 +127,18 @@ export class Logger {
 	 * @returns {string} The formatted meta data as a string.
 	 */
 	private formatMeta(message: string, meta: unknown): string {
+		let data: string = "";
 		// Convert the meta data to a JSON string with indentation for readability.
-		meta = JSON.stringify(meta, this.metaReplacer, "\t").trim();
+		data = JSON.stringify(meta, this.metaReplacer, "\t").trim();
 
 		// If the message contains "filepaths", eg. "language config filepaths"...
 		if (message.includes("filepaths")) {
 			// Split the meta data by commas and join them with newlines for better readability.
-			const lines = meta.split(",");
-			meta = lines.join(",\n");
+			const lines = data.split(",");
+			data = lines.join(",\n");
 		}
 
-		return meta;
+		return data;
 	}
 
 	/**
