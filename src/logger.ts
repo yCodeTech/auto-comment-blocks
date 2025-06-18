@@ -127,6 +127,13 @@ export class Logger {
 		// Convert the meta data to a JSON string with indentation for readability.
 		meta = JSON.stringify(meta, this.metaReplacer, "\t").trim();
 
+		// If the message contains "filepaths", eg. "language config filepaths"...
+		if (message.includes("filepaths")) {
+			// Split the meta data by commas and join them with newlines for better readability.
+			const lines = meta.split(",");
+			meta = lines.join(",\n");
+		}
+
 		return meta;
 	}
 
