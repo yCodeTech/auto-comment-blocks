@@ -108,8 +108,25 @@ export class Logger {
 		this.outputChannel.appendLine(`["${level}" - ${time}] ${message}`);
 
 		if (meta) {
-			const message = JSON.stringify(meta, null, 4).trim();
-			this.outputChannel.appendLine(message);
+			meta = this.formatMeta(message, meta);
+
+			this.outputChannel.appendLine(meta);
 		}
+	}
+
+	/**
+	 * Formats the meta data for logging.
+	 * This method converts the meta data to a JSON string with indentation for readability.
+	 *
+	 * @param {string} message The message to use for checking what the meta data is related to.
+	 * @param {unknown} meta The meta data to be logged, usually an object or array.
+	 *
+	 * @returns {string} The formatted meta data as a string.
+	 */
+	private formatMeta(message: string, meta: unknown): string {
+		// Convert the meta data to a JSON string with indentation for readability.
+		meta = JSON.stringify(meta, null, "\t").trim();
+
+		return meta;
 	}
 }
