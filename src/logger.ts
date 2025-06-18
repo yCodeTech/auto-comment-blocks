@@ -105,11 +105,14 @@ export class Logger {
 			this.setupOutputChannel();
 		}
 		const time = new Date().toLocaleTimeString();
+
+		// Output the log message to the output channel.
 		this.outputChannel.appendLine(`["${level}" - ${time}] ${message}`);
 
 		if (meta) {
 			meta = this.formatMeta(message, meta);
 
+			// Output the meta data to the output channel.
 			this.outputChannel.appendLine(meta);
 		}
 	}

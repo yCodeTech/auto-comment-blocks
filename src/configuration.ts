@@ -65,6 +65,9 @@ export class Configuration {
 		this.logger.info(`Extension ID: ${extensionId}.`);
 		this.logger.info(`Extension Version: ${vscode.extensions.getExtension(extensionId)?.packageJSON.version}.`);
 
+		// Log the extension's user configuration settings.
+		this.logger.debug("Configuration settings:", this.getConfiguration());
+
 		this.findAllLanguageConfigFilePaths();
 		this.setLanguageConfigDefinitions();
 
