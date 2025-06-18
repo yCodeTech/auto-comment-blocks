@@ -4,6 +4,36 @@ All notable changes to this extension will be documented in this file.
 
 This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure.
 
+## [1.1.8](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.8) - 2025-06-18
+
+#### Fixed:
+
+-   Fixed `Logger::logMessage` not logging regex meta data. When a log's extra `debug` data contains a `RegExp` object, `JSON.stringify` can not convert it to a string, so it just outputs an empty object `{}` in the Output channel. This is useless for debugging.
+
+    Fixed by adding a new `Logger::metaReplacer` method to use as a replacer function in the `JSON.stringify` method's replacer arg. This new method will convert all instances of `RegExp` to it's string representation ready for output in the channel.
+
+#### Changed:
+
+-   Refactor `Logger::logMessage` by moving the `JSON.stringify` call to a new `formatMeta` method.
+
+-   Refactored the logging of `debug` meta data objects in the `Configuration::constructor` method:
+
+    -   Removed all `Object.fromEntries` calls from the debug logging in the `Configuration::constructor` method.
+
+    -   Added a new `if` condition in the `Logger::metaReplacer` method, to allow all `Map` objects to be converted to plain objects via `Object.fromEntries`.
+
+    This prevents having to wrap multiple variables evaluating to `Map` objects inside `Object.fromEntries` themselves, like it was done previously.
+
+#### Added:
+
+-   Added the logging of:
+
+    -   The extension's user config settings.
+    -   Various VS Code environment info.
+    -   Various System environment info.
+
+    This allows for a more complete debugging diagnostic report.
+
 ## [1.1.7](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.7) - 2025-06-13
 
 #### Added:
