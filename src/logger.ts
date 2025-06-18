@@ -125,8 +125,26 @@ export class Logger {
 	 */
 	private formatMeta(message: string, meta: unknown): string {
 		// Convert the meta data to a JSON string with indentation for readability.
-		meta = JSON.stringify(meta, null, "\t").trim();
+		meta = JSON.stringify(meta, this.metaReplacer, "\t").trim();
 
 		return meta;
+	}
+
+	/**
+	 * A replacer function to handle special cases in `JSON.stringify`.
+	 *
+	 * @param _key The key is never used, but is required by the replacer function signature.
+	 * @param value The value of the property being stringified.
+	 *
+	 * @returns The value to be stringified.
+	 */
+	private metaReplacer(_key: string, value: unknown): unknown {
+		// Replace RegExp objects with their string representation, to allow for
+		// JSON.stringify to work properly and prevent it outputting empty objects.
+		if (value instanceof RegExp) {
+			return value.toString();
+		}
+
+		return value;
 	}
 }
