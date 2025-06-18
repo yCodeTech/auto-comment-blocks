@@ -62,8 +62,20 @@ export class Configuration {
 
 		// Always output extension information to channel on activate.
 		const extensionId = this.getExtensionNames().id;
-		this.logger.info(`Extension ID: ${extensionId}.`);
-		this.logger.info(`Extension Version: ${vscode.extensions.getExtension(extensionId)?.packageJSON.version}.`);
+		const extensionVersion = vscode.extensions.getExtension(extensionId)?.packageJSON.version;
+		this.logger.info(`Extension: ${extensionId} (${extensionVersion})`);
+
+		const env = {
+			"OS": process.platform,
+			"Platform": process.platform,
+			"VS Code Version": vscode.version,
+			"VS Code Root Path": vscode.env.appRoot,
+			"VS Code Built-in Extensions Path": `${vscode.env.appRoot}\\extensions`,
+			"VS Code Host": vscode.env.appHost,
+			"VS Code Remote Name": vscode.env.remoteName || "local",
+			"Other System Env Variables": process.env,
+		};
+		this.logger.debug("Environment:", env);
 
 		// Log the extension's user configuration settings.
 		this.logger.debug("Configuration settings:", this.getConfiguration());
