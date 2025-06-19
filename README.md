@@ -141,3 +141,5 @@ Reload the extension after changing any settings.
 -   Doesn't work properly on Windows Linux WSL2. VScode API only finds language configs that are installed only on WSL2, and not also on Windows. That means all the normal built-in as well as 3rd party extensions won't have auto comment blocks support in WSL2. (Related issue: [#6](https://github.com/yCodeTech/auto-comment-blocks/issues/6))
 
 Please [report an issue](https://github.com/yCodeTech/auto-comment-blocks/issues/new) if you find any bugs, or have questions or feature requests.
+
+As of v1.1.7, debugging information is now logged to a dedicated `Auto Comment Blocks` Output channel. Please save the entire log to file using the `Save Output As` button in the Output's "3-dot menu", and attach the file to any new issue.
