@@ -65,21 +65,6 @@ export class Configuration {
 		const extensionVersion = vscode.extensions.getExtension(extensionId)?.packageJSON.version;
 		this.logger.info(`Extension: ${extensionId} (${extensionVersion})`);
 
-		const env = {
-			"OS": process.platform,
-			"Platform": process.platform,
-			"VS Code Version": vscode.version,
-			"VS Code Root Path": vscode.env.appRoot,
-			"VS Code Built-in Extensions Path": `${vscode.env.appRoot}\\extensions`,
-			"VS Code Host": vscode.env.appHost,
-			"VS Code Remote Name": vscode.env.remoteName || "local",
-			"Other System Env Variables": process.env,
-		};
-		this.logger.debug("Environment:", env);
-
-		// Log the extension's user configuration settings.
-		this.logger.debug("Configuration settings:", this.getConfiguration());
-
 		this.findAllLanguageConfigFilePaths();
 		this.setLanguageConfigDefinitions();
 
@@ -87,11 +72,7 @@ export class Configuration {
 		this.setSingleLineCommentLanguageDefinitions();
 		this.writeCommentLanguageDefinitionsToJsonFile();
 
-		// Log the objects for debugging purposes.
-		this.logger.debug("The language config filepaths found are:", this.languageConfigFilePaths);
-		this.logger.debug("The language configs found are:", this.languageConfigs);
-		this.logger.debug("The supported languages for multi-line blocks:", this.multiLineBlocksMap);
-		this.logger.debug("The supported languages single-line blocks:", this.singleLineBlocksMap);
+		this.logDebugInfo();
 	}
 
 	/**
@@ -1000,5 +981,31 @@ export class Configuration {
 			// Set the comments for blade language.
 			this.setBladeComments(false);
 		}
+	}
+
+	/**
+	 * Logs the environment, configuration settings, and language configs for debugging purposes.
+	 */
+	private logDebugInfo() {
+		const env = {
+			"OS": process.platform,
+			"Platform": process.platform,
+			"VS Code Version": vscode.version,
+			"VS Code Root Path": vscode.env.appRoot,
+			"VS Code Built-in Extensions Path": `${vscode.env.appRoot}\\extensions`,
+			"VS Code Host": vscode.env.appHost,
+			"VS Code Remote Name": vscode.env.remoteName || "local",
+			"Other System Env Variables": process.env,
+		};
+		this.logger.debug("Environment:", env);
+
+		// Log the extension's user configuration settings.
+		this.logger.debug("Configuration settings:", this.getConfiguration());
+
+		// Log the objects for debugging purposes.
+		this.logger.debug("The language config filepaths found are:", this.languageConfigFilePaths);
+		this.logger.debug("The language configs found are:", this.languageConfigs);
+		this.logger.debug("The supported languages for multi-line blocks:", this.readJsonFile(this.multiLineLangDefinitionFilePath));
+		this.logger.debug("The supported languages for single-line blocks:", this.readJsonFile(this.singleLineLangDefinitionFilePath));
 	}
 }
