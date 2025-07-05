@@ -4,7 +4,9 @@
 <a href="https://marketplace.visualstudio.com/items?itemName=yCodeTech.automatic-comment-blocks"><img alt="Visual Studio Marketplace Installs" src="https://img.shields.io/visual-studio-marketplace/i/yCodeTech.automatic-comment-blocks?style=for-the-badge&label=VS%20Code%20Installs"></a>&nbsp;&nbsp;
 <a href="https://open-vsx.org/extension/ycodetech/automatic-comment-blocks"><img alt="Open VSX Registry Installs" src="https://img.shields.io/open-vsx/dt/yCodeTech/automatic-comment-blocks?style=for-the-badge&label=Open%20VSX%20Downloads"></a>
 
-A VScode extension that provides block comment completion for Javadoc-style multi-line comments and single-line comment blocks for most officially supported languages
+A VScode extension that provides block comment completion for Javadoc-style multi-line comments and single-line comment blocks for [_all_ supported languages](#as-of-v110-this-extension-now-automatically-adds-language-support-and-no-longer-keeps-hardcoded-language-support).
+
+![auto-block-comments](https://raw.githubusercontent.com/yCodeTech/auto-comment-blocks/master/img/auto-comment-blocks.gif)
 
 This is a fork of the original by [kevb34ns](https://github.com/kevb34ns/auto-comment-blocks) with lots of additional support.
 
@@ -82,9 +84,29 @@ Press `shift + enter` while on a commented line to insert a new commented line w
 
 The Language Support section shows which languages are supported. See the Settings section for how to add single-line comment support to languages that are not officially supported.
 
+#### Slash-style comments
+
+![slash-style-comments](https://raw.githubusercontent.com/yCodeTech/auto-comment-blocks/master/img/slash-style-comments.gif)
+
+![triple-slash-style-comments](https://raw.githubusercontent.com/yCodeTech/auto-comment-blocks/master/img/triple-slash-style-comments.gif)
+
+![qdoc-style-comments](https://raw.githubusercontent.com/yCodeTech/auto-comment-blocks/master/img/qdoc-style-comments.gif)
+
+#### Hash-style comments
+
+![hash-style-comments](https://raw.githubusercontent.com/yCodeTech/auto-comment-blocks/master/img/hash-style-comments.gif)
+
+![double-hash-style-comments](https://raw.githubusercontent.com/yCodeTech/auto-comment-blocks/master/img/double-hash-style-comments.gif)
+
+#### Semi-colon-style comments
+
+![semi-colon-style-comments](https://raw.githubusercontent.com/yCodeTech/auto-comment-blocks/master/img/semi-colon-style-comments.gif)
+
+![double-semi-colon-style-comments](https://raw.githubusercontent.com/yCodeTech/auto-comment-blocks/master/img/double-semi-colon-style-comments.gif)
+
 ### Multi-line Comment Blocks
 
-![Demo](https://raw.githubusercontent.com/kevinkyang/auto-comment-blocks/master/img/demo.gif)
+![Demo](https://raw.githubusercontent.com/yCodeTech/auto-comment-blocks/master/img/demo.gif)
 
 While inside any style of the multi-line comment blocks, when pressing `enter`, the extension will insert an asterisk (`*`) at the start of every new line, and align the comment, respecting indentation.
 
@@ -92,19 +114,25 @@ While inside any style of the multi-line comment blocks, when pressing `enter`, 
 
 Type `/**` to start the Javadoc-style block comment, after typing the 2nd `*`, the extension will auto-close the block.
 
+![javadoc-style-block-comments](https://raw.githubusercontent.com/yCodeTech/auto-comment-blocks/master/img/javadoc-style-block-comments.gif)
+
 #### QDoc-style (Qt) comment blocks
 
 Use `/*!` in all file types that support the normal `/*` comments to start a QDoc comment block; and like the Javadoc-style, the extension will auto-close the block after the `!` is typed.
 
-#### New: Normal comment blocks
+![qdoc-style-block-comments](https://raw.githubusercontent.com/yCodeTech/auto-comment-blocks/master/img/qdoc-style-block-comments.gif)
+
+#### Normal comment blocks
 
 Using the normal comment block `/* */` either typing manually or the native VScode command "Toggle Block Comment" (`editor.action.blockComment`, native keybinding `shift + alt + a`), the block will have the same on enter functionality as described above.
+
+![block-comments](https://raw.githubusercontent.com/yCodeTech/auto-comment-blocks/master/img/block-comments.gif)
 
 ## Language Support
 
 All auto-supported languages are defined in the auto-generated files found in [auto-generated-language-definitions directory](auto-generated-language-definitions) of the repo. Custom supported languages specified by user settings can also appear in these files.
 
-These files are only for documentation purposes and are not used in the extension.
+These files are only for documentation purposes and debug logging.
 
 Some languages that appear in the files will have been added from 3rd party language extensions. The supported languages will be different from person to person, dependant on extensions installed/enabled.
 
