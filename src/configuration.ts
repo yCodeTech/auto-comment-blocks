@@ -5,6 +5,7 @@ import * as vscode from "vscode";
 import * as fs from "node:fs";
 import * as jsonc from "jsonc-parser";
 import * as path from "path";
+import isWsl from "is-wsl";
 
 import {Rules} from "./rules";
 import {Logger} from "./logger";
