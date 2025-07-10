@@ -23,6 +23,11 @@ export class Configuration {
 	private logger: Logger;
 
 	/**
+	 * This extension details in the form of a key:value Map object, for ease of use.
+	 */
+	private extensionDetails = new Map<string, any>();
+
+	/**
 	 * A key:value Map object of language IDs and their config file paths.
 	 */
 	private languageConfigFilePaths = new Map<string, string>();
@@ -61,10 +66,12 @@ export class Configuration {
 	public constructor(logger: Logger) {
 		this.logger = logger;
 
+		this.setExtensionData();
+
 		// Always output extension information to channel on activate.
-		const extensionId = this.getExtensionNames().id;
-		const extensionVersion = vscode.extensions.getExtension(extensionId)?.packageJSON.version;
-		this.logger.info(`Extension: ${extensionId} (${extensionVersion})`);
+		const id = this.getExtensionData("id");
+		const version = this.getExtensionData("version");
+		this.logger.info(`Extension: ${id} (${version})`);
 
 		this.findAllLanguageConfigFilePaths();
 		this.setLanguageConfigDefinitions();
@@ -194,22 +201,56 @@ export class Configuration {
 	}
 
 	/**
-	 * Get the names and ids of this extension from package.json.
+	 * Get the names, id, and version of this extension from package.json.
 	 *
-	 * @returns {object} An object containing the extension id, name, and display name.
+	 * @returns {object} An object containing the extension id, name, display name, and version.
 	 */
-	public getExtensionNames(): {id: string; name: string; displayName: string} {
-		const packageJSON = JSON.parse(fs.readFileSync(__dirname + "/../../package.json").toString());
+	private getExtensionPackageJsonData(): {id: string; name: string; displayName: string; version: string} {
+		const packageJSON = this.readJsonFile(__dirname + "/../../package.json");
 
 		const displayName: string = packageJSON.displayName;
 		const fullname: string = packageJSON.name;
 		const id: string = `${packageJSON.publisher}.${fullname}`;
+		const version: string = packageJSON.version;
 
 		let nameParts = fullname.split("-");
 		nameParts[0] = "auto";
 		const name = nameParts.join("-");
 
-		return {id: id, name: name, displayName: displayName};
+		return {id: id, name: name, displayName: displayName, version: version};
+	}
+
+	/**
+	 * Set the extension data into the extensionDetails Map.
+	 */
+	private setExtensionData() {
+		const extensionPackageJsonData = this.getExtensionPackageJsonData();
+
+		const id = extensionPackageJsonData.id;
+		const name = extensionPackageJsonData.name;
+		const displayName = extensionPackageJsonData.displayName;
+		const version = extensionPackageJsonData.version;
+
+		const userExtensionsPath = path.join(vscode.extensions.getExtension(id).extensionPath, "../");
+
+		this.extensionDetails.set("id", id);
+		this.extensionDetails.set("name", name);
+		this.extensionDetails.set("displayName", displayName);
+		this.extensionDetails.set("version", version);
+		this.extensionDetails.set("userExtensionsPath", userExtensionsPath);
+	}
+
+	/**
+	 * Get the extension's details.
+	 *
+	 * @param {string} key The key of the specific extension detail to get.
+	 *
+	 * @returns {any} Returns a value of a specific key.
+	 */
+	public getExtensionData(key: string): any {
+		if (this.extensionDetails.has(key)) {
+			return this.extensionDetails.get(key);
+		}
 	}
 
 	/**
@@ -218,7 +259,7 @@ export class Configuration {
 	 * @returns {vscode.WorkspaceConfiguration}
 	 */
 	public getConfiguration(): vscode.WorkspaceConfiguration {
-		return vscode.workspace.getConfiguration(this.getExtensionNames().name, null);
+		return vscode.workspace.getConfiguration(this.getExtensionData("name"), null);
 	}
 
 	/**
@@ -1005,7 +1046,7 @@ export class Configuration {
 	 */
 	private handleChangeBladeMultiLineBlock(textEditor: vscode.TextEditor) {
 		let langId = textEditor.document.languageId;
-		const extensionNames = this.getExtensionNames();
+		const extensionName = this.getExtensionData("name");
 
 		// Only carry out function if languageId is blade.
 		if (langId === "blade" && !this.isLangIdDisabled(langId)) {
@@ -1029,7 +1070,7 @@ export class Configuration {
 		// then output a message to the user.
 		else if (langId == "blade" && this.isLangIdDisabled(langId)) {
 			vscode.window.showInformationMessage(
-				`Blade is set as disabled in the "${extensionNames.name}.disabledLanguages" setting. The "${extensionNames.name}.bladeOverrideComments" setting will have no affect.`,
+				`Blade is set as disabled in the "${extensionName}.disabledLanguages" setting. The "${extensionName}.bladeOverrideComments" setting will have no affect.`,
 				"OK"
 			);
 
@@ -1044,8 +1085,6 @@ export class Configuration {
 	 * @returns {Object} An object containing the user and built-in extensions paths.
 	 */
 	private getExtensionsPathsFromWslEnv() {
-		const extensionNames = this.getExtensionNames();
-
 		/** Built-in Extensions */
 
 		// Get the path to the VS Code's exectutable from the VSCODE_CWD environment variable.
