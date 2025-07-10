@@ -232,12 +232,14 @@ export class Configuration {
 		const version = extensionPackageJsonData.version;
 
 		const userExtensionsPath = path.join(vscode.extensions.getExtension(id).extensionPath, "../");
+		const builtInExtensionsPath = path.join(vscode.env.appRoot, "extensions");
 
 		this.extensionDetails.set("id", id);
 		this.extensionDetails.set("name", name);
 		this.extensionDetails.set("displayName", displayName);
 		this.extensionDetails.set("version", version);
 		this.extensionDetails.set("userExtensionsPath", userExtensionsPath);
+		this.extensionDetails.set("builtInExtensionsPath", builtInExtensionsPath);
 	}
 
 	/**
@@ -1117,7 +1119,7 @@ export class Configuration {
 	private logDebugInfo() {
 		// The path to the built-in extensions. The env variable changes when on WSL.
 		// So we can use it for both Windows and WSL.
-		const builtInExtensionsPath = path.join(vscode.env.appRoot, "extensions");
+		const builtInExtensionsPath = this.getExtensionData("builtInExtensionsPath");
 
 		let extensionsPaths = {};
 
