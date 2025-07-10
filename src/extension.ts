@@ -17,10 +17,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 	disposables.push(...configureCommentBlocksDisposable, ...registerCommandsDisposable);
 
-	const extensionNames = configuration.getExtensionNames();
-
-	const extensionName = extensionNames.name;
-	const extensionDisplayName = extensionNames.displayName;
+	const extensionName = configuration.getExtensionData("name");
+	const extensionDisplayName = configuration.getExtensionData("displayName");
 
 	let disabledLangConfig: string[] = configuration.getConfigurationValue<string[]>("disabledLanguages");
 
