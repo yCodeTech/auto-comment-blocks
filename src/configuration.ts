@@ -1132,12 +1132,9 @@ export class Configuration {
 				"WSL-installed User Extensions Path": path.join(vscode.env.appRoot, "../../", "extensions"),
 			};
 		} else {
-			// Get the user home directory from the environment variable:
-			// `USERPROFILE` on Windows, `HOME` on macOS/Linux.
-			const userHome = process.env.USERPROFILE || process.env.HOME;
 			extensionsPaths = {
 				"Built-in Extensions Path": builtInExtensionsPath,
-				"User Extensions Path": path.join(userHome, ".vscode", "extensions"),
+				"User Extensions Path": this.getExtensionData("userExtensionsPath"),
 			};
 		}
 
