@@ -304,8 +304,27 @@ export class Configuration {
 	 * (built-in and 3rd party).
 	 */
 	private findAllLanguageConfigFilePaths() {
+		const extensions: any[] = [];
+
+		// If running in WSL...
+		if (isWsl) {
+			// Get the Windows built-in and user extensions paths from WSL environment variables.
+			const {builtInExtensionsPathFromWsl, userExtensionsPathFromWsl} = this.getExtensionsPathsFromWslEnv();
+
+			// Read the paths and create arrays of the extensions.
+			const builtInExtensions = this.readExtensionsFromDirectory(builtInExtensionsPathFromWsl);
+			const userExtensions = this.readExtensionsFromDirectory(userExtensionsPathFromWsl);
+
+			// Combine the built-in and user extensions into the extensions array.
+			extensions.push(...builtInExtensions, ...userExtensions);
+		}
+
+		// Add all installed extensions (including built-in ones) into the extensions array.
+		// If running WSL, these will be the WSL-installed extensions.
+		extensions.push(...vscode.extensions.all);
+
 		// Loop through all installed extensions, including built-in extensions
-		for (let extension of vscode.extensions.all) {
+		for (let extension of extensions) {
 			const packageJSON = extension.packageJSON;
 
 			// If an extension package.json has "contributes" key,
@@ -423,6 +442,41 @@ export class Configuration {
 		// Write the updated JSON back into the file and add tab indentation
 		// to make it easier to read.
 		fs.writeFileSync(filepath, JSON.stringify(data, null, "\t"));
+	}
+
+	/**
+	 * Read the directory in the given path and return an array of objects with the data of
+	 * all extensions found in the directory.
+	 *
+	 * @param {string} extensionsPath The path where extensions are stored.
+	 *
+	 * @returns {Array<{ id: string; extensionPath: string; packageJSON: any }>}
+	 */
+	private readExtensionsFromDirectory(extensionsPath: string): Array<{id: string; extensionPath: string; packageJSON: any}> {
+		// Create an array to hold the found extensions.
+		const foundExtensions: Array<{id: string; extensionPath: string; packageJSON: any}> = [];
+
+		fs.readdirSync(extensionsPath).forEach((extensionName) => {
+			const extensionPath = path.join(extensionsPath, extensionName);
+
+			// If the extensionName is a directory...
+			if (fs.statSync(extensionPath).isDirectory()) {
+				// Get the package.json file path.
+				const packageJSONPath = path.join(extensionPath, "package.json");
+
+				// If the package.json file exists...
+				if (fs.existsSync(packageJSONPath)) {
+					const packageJSON = this.readJsonFile(packageJSONPath);
+
+					const id = `${packageJSON.publisher}.${packageJSON.name}`;
+
+					// Push the extension data object into the array.
+					foundExtensions.push({id, extensionPath, packageJSON});
+				}
+			}
+		});
+
+		return foundExtensions;
 	}
 
 	/**
@@ -974,6 +1028,40 @@ export class Configuration {
 			// Set the comments for blade language.
 			this.setBladeComments(false);
 		}
+	}
+
+	/**
+	 * Gets the user and built-in extensions paths on Windows from WSL environment variables.
+	 *
+	 * @returns {Object} An object containing the user and built-in extensions paths.
+	 */
+	private getExtensionsPathsFromWslEnv() {
+		const extensionNames = this.getExtensionNames();
+
+		/** Built-in Extensions */
+
+		// Get the path to the VS Code's exectutable from the VSCODE_CWD environment variable.
+		// The variable will be a path like:
+		// "/mnt/c/Users/USERNAME/AppData/Local/Programs/Microsoft VS Code".
+		const vscodePathFromWsl = process.env.VSCODE_CWD;
+		// Append "resources/app/extensions" to the base path to form the path to the
+		// built-in extensions.
+		const builtInExtensionsPathFromWsl = path.join(vscodePathFromWsl, "resources/app/extensions");
+
+		/** User Extensions */
+
+		// Get the user extensions path from VSCODE_WSL_EXT_LOCATION env variable.
+		// If it's not set, then use an empty string.
+		// The variable will be a path like:
+		// "/mnt/c/Users/USERNAME/.vscode/extensions/ms-vscode-remote.remote-wsl-0.99.0".
+		// So we just need to return the directory name like:
+		// "/mnt/c/Users/USERNAME/.vscode/extensions/"
+		const userExtensionsPathFromWsl = path.dirname(process.env.VSCODE_WSL_EXT_LOCATION);
+
+		return {
+			builtInExtensionsPathFromWsl,
+			userExtensionsPathFromWsl,
+		};
 	}
 
 	/**
