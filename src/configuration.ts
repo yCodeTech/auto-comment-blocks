@@ -1076,14 +1076,38 @@ export class Configuration {
 	 * Logs the environment, configuration settings, and language configs for debugging purposes.
 	 */
 	private logDebugInfo() {
+		// The path to the built-in extensions. The env variable changes when on WSL.
+		// So we can use it for both Windows and WSL.
+		const builtInExtensionsPath = path.join(vscode.env.appRoot, "extensions");
+
+		let extensionsPaths = {};
+
+		if (isWsl) {
+			// Get the Windows user and built-in extensions paths on Windows from WSL environment variables.
+			const {builtInExtensionsPathFromWsl, userExtensionsPathFromWsl} = this.getExtensionsPathsFromWslEnv();
+
+			extensionsPaths = {
+				"Windows-installed Built-in Extensions Path": builtInExtensionsPathFromWsl,
+				"Windows-installed User Extensions Path": userExtensionsPathFromWsl,
+				"WSL-installed Built-in Extensions Path": builtInExtensionsPath,
+				"WSL-installed User Extensions Path": path.join(vscode.env.appRoot, "../../", "extensions"),
+			};
+		} else {
+			extensionsPaths = {
+				"Built-in Extensions Path": builtInExtensionsPath,
+				"User Extensions Path": path.join(process.env.USERPROFILE, ".vscode", "extensions"),
+			};
+		}
+
 		const env = {
 			"OS": process.platform,
 			"Platform": process.platform,
-			"VS Code Version": vscode.version,
-			"VS Code Root Path": vscode.env.appRoot,
-			"VS Code Built-in Extensions Path": `${vscode.env.appRoot}\\extensions`,
-			"VS Code Host": vscode.env.appHost,
-			"VS Code Remote Name": vscode.env.remoteName || "local",
+			"VS Code Details": {
+				"Version": vscode.version,
+				"Remote Name": vscode.env.remoteName || "local",
+				"Host": vscode.env.appHost,
+				...extensionsPaths,
+			},
 			"Other System Env Variables": process.env,
 		};
 		this.logger.debug("Environment:", env);
