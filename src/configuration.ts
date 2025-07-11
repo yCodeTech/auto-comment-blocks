@@ -523,6 +523,11 @@ export class Configuration {
 
 			// If the extensionName is a directory...
 			if (fs.statSync(extensionPath).isDirectory()) {
+				// If the extensionName starts with a dot, skip it.
+				if (extensionName.startsWith(".")) {
+					return;
+				}
+
 				// Get the package.json file path.
 				const packageJSONPath = path.join(extensionPath, "package.json");
 
