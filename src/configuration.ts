@@ -231,7 +231,13 @@ export class Configuration {
 		const displayName = extensionPackageJsonData.displayName;
 		const version = extensionPackageJsonData.version;
 
-		const userExtensionsPath = path.join(vscode.extensions.getExtension(id).extensionPath, "../");
+		// The path to the user extensions.
+		const userExtensionsPath = isWSL
+			? path.join(vscode.env.appRoot, "../../", "extensions")
+			: path.join(vscode.extensions.getExtension(id).extensionPath, "../");
+
+		// The path to the built-in extensions.
+		// This env variable changes when on WSL to it's WSL-built-in extensions path.
 		const builtInExtensionsPath = path.join(vscode.env.appRoot, "extensions");
 
 		this.extensionDetails.set("id", id);
@@ -240,6 +246,18 @@ export class Configuration {
 		this.extensionDetails.set("version", version);
 		this.extensionDetails.set("userExtensionsPath", userExtensionsPath);
 		this.extensionDetails.set("builtInExtensionsPath", builtInExtensionsPath);
+
+		if (isWsl) {
+			// Get the root path to VS Code from the env variable, and use it to get
+			// the Windows built-in extensions.
+			const windowsBuiltInExtensionsPathFromWsl = path.join(process.env.VSCODE_CWD, "resources/app/extensions");
+
+			// Get the Windows user extensions path from env variable.
+			const windowsUserExtensionsPathFromWsl = path.dirname(process.env.VSCODE_WSL_EXT_LOCATION);
+
+			this.extensionDetails.set("WindowsUserExtensionsPathFromWsl", windowsUserExtensionsPathFromWsl);
+			this.extensionDetails.set("WindowsBuiltInExtensionsPathFromWsl", windowsBuiltInExtensionsPathFromWsl);
+		}
 	}
 
 	/**
@@ -351,12 +369,13 @@ export class Configuration {
 
 		// If running in WSL...
 		if (isWsl) {
-			// Get the Windows built-in and user extensions paths from WSL environment variables.
-			const {builtInExtensionsPathFromWsl, userExtensionsPathFromWsl} = this.getExtensionsPathsFromWslEnv();
+			// Get the Windows user and built-in extensions paths.
+			const windowsUserExtensionsPath = this.getExtensionData("WindowsUserExtensionsPathFromWsl");
+			const windowsBuiltInExtensionsPath = this.getExtensionData("WindowsBuiltInExtensionsPathFromWsl");
 
 			// Read the paths and create arrays of the extensions.
-			const builtInExtensions = this.readExtensionsFromDirectory(builtInExtensionsPathFromWsl);
-			const userExtensions = this.readExtensionsFromDirectory(userExtensionsPathFromWsl);
+			const builtInExtensions = this.readExtensionsFromDirectory(windowsBuiltInExtensionsPath);
+			const userExtensions = this.readExtensionsFromDirectory(windowsUserExtensionsPath);
 
 			// Combine the built-in and user extensions into the extensions array.
 			extensions.push(...builtInExtensions, ...userExtensions);
@@ -1082,38 +1101,6 @@ export class Configuration {
 	}
 
 	/**
-	 * Gets the user and built-in extensions paths on Windows from WSL environment variables.
-	 *
-	 * @returns {Object} An object containing the user and built-in extensions paths.
-	 */
-	private getExtensionsPathsFromWslEnv() {
-		/** Built-in Extensions */
-
-		// Get the path to the VS Code's exectutable from the VSCODE_CWD environment variable.
-		// The variable will be a path like:
-		// "/mnt/c/Users/USERNAME/AppData/Local/Programs/Microsoft VS Code".
-		const vscodePathFromWsl = process.env.VSCODE_CWD;
-		// Append "resources/app/extensions" to the base path to form the path to the
-		// built-in extensions.
-		const builtInExtensionsPathFromWsl = path.join(vscodePathFromWsl, "resources/app/extensions");
-
-		/** User Extensions */
-
-		// Get the user extensions path from VSCODE_WSL_EXT_LOCATION env variable.
-		// If it's not set, then use an empty string.
-		// The variable will be a path like:
-		// "/mnt/c/Users/USERNAME/.vscode/extensions/ms-vscode-remote.remote-wsl-0.99.0".
-		// So we just need to return the directory name like:
-		// "/mnt/c/Users/USERNAME/.vscode/extensions/"
-		const userExtensionsPathFromWsl = path.dirname(process.env.VSCODE_WSL_EXT_LOCATION);
-
-		return {
-			builtInExtensionsPathFromWsl,
-			userExtensionsPathFromWsl,
-		};
-	}
-
-	/**
 	 * Logs the environment, configuration settings, and language configs for debugging purposes.
 	 */
 	private logDebugInfo() {
@@ -1124,14 +1111,15 @@ export class Configuration {
 		let extensionsPaths = {};
 
 		if (isWsl) {
-			// Get the Windows user and built-in extensions paths on Windows from WSL environment variables.
-			const {builtInExtensionsPathFromWsl, userExtensionsPathFromWsl} = this.getExtensionsPathsFromWslEnv();
+			// Get the Windows user and built-in extensions paths.
+			const windowsUserExtensionsPath = this.getExtensionData("WindowsUserExtensionsPathFromWsl");
+			const windowsBuiltInExtensionsPath = this.getExtensionData("WindowsBuiltInExtensionsPathFromWsl");
 
 			extensionsPaths = {
-				"Windows-installed Built-in Extensions Path": builtInExtensionsPathFromWsl,
-				"Windows-installed User Extensions Path": userExtensionsPathFromWsl,
+				"Windows-installed Built-in Extensions Path": windowsBuiltInExtensionsPath,
+				"Windows-installed User Extensions Path": windowsUserExtensionsPath,
 				"WSL-installed Built-in Extensions Path": builtInExtensionsPath,
-				"WSL-installed User Extensions Path": path.join(vscode.env.appRoot, "../../", "extensions"),
+				"WSL-installed User Extensions Path": this.getExtensionData("userExtensionsPath"),
 			};
 		} else {
 			extensionsPaths = {
