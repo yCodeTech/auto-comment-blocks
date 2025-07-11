@@ -71,7 +71,7 @@ export class Configuration {
 		// Always output extension information to channel on activate.
 		const id = this.getExtensionData("id");
 		const version = this.getExtensionData("version");
-		this.logger.info(`Extension: ${id} (${version})`);
+		this.logger.debug(`Extension details:`, this.extensionDetails);
 
 		this.findAllLanguageConfigFilePaths();
 		this.setLanguageConfigDefinitions();
