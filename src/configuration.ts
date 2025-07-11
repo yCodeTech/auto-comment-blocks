@@ -622,16 +622,24 @@ export class Configuration {
 			// If the config object has own property of comments AND the comments key has
 			// own property of lineComment...
 			if (Object.hasOwn(config, "comments") && Object.hasOwn(config.comments, "lineComment")) {
+				let lineComment = config.comments.lineComment;
+
+				// Line comments can be a string or an object with a "comment" key.
+				// If the lineComment is an object, get the "comment" key value.
+				if (Object.hasOwn(lineComment, "comment")) {
+					lineComment = lineComment.comment;
+				}
+
 				// If the lineComment is "//"...
-				if (config.comments.lineComment === "//") {
+				if (lineComment === "//") {
 					style = "//";
 				}
 				// If the lineComment is "#"...
-				else if (config.comments.lineComment === "#") {
+				else if (lineComment === "#") {
 					style = "#";
 				}
 				// If the lineComment includes a ";" (; or ;;)...
-				else if (config.comments.lineComment.includes(";")) {
+				else if (lineComment.includes(";")) {
 					style = ";";
 				}
 
