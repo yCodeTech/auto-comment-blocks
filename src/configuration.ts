@@ -232,7 +232,7 @@ export class Configuration {
 		const version = extensionPackageJsonData.version;
 
 		// The path to the user extensions.
-		const userExtensionsPath = isWSL
+		const userExtensionsPath = isWsl
 			? path.join(vscode.env.appRoot, "../../", "extensions")
 			: path.join(vscode.extensions.getExtension(id).extensionPath, "../");
 
