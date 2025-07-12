@@ -4,6 +4,20 @@ All notable changes to this extension will be documented in this file.
 
 This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure.
 
+## [1.1.9](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.9) - 2025-07-12
+
+#### Fixed:
+
+-   Fixes yCodeTech/auto-comment-blocks#10
+
+    The `lineComment` language config key has changed to be either a string or an object. With the object having `comment` and `noIndent` keys, which was introduced in VS Code's June 2025 release. This breaks the extension when encountering the `makefile` language, and an error occurs:
+
+    > lineComment.includes is not a function
+
+    To fix:
+
+    -   Added a check to see if the `lineComment` is an object with a `comment` key inside, if it does then use the string value of the `comment` key. Otherwise, it will use the string value of the `lineComment`.
+
 ## [1.1.8](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.8) - 2025-06-19
 
 #### Fixed:
