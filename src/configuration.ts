@@ -5,6 +5,7 @@ import * as vscode from "vscode";
 import * as fs from "node:fs";
 import * as jsonc from "jsonc-parser";
 import * as path from "path";
+import isWsl from "is-wsl";
 
 import {Rules} from "./rules";
 import {Logger} from "./logger";
@@ -20,6 +21,11 @@ export class Configuration {
 	 * @type {Logger}
 	 */
 	private logger: Logger;
+
+	/**
+	 * This extension details in the form of a key:value Map object, for ease of use.
+	 */
+	private extensionDetails = new Map<string, any>();
 
 	/**
 	 * A key:value Map object of language IDs and their config file paths.
@@ -60,25 +66,12 @@ export class Configuration {
 	public constructor(logger: Logger) {
 		this.logger = logger;
 
+		this.setExtensionData();
+
 		// Always output extension information to channel on activate.
-		const extensionId = this.getExtensionNames().id;
-		const extensionVersion = vscode.extensions.getExtension(extensionId)?.packageJSON.version;
-		this.logger.info(`Extension: ${extensionId} (${extensionVersion})`);
-
-		const env = {
-			"OS": process.platform,
-			"Platform": process.platform,
-			"VS Code Version": vscode.version,
-			"VS Code Root Path": vscode.env.appRoot,
-			"VS Code Built-in Extensions Path": `${vscode.env.appRoot}\\extensions`,
-			"VS Code Host": vscode.env.appHost,
-			"VS Code Remote Name": vscode.env.remoteName || "local",
-			"Other System Env Variables": process.env,
-		};
-		this.logger.debug("Environment:", env);
-
-		// Log the extension's user configuration settings.
-		this.logger.debug("Configuration settings:", this.getConfiguration());
+		const id = this.getExtensionData("id");
+		const version = this.getExtensionData("version");
+		this.logger.debug(`Extension details:`, this.extensionDetails);
 
 		this.findAllLanguageConfigFilePaths();
 		this.setLanguageConfigDefinitions();
@@ -87,11 +80,7 @@ export class Configuration {
 		this.setSingleLineCommentLanguageDefinitions();
 		this.writeCommentLanguageDefinitionsToJsonFile();
 
-		// Log the objects for debugging purposes.
-		this.logger.debug("The language config filepaths found are:", this.languageConfigFilePaths);
-		this.logger.debug("The language configs found are:", this.languageConfigs);
-		this.logger.debug("The supported languages for multi-line blocks:", this.multiLineBlocksMap);
-		this.logger.debug("The supported languages single-line blocks:", this.singleLineBlocksMap);
+		this.logDebugInfo();
 	}
 
 	/**
@@ -212,22 +201,76 @@ export class Configuration {
 	}
 
 	/**
-	 * Get the names and ids of this extension from package.json.
+	 * Get the names, id, and version of this extension from package.json.
 	 *
-	 * @returns {object} An object containing the extension id, name, and display name.
+	 * @returns {object} An object containing the extension id, name, display name, and version.
 	 */
-	public getExtensionNames(): {id: string; name: string; displayName: string} {
-		const packageJSON = JSON.parse(fs.readFileSync(__dirname + "/../../package.json").toString());
+	private getExtensionPackageJsonData(): {id: string; name: string; displayName: string; version: string} {
+		const packageJSON = this.readJsonFile(__dirname + "/../../package.json");
 
 		const displayName: string = packageJSON.displayName;
 		const fullname: string = packageJSON.name;
 		const id: string = `${packageJSON.publisher}.${fullname}`;
+		const version: string = packageJSON.version;
 
 		let nameParts = fullname.split("-");
 		nameParts[0] = "auto";
 		const name = nameParts.join("-");
 
-		return {id: id, name: name, displayName: displayName};
+		return {id: id, name: name, displayName: displayName, version: version};
+	}
+
+	/**
+	 * Set the extension data into the extensionDetails Map.
+	 */
+	private setExtensionData() {
+		const extensionPackageJsonData = this.getExtensionPackageJsonData();
+
+		const id = extensionPackageJsonData.id;
+		const name = extensionPackageJsonData.name;
+		const displayName = extensionPackageJsonData.displayName;
+		const version = extensionPackageJsonData.version;
+
+		// The path to the user extensions.
+		const userExtensionsPath = isWsl
+			? path.join(vscode.env.appRoot, "../../", "extensions")
+			: path.join(vscode.extensions.getExtension(id).extensionPath, "../");
+
+		// The path to the built-in extensions.
+		// This env variable changes when on WSL to it's WSL-built-in extensions path.
+		const builtInExtensionsPath = path.join(vscode.env.appRoot, "extensions");
+
+		this.extensionDetails.set("id", id);
+		this.extensionDetails.set("name", name);
+		this.extensionDetails.set("displayName", displayName);
+		this.extensionDetails.set("version", version);
+		this.extensionDetails.set("userExtensionsPath", userExtensionsPath);
+		this.extensionDetails.set("builtInExtensionsPath", builtInExtensionsPath);
+
+		if (isWsl) {
+			// Get the root path to VS Code from the env variable, and use it to get
+			// the Windows built-in extensions.
+			const windowsBuiltInExtensionsPathFromWsl = path.join(process.env.VSCODE_CWD, "resources/app/extensions");
+
+			// Get the Windows user extensions path from env variable.
+			const windowsUserExtensionsPathFromWsl = path.dirname(process.env.VSCODE_WSL_EXT_LOCATION);
+
+			this.extensionDetails.set("WindowsUserExtensionsPathFromWsl", windowsUserExtensionsPathFromWsl);
+			this.extensionDetails.set("WindowsBuiltInExtensionsPathFromWsl", windowsBuiltInExtensionsPathFromWsl);
+		}
+	}
+
+	/**
+	 * Get the extension's details.
+	 *
+	 * @param {string} key The key of the specific extension detail to get.
+	 *
+	 * @returns {any} Returns a value of a specific key.
+	 */
+	public getExtensionData(key: string): any {
+		if (this.extensionDetails.has(key)) {
+			return this.extensionDetails.get(key);
+		}
 	}
 
 	/**
@@ -236,7 +279,7 @@ export class Configuration {
 	 * @returns {vscode.WorkspaceConfiguration}
 	 */
 	public getConfiguration(): vscode.WorkspaceConfiguration {
-		return vscode.workspace.getConfiguration(this.getExtensionNames().name, null);
+		return vscode.workspace.getConfiguration(this.getExtensionData("name"), null);
 	}
 
 	/**
@@ -322,8 +365,28 @@ export class Configuration {
 	 * (built-in and 3rd party).
 	 */
 	private findAllLanguageConfigFilePaths() {
+		const extensions: any[] = [];
+
+		// If running in WSL...
+		if (isWsl) {
+			// Get the Windows user and built-in extensions paths.
+			const windowsUserExtensionsPath = this.getExtensionData("WindowsUserExtensionsPathFromWsl");
+			const windowsBuiltInExtensionsPath = this.getExtensionData("WindowsBuiltInExtensionsPathFromWsl");
+
+			// Read the paths and create arrays of the extensions.
+			const builtInExtensions = this.readExtensionsFromDirectory(windowsBuiltInExtensionsPath);
+			const userExtensions = this.readExtensionsFromDirectory(windowsUserExtensionsPath);
+
+			// Combine the built-in and user extensions into the extensions array.
+			extensions.push(...builtInExtensions, ...userExtensions);
+		}
+
+		// Add all installed extensions (including built-in ones) into the extensions array.
+		// If running WSL, these will be the WSL-installed extensions.
+		extensions.push(...vscode.extensions.all);
+
 		// Loop through all installed extensions, including built-in extensions
-		for (let extension of vscode.extensions.all) {
+		for (let extension of extensions) {
 			const packageJSON = extension.packageJSON;
 
 			// If an extension package.json has "contributes" key,
@@ -441,6 +504,46 @@ export class Configuration {
 		// Write the updated JSON back into the file and add tab indentation
 		// to make it easier to read.
 		fs.writeFileSync(filepath, JSON.stringify(data, null, "\t"));
+	}
+
+	/**
+	 * Read the directory in the given path and return an array of objects with the data of
+	 * all extensions found in the directory.
+	 *
+	 * @param {string} extensionsPath The path where extensions are stored.
+	 *
+	 * @returns {Array<{ id: string; extensionPath: string; packageJSON: any }>}
+	 */
+	private readExtensionsFromDirectory(extensionsPath: string): Array<{id: string; extensionPath: string; packageJSON: any}> {
+		// Create an array to hold the found extensions.
+		const foundExtensions: Array<{id: string; extensionPath: string; packageJSON: any}> = [];
+
+		fs.readdirSync(extensionsPath).forEach((extensionName) => {
+			const extensionPath = path.join(extensionsPath, extensionName);
+
+			// If the extensionName is a directory...
+			if (fs.statSync(extensionPath).isDirectory()) {
+				// If the extensionName starts with a dot, skip it.
+				if (extensionName.startsWith(".")) {
+					return;
+				}
+
+				// Get the package.json file path.
+				const packageJSONPath = path.join(extensionPath, "package.json");
+
+				// If the package.json file exists...
+				if (fs.existsSync(packageJSONPath)) {
+					const packageJSON = this.readJsonFile(packageJSONPath);
+
+					const id = `${packageJSON.publisher}.${packageJSON.name}`;
+
+					// Push the extension data object into the array.
+					foundExtensions.push({id, extensionPath, packageJSON});
+				}
+			}
+		});
+
+		return foundExtensions;
 	}
 
 	/**
@@ -969,7 +1072,7 @@ export class Configuration {
 	 */
 	private handleChangeBladeMultiLineBlock(textEditor: vscode.TextEditor) {
 		let langId = textEditor.document.languageId;
-		const extensionNames = this.getExtensionNames();
+		const extensionName = this.getExtensionData("name");
 
 		// Only carry out function if languageId is blade.
 		if (langId === "blade" && !this.isLangIdDisabled(langId)) {
@@ -993,12 +1096,63 @@ export class Configuration {
 		// then output a message to the user.
 		else if (langId == "blade" && this.isLangIdDisabled(langId)) {
 			vscode.window.showInformationMessage(
-				`Blade is set as disabled in the "${extensionNames.name}.disabledLanguages" setting. The "${extensionNames.name}.bladeOverrideComments" setting will have no affect.`,
+				`Blade is set as disabled in the "${extensionName}.disabledLanguages" setting. The "${extensionName}.bladeOverrideComments" setting will have no affect.`,
 				"OK"
 			);
 
 			// Set the comments for blade language.
 			this.setBladeComments(false);
 		}
+	}
+
+	/**
+	 * Logs the environment, configuration settings, and language configs for debugging purposes.
+	 */
+	private logDebugInfo() {
+		// The path to the built-in extensions. The env variable changes when on WSL.
+		// So we can use it for both Windows and WSL.
+		const builtInExtensionsPath = this.getExtensionData("builtInExtensionsPath");
+
+		let extensionsPaths = {};
+
+		if (isWsl) {
+			// Get the Windows user and built-in extensions paths.
+			const windowsUserExtensionsPath = this.getExtensionData("WindowsUserExtensionsPathFromWsl");
+			const windowsBuiltInExtensionsPath = this.getExtensionData("WindowsBuiltInExtensionsPathFromWsl");
+
+			extensionsPaths = {
+				"Windows-installed Built-in Extensions Path": windowsBuiltInExtensionsPath,
+				"Windows-installed User Extensions Path": windowsUserExtensionsPath,
+				"WSL-installed Built-in Extensions Path": builtInExtensionsPath,
+				"WSL-installed User Extensions Path": this.getExtensionData("userExtensionsPath"),
+			};
+		} else {
+			extensionsPaths = {
+				"Built-in Extensions Path": builtInExtensionsPath,
+				"User Extensions Path": this.getExtensionData("userExtensionsPath"),
+			};
+		}
+
+		const env = {
+			"OS": process.platform,
+			"Platform": process.platform,
+			"VS Code Details": {
+				"Version": vscode.version,
+				"Remote Name": vscode.env.remoteName || "local",
+				"Host": vscode.env.appHost,
+				...extensionsPaths,
+			},
+			"Other System Env Variables": process.env,
+		};
+		this.logger.debug("Environment:", env);
+
+		// Log the extension's user configuration settings.
+		this.logger.debug("Configuration settings:", this.getConfiguration());
+
+		// Log the objects for debugging purposes.
+		this.logger.debug("The language config filepaths found are:", this.languageConfigFilePaths);
+		this.logger.debug("The language configs found are:", this.languageConfigs);
+		this.logger.debug("The supported languages for multi-line blocks:", this.readJsonFile(this.multiLineLangDefinitionFilePath));
+		this.logger.debug("The supported languages for single-line blocks:", this.readJsonFile(this.singleLineLangDefinitionFilePath));
 	}
 }
