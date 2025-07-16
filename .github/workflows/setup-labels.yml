@@ -1,7 +1,9 @@
 name: Setup Labels
 on:
-  create:
+  workflow_dispatch:
   push:
+    paths:
+      - ".github/workflows/setup-labels.yml"
 permissions:
   pull-requests: write
 jobs:
