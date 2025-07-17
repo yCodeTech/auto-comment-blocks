@@ -28,13 +28,16 @@ export class ExtensionData {
 	/**
 	 * Get the names, id, and version of this extension from package.json.
 	 *
-	 * @returns {IPackageJson} The package.json data for this extension, plus the new `id`, and `contributes.configuration.namespace` keys.
+	 * @returns {IPackageJson} The package.json data for this extension, with extra custom keys.
 	 */
 	private getExtensionPackageJsonData(): IPackageJson {
-		const packageJSON: IPackageJson = readJsonFile(__dirname + "/../../package.json");
+		const extensionPath = path.join(__dirname, "../../");
+
+		const packageJSON: IPackageJson = readJsonFile(path.join(extensionPath, "package.json"));
 
 		// Set the id (publisher.name) into the packageJSON object as a new `id` key.
 		packageJSON.id = `${packageJSON.publisher}.${packageJSON.name}`;
+		packageJSON.extensionPath = extensionPath;
 
 		// The configuration settings namespace is a shortened version of the extension name.
 		// We just need to replace "automatic" with "auto" in the name.
@@ -65,8 +68,7 @@ export class ExtensionData {
 		// The path to the user extensions.
 		const userExtensionsPath = isWsl
 			? path.join(vscode.env.appRoot, "../../", "extensions")
-			: path.join(vscode.extensions.getExtension(id).extensionPath, "../");
-
+			: path.join(this.packageJsonData.extensionPath, "../");
 
 		// Set the keys and values for the Map.
 		// The keys will also be used for type inference in VSCode intellisense.
