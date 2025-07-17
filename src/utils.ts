@@ -81,20 +81,9 @@ export function reconstructRegex(obj: any, key: string) {
  *
  * {
  * 	"supportedLanguages" => {
- * 		"#": [
- * 			"apacheconf",
- * 			"coffeescript",
- * 			...
- * 		],
- * 		"//": [
- * 			"c",
- * 			"cpp",
- * 			...
- * 		],
- * 		";": [
- * 			"clojure",
- * 			...
- * 		]
+ * 		"#": ["apacheconf", "coffeescript"],
+ * 		"//": ["c", "cpp"],
+ * 		";": ["clojure"]
  * 	}
  * }
  */
