@@ -85,10 +85,9 @@ export class Configuration {
 	/**
 	 * Configure the comment blocks.
 	 *
-	 * @param {vscode.ExtensionContext} context The context of the extension.
 	 * @returns {vscode.Disposable[]}
 	 */
-	public configureCommentBlocks(context: vscode.ExtensionContext) {
+	public configureCommentBlocks() {
 		const disposables: vscode.Disposable[] = [];
 
 		/**
