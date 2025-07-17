@@ -306,9 +306,16 @@ export class Configuration {
 			extensions.push(...windowsBuiltInExtensions, ...windowsUserExtensions);
 		}
 
+		const userExtensionsPath = this.extensionData.get("userExtensionsPath");
+		const builtInExtensionsPath = this.extensionData.get("builtInExtensionsPath");
+
+		// Read the paths and create arrays of the extensions.
+		const userExtensions = this.readExtensionsFromDirectory(userExtensionsPath);
+		const builtInExtensions = this.readExtensionsFromDirectory(builtInExtensionsPath);
+
 		// Add all installed extensions (including built-in ones) into the extensions array.
 		// If running WSL, these will be the WSL-installed extensions.
-		extensions.push(...vscode.extensions.all);
+		extensions.push(...builtInExtensions, ...userExtensions);
 
 		// Loop through all installed extensions, including built-in extensions
 		for (let extension of extensions) {
