@@ -700,14 +700,10 @@ export class Configuration {
 		let langConfig = {...internalLangConfig};
 
 		if (multiLine) {
-			langConfig.autoClosingPairs = this.mergeConfigProperty(
-				defaultMultiLineConfig.autoClosingPairs,
-				internalLangConfig?.autoClosingPairs,
-				"open"
-			);
+			langConfig.autoClosingPairs = utils.mergeArraysBy(defaultMultiLineConfig.autoClosingPairs, internalLangConfig?.autoClosingPairs, "open");
 
 			// Add the multi-line onEnter rules to the langConfig.
-			langConfig.onEnterRules = this.mergeConfigProperty(Rules.multilineEnterRules, internalLangConfig?.onEnterRules, "beforeText");
+			langConfig.onEnterRules = utils.mergeArraysBy(Rules.multilineEnterRules, internalLangConfig?.onEnterRules, "beforeText");
 
 			// Only assign the default config comments if it doesn't already exist.
 			// (nullish assignment operator ??=)
@@ -736,15 +732,15 @@ export class Configuration {
 		if (isOnEnter && singleLineStyle) {
 			// //-style comments
 			if (singleLineStyle === "//") {
-				langConfig.onEnterRules = this.mergeConfigProperty(Rules.slashEnterRules, langConfig?.onEnterRules, "beforeText");
+				langConfig.onEnterRules = utils.mergeArraysBy(Rules.slashEnterRules, langConfig?.onEnterRules, "beforeText");
 			}
 			// #-style comments
 			else if (singleLineStyle === "#") {
-				langConfig.onEnterRules = this.mergeConfigProperty(Rules.hashEnterRules, langConfig?.onEnterRules, "beforeText");
+				langConfig.onEnterRules = utils.mergeArraysBy(Rules.hashEnterRules, langConfig?.onEnterRules, "beforeText");
 			}
 			// ;-style comments
 			else if (singleLineStyle === ";") {
-				langConfig.onEnterRules = this.mergeConfigProperty(Rules.semicolonEnterRules, langConfig?.onEnterRules, "beforeText");
+				langConfig.onEnterRules = utils.mergeArraysBy(Rules.semicolonEnterRules, langConfig?.onEnterRules, "beforeText");
 			}
 		}
 		// If isOnEnter is false AND singleLineStyle isn't false, i.e. a string.
@@ -852,40 +848,6 @@ export class Configuration {
 		this.logger.debug(`The language config for ${langId}:`, langConfig);
 
 		return vscode.languages.setLanguageConfiguration(langId, langConfig);
-	}
-
-	/**
-	 * Merges two configuration properties arrays, removing any duplicates based on a
-	 * specified property.
-	 *
-	 * @param {any[]} defaultConfigProperty The default configuration property array of objects.
-	 * @param {any[]} internalConfigProperty The internal configuration property array of objects.
-	 * @param {string} objectKey The key within the array item object to check against for preventing duplicates
-	 * @returns {any[]} The merged configuration property array without duplicates.
-	 */
-	private mergeConfigProperty(defaultConfigProperty: any[], internalConfigProperty: any[], objectKey: string) {
-		// Define an empty array if the internalConfigProperty is undefined.
-		internalConfigProperty ??= [];
-
-		// Copy to avoid side effects.
-		const merged = [...defaultConfigProperty];
-
-		/**
-		 * Merge the arrays and remove any duplicates.
-		 */
-
-		// Loop over the internalConfigProperty array...
-		internalConfigProperty.forEach((item) =>
-			// Test all items in the merged array, and if the item's
-			// key is not already present in one of the merged array's objects then add the item
-			// to the merged array.
-			//
-			// Code based on "2023 update" portion of this StackOverflow answer:
-			// https://stackoverflow.com/a/1584377/2358222
-			merged.some((mergedItem) => item[objectKey] === mergedItem[objectKey]) ? null : merged.push(item)
-		);
-
-		return merged;
 	}
 
 	/**
