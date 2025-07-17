@@ -5,6 +5,7 @@ import * as vscode from "vscode";
 import * as fs from "node:fs";
 import * as path from "path";
 import isWsl from "is-wsl";
+import {IPackageJson} from "package-json-type";
 
 import {Rules} from "./rules";
 import {Logger} from "./logger";
@@ -319,7 +320,7 @@ export class Configuration {
 
 		// Loop through all installed extensions, including built-in extensions
 		for (let extension of extensions) {
-			const packageJSON = extension.packageJSON;
+			const packageJSON: IPackageJson = extension.packageJSON;
 
 			// If an extension package.json has "contributes" key,
 			// AND the contributes object has "languages" key...
@@ -415,11 +416,11 @@ export class Configuration {
 	 *
 	 * @param {string} extensionsPath The path where extensions are stored.
 	 *
-	 * @returns {Array<{ id: string; extensionPath: string; packageJSON: any }>}
+	 * @returns {Array<{ id: string; extensionPath: string; packageJSON: IPackageJson }>}
 	 */
-	private readExtensionsFromDirectory(extensionsPath: string): Array<{id: string; extensionPath: string; packageJSON: any}> {
+	private readExtensionsFromDirectory(extensionsPath: string): Array<{id: string; extensionPath: string; packageJSON: IPackageJson}> {
 		// Create an array to hold the found extensions.
-		const foundExtensions: Array<{id: string; extensionPath: string; packageJSON: any}> = [];
+		const foundExtensions: Array<{id: string; extensionPath: string; packageJSON: IPackageJson}> = [];
 
 		fs.readdirSync(extensionsPath).forEach((extensionName) => {
 			const extensionPath = path.join(extensionsPath, extensionName);
@@ -436,7 +437,7 @@ export class Configuration {
 
 				// If the package.json file exists...
 				if (fs.existsSync(packageJSONPath)) {
-					const packageJSON = utils.readJsonFile(packageJSONPath);
+					const packageJSON: IPackageJson = utils.readJsonFile(packageJSONPath);
 
 					const id = `${packageJSON.publisher}.${packageJSON.name}`;
 
