@@ -9,6 +9,7 @@ import isWsl from "is-wsl";
 import {Rules} from "./rules";
 import {Logger} from "./logger";
 import * as utils from "./utils";
+import {ExtensionData} from "./extensionData";
 
 export class Configuration {
 	/**************
@@ -23,9 +24,10 @@ export class Configuration {
 	private logger: Logger;
 
 	/**
-	 * This extension details in the form of a key:value Map object, for ease of use.
+	 * This extension data class instance.
+	 * @type {ExtensionData}
 	 */
-	private extensionDetails = new Map<string, any>();
+	private extensionData: ExtensionData = new ExtensionData();
 
 	/**
 	 * A key:value Map object of language IDs and their config file paths.
@@ -66,10 +68,8 @@ export class Configuration {
 	public constructor(logger: Logger) {
 		this.logger = logger;
 
-		this.setExtensionData();
-
 		// Always output extension information to channel on activate.
-		this.logger.debug(`Extension details:`, this.extensionDetails);
+		this.logger.debug(`Extension details:`, this.extensionData.getAll());
 
 		this.findAllLanguageConfigFilePaths();
 		this.setLanguageConfigDefinitions();
@@ -199,85 +199,12 @@ export class Configuration {
 	}
 
 	/**
-	 * Get the names, id, and version of this extension from package.json.
-	 *
-	 * @returns {object} An object containing the extension id, name, display name, and version.
-	 */
-	private getExtensionPackageJsonData(): {id: string; name: string; displayName: string; version: string} {
-		const packageJSON = utils.readJsonFile(__dirname + "/../../package.json");
-
-		const displayName: string = packageJSON.displayName;
-		const fullname: string = packageJSON.name;
-		const id: string = `${packageJSON.publisher}.${fullname}`;
-		const version: string = packageJSON.version;
-
-		let nameParts = fullname.split("-");
-		nameParts[0] = "auto";
-		const name = nameParts.join("-");
-
-		return {id: id, name: name, displayName: displayName, version: version};
-	}
-
-	/**
-	 * Set the extension data into the extensionDetails Map.
-	 */
-	private setExtensionData() {
-		const extensionPackageJsonData = this.getExtensionPackageJsonData();
-
-		const id = extensionPackageJsonData.id;
-		const name = extensionPackageJsonData.name;
-		const displayName = extensionPackageJsonData.displayName;
-		const version = extensionPackageJsonData.version;
-
-		// The path to the user extensions.
-		const userExtensionsPath = isWsl
-			? path.join(vscode.env.appRoot, "../../", "extensions")
-			: path.join(vscode.extensions.getExtension(id).extensionPath, "../");
-
-		// The path to the built-in extensions.
-		// This env variable changes when on WSL to it's WSL-built-in extensions path.
-		const builtInExtensionsPath = path.join(vscode.env.appRoot, "extensions");
-
-		this.extensionDetails.set("id", id);
-		this.extensionDetails.set("name", name);
-		this.extensionDetails.set("displayName", displayName);
-		this.extensionDetails.set("version", version);
-		this.extensionDetails.set("userExtensionsPath", userExtensionsPath);
-		this.extensionDetails.set("builtInExtensionsPath", builtInExtensionsPath);
-
-		if (isWsl) {
-			// Get the root path to VS Code from the env variable, and use it to get
-			// the Windows built-in extensions.
-			const windowsBuiltInExtensionsPathFromWsl = path.join(process.env.VSCODE_CWD, "resources/app/extensions");
-
-			// Get the Windows user extensions path from env variable.
-			const windowsUserExtensionsPathFromWsl = path.dirname(process.env.VSCODE_WSL_EXT_LOCATION);
-
-			this.extensionDetails.set("WindowsUserExtensionsPathFromWsl", windowsUserExtensionsPathFromWsl);
-			this.extensionDetails.set("WindowsBuiltInExtensionsPathFromWsl", windowsBuiltInExtensionsPathFromWsl);
-		}
-	}
-
-	/**
-	 * Get the extension's details.
-	 *
-	 * @param {string} key The key of the specific extension detail to get.
-	 *
-	 * @returns {any} Returns a value of a specific key.
-	 */
-	public getExtensionData(key: string): any {
-		if (this.extensionDetails.has(key)) {
-			return this.extensionDetails.get(key);
-		}
-	}
-
-	/**
 	 * Get all the extension's configuration settings.
 	 *
 	 * @returns {vscode.WorkspaceConfiguration}
 	 */
 	public getConfiguration(): vscode.WorkspaceConfiguration {
-		return vscode.workspace.getConfiguration(this.getExtensionData("name"), null);
+		return vscode.workspace.getConfiguration(this.extensionData.get("name"), null);
 	}
 
 	/**
@@ -368,15 +295,15 @@ export class Configuration {
 		// If running in WSL...
 		if (isWsl) {
 			// Get the Windows user and built-in extensions paths.
-			const windowsUserExtensionsPath = this.getExtensionData("WindowsUserExtensionsPathFromWsl");
-			const windowsBuiltInExtensionsPath = this.getExtensionData("WindowsBuiltInExtensionsPathFromWsl");
+			const windowsUserExtensionsPath = this.extensionData.get("WindowsUserExtensionsPathFromWsl");
+			const windowsBuiltInExtensionsPath = this.extensionData.get("WindowsBuiltInExtensionsPathFromWsl");
 
 			// Read the paths and create arrays of the extensions.
-			const builtInExtensions = this.readExtensionsFromDirectory(windowsBuiltInExtensionsPath);
-			const userExtensions = this.readExtensionsFromDirectory(windowsUserExtensionsPath);
+			const windowsBuiltInExtensions = this.readExtensionsFromDirectory(windowsBuiltInExtensionsPath);
+			const windowsUserExtensions = this.readExtensionsFromDirectory(windowsUserExtensionsPath);
 
 			// Combine the built-in and user extensions into the extensions array.
-			extensions.push(...builtInExtensions, ...userExtensions);
+			extensions.push(...windowsBuiltInExtensions, ...windowsUserExtensions);
 		}
 
 		// Add all installed extensions (including built-in ones) into the extensions array.
@@ -916,7 +843,7 @@ export class Configuration {
 	 */
 	private handleChangeBladeMultiLineBlock(textEditor: vscode.TextEditor) {
 		let langId = textEditor.document.languageId;
-		const extensionName = this.getExtensionData("name");
+		const extensionName = this.extensionData.get("name");
 
 		// Only carry out function if languageId is blade.
 		if (langId === "blade" && !this.isLangIdDisabled(langId)) {
@@ -955,25 +882,25 @@ export class Configuration {
 	private logDebugInfo() {
 		// The path to the built-in extensions. The env variable changes when on WSL.
 		// So we can use it for both Windows and WSL.
-		const builtInExtensionsPath = this.getExtensionData("builtInExtensionsPath");
+		const builtInExtensionsPath = this.extensionData.get("builtInExtensionsPath");
 
 		let extensionsPaths = {};
 
 		if (isWsl) {
 			// Get the Windows user and built-in extensions paths.
-			const windowsUserExtensionsPath = this.getExtensionData("WindowsUserExtensionsPathFromWsl");
-			const windowsBuiltInExtensionsPath = this.getExtensionData("WindowsBuiltInExtensionsPathFromWsl");
+			const windowsUserExtensionsPath = this.extensionData.get("WindowsUserExtensionsPathFromWsl");
+			const windowsBuiltInExtensionsPath = this.extensionData.get("WindowsBuiltInExtensionsPathFromWsl");
 
 			extensionsPaths = {
 				"Windows-installed Built-in Extensions Path": windowsBuiltInExtensionsPath,
 				"Windows-installed User Extensions Path": windowsUserExtensionsPath,
 				"WSL-installed Built-in Extensions Path": builtInExtensionsPath,
-				"WSL-installed User Extensions Path": this.getExtensionData("userExtensionsPath"),
+				"WSL-installed User Extensions Path": this.extensionData.get("userExtensionsPath"),
 			};
 		} else {
 			extensionsPaths = {
 				"Built-in Extensions Path": builtInExtensionsPath,
-				"User Extensions Path": this.getExtensionData("userExtensionsPath"),
+				"User Extensions Path": this.extensionData.get("userExtensionsPath"),
 			};
 		}
 

@@ -4,8 +4,10 @@ import * as vscode from "vscode";
 
 import {Configuration} from "./configuration";
 import {Logger} from "./logger";
+import {ExtensionData} from "./extensionData";
 
 const logger = new Logger();
+const extensionData = new ExtensionData();
 logger.setupOutputChannel();
 let configuration = new Configuration(logger);
 
@@ -17,8 +19,9 @@ export function activate(context: vscode.ExtensionContext) {
 
 	disposables.push(...configureCommentBlocksDisposable, ...registerCommandsDisposable);
 
-	const extensionName = configuration.getExtensionData("name");
-	const extensionDisplayName = configuration.getExtensionData("displayName");
+	const extensionName = extensionData.get("name");
+
+	const extensionDisplayName = extensionData.get("displayName");
 
 	let disabledLangConfig: string[] = configuration.getConfigurationValue<string[]>("disabledLanguages");
 
