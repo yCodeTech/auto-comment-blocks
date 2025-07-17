@@ -125,3 +125,46 @@ export function convertMapToReversedObject(m: Map<string, Map<string, string>>):
 	}
 	return result;
 }
+
+/**
+ * Merges two arrays of objects, removing duplicates based on a specified property.
+ *
+ * Code based on "2023 update" portion of this StackOverflow answer:
+ * https://stackoverflow.com/a/1584377/2358222
+ *
+ * @param {T[]} primaryArray The primary array of objects (takes precedence).
+ * @param {T[]} secondaryArray The secondary array of objects to merge in.
+ * @param {keyof T} key The property key to check for duplicates.
+ *
+ * @returns {T[]} The merged array without duplicates
+ *
+ * @example
+ * const users1 = [{id: 1, name: 'John'}, {id: 2, name: 'Jane'}];
+ * const users2 = [{id: 2, name: 'Jane'}, {id: 3, name: 'Jane Doe'}];
+ * const merged = mergeArraysBy(users1, users2, 'name');
+ * // Result: [{id: 1, name: 'John'}, {id: 2, name: 'Jane'}, {id: 3, name: 'Jane Doe'}]
+ */
+export function mergeArraysBy<T>(primaryArray: T[], secondaryArray: T[], key: keyof T): T[] {
+	// Handle undefined/null arrays
+	const primary = primaryArray || [];
+	const secondary = secondaryArray || [];
+
+	// Start with primary array (avoids side effects)
+	const merged = [...primary];
+
+	// Add items from secondary array that don't exist in primary,
+	// removing any duplicates.
+	secondary.forEach((item) => {
+		// Test all items in the merged array to check if the value of the key
+		// already exists in the merged array.
+		const exists: boolean = merged.some((existingItem) => item[key] === existingItem[key]);
+
+		// If the value of the key does not exist in the merged array,
+		// then add the item, which prevents duplicates.
+		if (!exists) {
+			merged.push(item);
+		}
+	});
+
+	return merged;
+}
