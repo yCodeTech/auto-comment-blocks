@@ -111,6 +111,7 @@ export class Configuration {
 
 		// Setup the auto-supported single-line languages.
 		for (let [langId, style] of singleLineLangs) {
+			// If langId isn't disabled...
 			if (!this.isLangIdDisabled(langId)) {
 				// Set a bool if the single-line language also supports multi-line comments
 				// (ie. the single-line language is also present in the multi-line map);
@@ -137,16 +138,20 @@ export class Configuration {
 
 		// Setup the custom-supported single-line languages, that are otherwise unsupported.
 		for (let [langId, style] of customSingleLineLangs) {
-			// Set a bool if the single-line language also supports multi-line comments
-			// (ie. the single-line language is also present in the multi-line map);
-			let multiLine = customMultiLineLangs.includes(langId);
-			disposables.push(this.setLanguageConfiguration(langId, multiLine, style));
+			// If the langId isn't set as disabled...
+			if (!this.isLangIdDisabled(langId)) {
+				// Set a bool if the single-line language also supports multi-line comments
+				// (ie. the single-line language is also present in the multi-line map);
+				let multiLine = customMultiLineLangs.includes(langId);
+				disposables.push(this.setLanguageConfiguration(langId, multiLine, style));
+			}
 		}
 
 		// Setup the custom-supported multi-line languages, that are otherwise unsupported.
 		for (let langId of customMultiLineLangs) {
-			// If customSingleLineLangs doesn't have the langId
-			if (!customSingleLineLangs.has(langId)) {
+			// If customSingleLineLangs doesn't have the langId AND
+			// the langId isn't set as disabled...
+			if (!customSingleLineLangs.has(langId) && !this.isLangIdDisabled(langId)) {
 				disposables.push(this.setLanguageConfiguration(langId, true));
 			}
 		}
@@ -495,8 +500,10 @@ export class Configuration {
 				if (config.comments.blockComment.includes("/*")) {
 					// console.log(langId, config.comments);
 
-					// If Language ID isn't already in the langArray...
-					if (!langArray.includes(langId)) {
+					// If Language ID isn't already in the langArray AND
+					// the langId isn't set as disabled...
+					if (!langArray.includes(langId) && !this.isLangIdDisabled(langId)) {
+						// Add it to the array.
 						langArray.push(langId);
 					}
 				}
@@ -513,9 +520,10 @@ export class Configuration {
 		langArray = [];
 		for (let langId of multiLineStyleBlocksLangs) {
 			// If langId is exists (ie. not NULL or empty string) AND
-			// the array doesn't already include langId,
-			// then add it to the array.
-			if (langId && !langArray.includes(langId)) {
+			// the array doesn't already include langId, AND
+			// the langId isn't set as disabled...
+			if (langId && !langArray.includes(langId) && !this.isLangIdDisabled(langId)) {
+				// Add it to the array.
 				langArray.push(langId);
 			}
 		}
@@ -558,9 +566,10 @@ export class Configuration {
 					style = ";";
 				}
 
-				// If style any empty string, (i.e. not an unsupported single-line
-				// comment like bat's @rem)...
-				if (style != "") {
+				// If style is NOT an empty string, (i.e. not an unsupported single-line
+				// comment like bat's @rem), AND
+				// the langId isn't set as disabled...
+				if (style != "" && !this.isLangIdDisabled(langId)) {
 					// Set the langId and it's style into the Map.
 					tempMap.set(langId, style);
 				}
@@ -577,6 +586,9 @@ export class Configuration {
 		// Get user-customized langIds for the //-style and add to the map.
 		let customSlashLangs = this.getConfigurationValue<string[]>("slashStyleBlocks");
 		for (let langId of customSlashLangs) {
+			// If langId is exists (ie. not NULL or empty string) AND
+			// the langId is longer than 0, AND
+			// the langId isn't set as disabled...
 			if (langId && langId.length > 0) {
 				tempMap.set(langId, "//");
 			}
@@ -585,7 +597,10 @@ export class Configuration {
 		// Get user-customized langIds for the #-style and add to the map.
 		let customHashLangs = this.getConfigurationValue<string[]>("hashStyleBlocks");
 		for (let langId of customHashLangs) {
-			if (langId && langId.length > 0) {
+			// If langId is exists (ie. not NULL or empty string) AND
+			// the langId is longer than 0, AND
+			// the langId isn't set as disabled...
+			if (langId && langId.length > 0 && !this.isLangIdDisabled(langId)) {
 				tempMap.set(langId, "#");
 			}
 		}
@@ -593,7 +608,10 @@ export class Configuration {
 		// Get user-customized langIds for the ;-style and add to the map.
 		let customSemicolonLangs = this.getConfigurationValue<string[]>("semicolonStyleBlocks");
 		for (let langId of customSemicolonLangs) {
-			if (langId && langId.length > 0) {
+			// If langId is exists (ie. not NULL or empty string) AND
+			// the langId is longer than 0, AND
+			// the langId isn't set as disabled...
+			if (langId && langId.length > 0 && !this.isLangIdDisabled(langId)) {
 				tempMap.set(langId, ";");
 			}
 		}
