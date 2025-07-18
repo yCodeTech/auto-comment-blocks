@@ -124,7 +124,7 @@ Use `/*!` in all file types that support the normal `/*` comments to start a QDo
 
 #### Normal comment blocks
 
-Using the normal comment block `/* */` either typing manually or the native VScode command "Toggle Block Comment" (`editor.action.blockComment`, native keybinding `shift + alt + a`), the block will have the same on enter functionality as described above.
+Using the normal comment block `/* */` either typing manually or the native VScode command "Toggle Block Comment" (`editor.action.blockComment`, native keybinding <kbd>shift + alt + a</kbd> (macOS: <kbd>shift + option + a</kbd>)), the block will have the same on enter functionality as described above.
 
 ![block-comments](https://raw.githubusercontent.com/yCodeTech/auto-comment-blocks/master/img/block-comments.gif)
 
@@ -156,9 +156,9 @@ Reload the extension after changing any settings.
 
 -   `auto-comment-blocks.multiLineStyleBlocks`: Add language IDs here to enable multi-line comment blocks support for that language, allowing unsupported languages to have comment completion. The default is `['blade', 'html']`"
 
--   `auto-comment-blocks.overrideDefaultLanguageMultiLineComments`: A key : value pairing of language IDs and the beginning portion of a multi-line comment style, to override the default comment style for the vscode "Toggle Block Comment" `editor.action.blockComment` command (native Keybinding `shift + alt + a`). eg. `{'php': '/*!'}`
+-   `auto-comment-blocks.overrideDefaultLanguageMultiLineComments`: A key : value pairing of language IDs and the beginning portion of a multi-line comment style, to override the default comment style for the vscode "Toggle Block Comment" `editor.action.blockComment` command (native Keybinding <kbd>shift + alt + a</kbd> (macOS: <kbd>shift + option + a</kbd>)). eg. `{'php': '/*!'}`
 
--   `auto-comment-blocks.bladeOverrideComments`: When enabled, Blade-style block comments will be used in Blade contexts. Ie. `{{--  --}}` comments will be used instead of the HTML `<!-- -->` comments. Keybinding to enable/disable, default `ctrl + shift + m`. If `blade` language ID is set in the disabledLanguages, then the HTML `<!-- -->` comments will be used.
+-   `auto-comment-blocks.bladeOverrideComments`: When enabled, Blade-style block comments will be used in Blade contexts. Ie. `{{--  --}}` comments will be used instead of the HTML `<!-- -->` comments. Keybinding to enable/disable, default <kbd>ctrl + shift + m</kbd> (macOS: <kbd>cmd + shift + m</kbd>). If `blade` language ID is set in the disabledLanguages, then the HTML `<!-- -->` comments will be used.
 
 ## Known Issues
 
