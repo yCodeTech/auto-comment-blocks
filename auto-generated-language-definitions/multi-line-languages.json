@@ -30,8 +30,5 @@
 		"typescript",
 		"typescriptreact"
 	],
-	"customSupportedLanguages": [
-		"blade",
-		"html"
-	]
+	"customSupportedLanguages": []
 }

@@ -61,7 +61,12 @@ There are 3 conditions in which a language is officially supported:
 2. The language is not defined in the `skip-languages` config file; and
 3. The language config has either `lineComment` or `blockComment` keys defined.
 
-Most of the officially VScode-supported languages (as defined in the [docs](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers)) pass these conditions.
+Most of the officially VScode default languages (as defined in the [docs](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers)) pass these conditions.
+
+For a full list of auto-supported VScode default languages, please view the auto-generated definition files:
+
+-   [Multi-line languages](https://github.com/yCodeTech/auto-comment-blocks/blob/master/auto-generated-language-definitions/multi-line-languages.json)
+-   [Single-line languages](https://github.com/yCodeTech/auto-comment-blocks/blob/master/auto-generated-language-definitions/single-line-languages.json)
 
 ---
 

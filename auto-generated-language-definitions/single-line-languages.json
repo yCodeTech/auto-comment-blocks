@@ -11,7 +11,6 @@
 			"git-commit",
 			"git-rebase",
 			"github-actions-workflow",
-			"http",
 			"ignore",
 			"julia",
 			"makefile",
@@ -58,7 +57,8 @@
 		],
 		";": [
 			"clojure",
-			"ini"
+			"ini",
+			"wat"
 		]
 	},
 	"customSupportedLanguages": {}
