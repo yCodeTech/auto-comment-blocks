@@ -4,6 +4,51 @@ All notable changes to this extension will be documented in this file.
 
 This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure.
 
+## [1.1.10](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.10) - 2025-07-21
+
+#### Fixed:
+
+-   Fixes yCodeTech/auto-comment-blocks#6 and indirectly yCodeTech/auto-comment-blocks#7
+
+    VS Code's `vscode.extensions.all` API doesn't find any built-in extensions on the Windows-side when running in WSL. It only gets the WSL-installed extensions, which causes the extension not to work at all because the language configuration file is not found.
+
+    The workaround fix is to manually read the Windows extensions directories when running in WSL and merge them with the WSL-installed extensions.
+
+-   Fixed language support detection to properly respect disabled language settings.
+
+    Custom language configurations now correctly check if a language is disabled before applying support, preventing unwanted language activation.
+
+-   Fixed support for languages with multiple extension configuration files by merging their configurations instead of overwriting them, ensuring complete language support. Also improved language configuration merging by properly handling comment configurations.
+
+#### Added:
+
+-   Added the ability to get the all extensions directly from the directory on non-WSL systems (eg. Windows) because VS Code's `extensions.all` API only gets enabled extensions and doesn't include disabled ones, which could prevent language configs being found.
+
+    -   Removed `vscode.extensions.all` API call from `findAllLanguageConfigFilePaths` method in favour of getting the extensions directly from the directories.
+
+-   Added new dependencies:
+
+    -   `is-wsl` for detecting WSL environments.
+    -   `package-json-type` for TypeScript type definitions of package.json.
+
+-   Added macOS keybinding support (`cmd+shift+m`) for the Blade override comments command.
+
+#### Changed:
+
+-   Refactored extension architecture with improved separation of concerns.
+
+    Major code reorganisation including extraction of utility functions, centralised extension data management, and improved debugging capabilities.
+
+    -   Added new `ExtensionData` class to centralize extension metadata management.
+
+        This new class provides a clean interface for accessing extension details like ID, name, version, and various system paths, improving code organisation and maintainability.
+
+    -   Added new `utils.ts` file with shared utility functions.
+
+        Extracted common functionality into reusable utility functions including JSON file operations, regex reconstruction, array merging, and data conversion utilities.
+
+-   Updated debug logging to provide more comprehensive environment and configuration information. Enhanced diagnostic output now includes detailed extension paths for both WSL and native environments, making troubleshooting easier.
+
 ## [1.1.9](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.9) - 2025-07-12
 
 #### Fixed:

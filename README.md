@@ -61,7 +61,12 @@ There are 3 conditions in which a language is officially supported:
 2. The language is not defined in the `skip-languages` config file; and
 3. The language config has either `lineComment` or `blockComment` keys defined.
 
-Most of the officially VScode-supported languages (as defined in the [docs](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers)) pass these conditions.
+Most of the officially VScode default languages (as defined in the [docs](https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers)) pass these conditions.
+
+For a full list of auto-supported VScode default languages, please view the auto-generated definition files:
+
+-   [Multi-line languages](https://github.com/yCodeTech/auto-comment-blocks/blob/master/auto-generated-language-definitions/multi-line-languages.json)
+-   [Single-line languages](https://github.com/yCodeTech/auto-comment-blocks/blob/master/auto-generated-language-definitions/single-line-languages.json)
 
 ---
 
@@ -124,7 +129,7 @@ Use `/*!` in all file types that support the normal `/*` comments to start a QDo
 
 #### Normal comment blocks
 
-Using the normal comment block `/* */` either typing manually or the native VScode command "Toggle Block Comment" (`editor.action.blockComment`, native keybinding `shift + alt + a`), the block will have the same on enter functionality as described above.
+Using the normal comment block `/* */` either typing manually or the native VScode command "Toggle Block Comment" (`editor.action.blockComment`, native keybinding <kbd>shift + alt + a</kbd> (macOS: <kbd>shift + option + a</kbd>)), the block will have the same on enter functionality as described above.
 
 ![block-comments](https://raw.githubusercontent.com/yCodeTech/auto-comment-blocks/master/img/block-comments.gif)
 
@@ -156,17 +161,15 @@ Reload the extension after changing any settings.
 
 -   `auto-comment-blocks.multiLineStyleBlocks`: Add language IDs here to enable multi-line comment blocks support for that language, allowing unsupported languages to have comment completion. The default is `['blade', 'html']`"
 
--   `auto-comment-blocks.overrideDefaultLanguageMultiLineComments`: A key : value pairing of language IDs and the beginning portion of a multi-line comment style, to override the default comment style for the vscode "Toggle Block Comment" `editor.action.blockComment` command (native Keybinding `shift + alt + a`). eg. `{'php': '/*!'}`
+-   `auto-comment-blocks.overrideDefaultLanguageMultiLineComments`: A key : value pairing of language IDs and the beginning portion of a multi-line comment style, to override the default comment style for the vscode "Toggle Block Comment" `editor.action.blockComment` command (native Keybinding <kbd>shift + alt + a</kbd> (macOS: <kbd>shift + option + a</kbd>)). eg. `{'php': '/*!'}`
 
--   `auto-comment-blocks.bladeOverrideComments`: When enabled, Blade-style block comments will be used in Blade contexts. Ie. `{{--  --}}` comments will be used instead of the HTML `<!-- -->` comments. Keybinding to enable/disable, default `ctrl + shift + m`. If `blade` language ID is set in the disabledLanguages, then the HTML `<!-- -->` comments will be used.
+-   `auto-comment-blocks.bladeOverrideComments`: When enabled, Blade-style block comments will be used in Blade contexts. Ie. `{{--  --}}` comments will be used instead of the HTML `<!-- -->` comments. Keybinding to enable/disable, default <kbd>ctrl + shift + m</kbd> (macOS: <kbd>cmd + shift + m</kbd>). If `blade` language ID is set in the disabledLanguages, then the HTML `<!-- -->` comments will be used.
 
 ## Known Issues
 
 -   Sometimes multi-line completion/asterisk insertion doesn't work. The reason is still unknown. It may go away if you reload your workspace.
 
 -   Currently, VS Code only allows extensions to overwrite, instead of modify, existing language configurations. This means that this extension may clash with another extension that overwrites the same language configurations, causing one or both not to work. In that case, uninstalling this extension is the only option for now.
-
--   Doesn't work properly on Windows Linux WSL2. VScode API only finds language configs that are installed only on WSL2, and not also on Windows. That means all the normal built-in as well as 3rd party extensions won't have auto comment blocks support in WSL2. (Related issue: [#6](https://github.com/yCodeTech/auto-comment-blocks/issues/6))
 
 Please [report an issue](https://github.com/yCodeTech/auto-comment-blocks/issues/new) if you find any bugs, or have questions or feature requests.
 

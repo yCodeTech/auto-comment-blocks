@@ -2,7 +2,7 @@
 	"name": "automatic-comment-blocks",
 	"displayName": "Automatic Comment Blocks",
 	"description": "Provides block comment completion for Javadoc-style multi-line comments and single-line comment blocks for most officially supported languages.",
-	"version": "1.1.9",
+	"version": "1.1.10",
 	"publisher": "ycodetech",
 	"homepage": "https://github.com/ycodetech/auto-comment-blocks",
 	"repository": {
@@ -71,13 +71,13 @@
 				"auto-comment-blocks.overrideDefaultLanguageMultiLineComments": {
 					"type": "object",
 					"default": {},
-					"markdownDescription": "A key : value pairing of language IDs and the beginning portion of a multi-line comment style, to override the default comment style for the vscode `command editor.action.blockComment` (native Keybinding `shift + alt + a`). eg. `{'php': '/*!'}`"
+					"markdownDescription": "A key : value pairing of language IDs and the beginning portion of a multi-line comment style, to override the default comment style for the vscode `command editor.action.blockComment` (native Keybinding `shift + alt + a` (macOS: `shift + option + a`)). eg. `{'php': '/*!'}`"
 				},
 				"auto-comment-blocks.bladeOverrideComments": {
 					"scope": "resource",
 					"type": "boolean",
 					"default": false,
-					"markdownDescription": "When enabled, Blade style block comments will be used in Blade contexts. Ie. `{{--  --}}` comments will be used instead of the HTML `<!-- -->` comments. Keybinding to enable/disable, default `ctrl + shift + m`. If `blade` language ID is set in the disabledLanguages, then the HTML `<!-- -->` comments will be used."
+					"markdownDescription": "When enabled, Blade style block comments will be used in Blade contexts. Ie. `{{--  --}}` comments will be used instead of the HTML `<!-- -->` comments. Keybinding to enable/disable, default `ctrl + shift + m` (macOS: `cmd + shift + m`). If `blade` language ID is set in the disabledLanguages, then the HTML `<!-- -->` comments will be used."
 				}
 			}
 		},
@@ -90,6 +90,7 @@
 			{
 				"command": "auto-comment-blocks.changeBladeMultiLineBlock",
 				"key": "ctrl+shift+m",
+				"mac": "cmd+shift+m",
 				"when": "editorTextFocus"
 			}
 		]
@@ -108,6 +109,8 @@
 		"typescript": "^5.7"
 	},
 	"dependencies": {
-		"jsonc-parser": "^3.3.1"
+		"is-wsl": "^3.1.0",
+		"jsonc-parser": "^3.3.1",
+		"package-json-type": "^1.0.3"
 	}
 }

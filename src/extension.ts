@@ -4,23 +4,24 @@ import * as vscode from "vscode";
 
 import {Configuration} from "./configuration";
 import {Logger} from "./logger";
+import {ExtensionData} from "./extensionData";
 
 const logger = new Logger();
+const extensionData = new ExtensionData();
 logger.setupOutputChannel();
 let configuration = new Configuration(logger);
 
 const disposables: vscode.Disposable[] = [];
 
 export function activate(context: vscode.ExtensionContext) {
-	const configureCommentBlocksDisposable = configuration.configureCommentBlocks(context);
+	const configureCommentBlocksDisposable = configuration.configureCommentBlocks();
 	const registerCommandsDisposable = configuration.registerCommands();
 
 	disposables.push(...configureCommentBlocksDisposable, ...registerCommandsDisposable);
 
-	const extensionNames = configuration.getExtensionNames();
+	const extensionName = extensionData.get("name");
 
-	const extensionName = extensionNames.name;
-	const extensionDisplayName = extensionNames.displayName;
+	const extensionDisplayName = extensionData.get("displayName");
 
 	let disabledLangConfig: string[] = configuration.getConfigurationValue<string[]>("disabledLanguages");
 
@@ -154,7 +155,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// Called when active editor language is changed, so re-configure the comment blocks.
 	vscode.workspace.onDidOpenTextDocument(() => {
 		logger.info("Active editor language changed, re-configuring comment blocks.");
-		const configureCommentBlocksDisposable = configuration.configureCommentBlocks(context);
+		const configureCommentBlocksDisposable = configuration.configureCommentBlocks();
 		disposables.push(...configureCommentBlocksDisposable);
 	});
 
