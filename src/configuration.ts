@@ -33,7 +33,7 @@ export class Configuration {
 	/**
 	 * A key:value Map object of language IDs and their config file paths.
 	 */
-	private languageConfigFilePaths = new Map<string, string>();
+	private languageConfigFilePaths = new Map<string, string[]>();
 
 	/**
 	 * A key:value Map object of language IDs and their configs.
@@ -343,23 +343,33 @@ export class Configuration {
 			if (Object.hasOwn(packageJSON, "contributes") && Object.hasOwn(packageJSON.contributes, "languages")) {
 				// Loop through the languages...
 				for (let language of packageJSON.contributes.languages) {
+					const langId = language.id;
 					// Get the languages to skip.
 					let skipLangs = this.getLanguagesToSkip();
 
-					// If skipLangs doesn't include the language ID,
+					// If skipLangs doesn't include the langId,
 					// AND the language object has "configuration" key...
-					if (!skipLangs?.includes(language.id) && Object.hasOwn(language, "configuration")) {
+					if (!skipLangs?.includes(langId) && Object.hasOwn(language, "configuration")) {
 						// Join the extension path with the configuration path.
 						let configPath = path.join(extension.extensionPath, language.configuration);
-						// Set the language ID and config path into the languageConfigFilePaths Map.
-						this.languageConfigFilePaths.set(language.id, configPath);
+
+						// If the langId already exists...
+						if (this.languageConfigFilePaths.has(langId)) {
+							// Push the new config path into the array of the existing langId.
+							this.languageConfigFilePaths.get(langId).push(configPath);
+						}
+						// Otherwise, if the langId doesn't exist...
+						else {
+							// Set the langId with a new config path array.
+							this.languageConfigFilePaths.set(langId, [configPath]);
+						}
 					}
 				}
 			}
 		}
 
 		// Set the languageConfigFilePaths to a new map with all the languages sorted in
-		// ascending order,for sanity reasons.
+		// ascending order, for sanity reasons.
 		this.languageConfigFilePaths = new Map([...this.languageConfigFilePaths].sort());
 	}
 
@@ -367,46 +377,83 @@ export class Configuration {
 	 * Set the language config definitions.
 	 */
 	private setLanguageConfigDefinitions() {
-		this.languageConfigFilePaths.forEach((filepath, langId) => {
-			const config = utils.readJsonFile(filepath);
+		this.languageConfigFilePaths.forEach((paths, langId) => {
+			// Loop through the paths array...
+			paths.forEach((filepath) => {
+				let config = utils.readJsonFile(filepath);
 
-			// If the config JSON has more than 0 keys (ie. not empty)
-			if (Object.keys(config).length > 0) {
-				/**
-				 * Change all autoClosingPairs items that are using the simpler syntax
-				 * (array instead of object) into the object with open and close keys.
-				 * Prevents vscode from failing quietly and not changing the editor language
-				 * properly, which makes the open file become unresponsive when changing tabs.
-				 */
+				// If the config JSON has more than 0 keys (ie. not empty)
+				if (Object.keys(config).length > 0) {
+					/**
+					 * Change all autoClosingPairs items that are using the simpler syntax
+					 * (array instead of object) into the object with open and close keys.
+					 * Prevents vscode from failing quietly and not changing the editor language
+					 * properly, which makes the open file become unresponsive when changing tabs.
+					 */
 
-				// If config has key autoClosingPairs...
-				if (Object.hasOwn(config, "autoClosingPairs")) {
-					// Define a new array as the new AutoClosingPair.
-					const autoClosingPairsArray: vscode.AutoClosingPair[] = [];
-					// Loop through the config's autoClosingPairs...
-					config.autoClosingPairs.forEach((item) => {
-						// If the item is an array...
-						if (Array.isArray(item)) {
-							// Create a new object with the 1st array element [0] as the
-							// value of the open key, and the 2nd element [1] as the value
-							// of the close key.
-							const autoClosingPairsObj = {open: item[0], close: item[1]};
-							// Push the object into the new array.
-							autoClosingPairsArray.push(autoClosingPairsObj);
+					// If config has key autoClosingPairs...
+					if (Object.hasOwn(config, "autoClosingPairs")) {
+						// Define a new array as the new AutoClosingPair.
+						const autoClosingPairsArray: vscode.AutoClosingPair[] = [];
+						// Loop through the config's autoClosingPairs...
+						config.autoClosingPairs.forEach((item) => {
+							// If the item is an array...
+							if (Array.isArray(item)) {
+								// Create a new object with the 1st array element [0] as the
+								// value of the open key, and the 2nd element [1] as the value
+								// of the close key.
+								const autoClosingPairsObj = {open: item[0], close: item[1]};
+								// Push the object into the new array.
+								autoClosingPairsArray.push(autoClosingPairsObj);
+							}
+							// Otherwise, the item is an object, so just push it into the array.
+							else {
+								autoClosingPairsArray.push(item);
+							}
+						});
+
+						// Add the new array to the config's autoClosingPairs key.
+						config.autoClosingPairs = autoClosingPairsArray;
+					}
+
+					// If the langId already exists, then it has multiple config files from
+					// different extensions, so we need to merge them together to ensure
+					// a full configuration is set, to avoid issues of missing values.
+					if (this.languageConfigs.has(langId)) {
+						const existingConfig = this.languageConfigs.get(langId);
+
+						// Only merge if both configs have comments
+						if (existingConfig.comments && config.comments) {
+							// Start with existing comments as base
+							const mergedComments = {...existingConfig.comments};
+
+							// Merge each comment type from new config.
+							Object.entries(config.comments).forEach(([key, value]) => {
+								// Skip empty arrays.
+								if (Array.isArray(value) && value.length === 0) {
+									return;
+								}
+								mergedComments[key] = value;
+							});
+
+							// Update the config with merged comments
+							config = {
+								...existingConfig,
+								...config,
+								comments: mergedComments,
+							};
 						}
-						// Otherwise, the item is an object, so just push it into the array.
+						// If only one config has comments or neither has comments...
 						else {
-							autoClosingPairsArray.push(item);
+							// Just merge the configs directly.
+							config = {...existingConfig, ...config};
 						}
-					});
+					}
 
-					// Add the new array to the config's autoClosingPairs key.
-					config.autoClosingPairs = autoClosingPairsArray;
+					// Set the language configs into the Map.
+					this.languageConfigs.set(langId, config);
 				}
-
-				// Set the language configs into the Map.
-				this.languageConfigs.set(langId, config);
-			}
+			});
 		});
 	}
 
