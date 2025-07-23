@@ -23,6 +23,11 @@ View the extension on [VScode Marketplace](https://marketplace.visualstudio.com/
 </td>
 <td>
 
+[VScode Required Settings](#vscode-required-settings)
+
+</td>
+<td>
+
 [Single-line Comment Blocks](#single-line-comment-blocks)
 
 </td>
@@ -78,6 +83,12 @@ For a full list of auto-supported VScode default languages, please view the auto
 -   Support for `/* */`, `##`, `;;`, and `{{--  --}}` (blade comments).
 
 View the [Changelog](/CHANGELOG.md) for more detailed changes/additions/removals.
+
+## VScode Required Settings
+
+These VScode settings are required to allow the extension to work correctly. So please make sure to change them accordingly.
+
+-   `"editor.autoIndent": "advanced"`
 
 ## Usage
 
