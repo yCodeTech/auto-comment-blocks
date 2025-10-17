@@ -856,6 +856,11 @@ export class Configuration {
 			};
 		}
 
+		// Normalize all onEnter rules to use consistent API format (for all languages)
+		if (langConfig.onEnterRules) {
+			this.normalizeOnEnterRules(langConfig.onEnterRules);
+		}
+
 		this.logger.debug(`The language config for ${langId}:`, langConfig);
 
 		return vscode.languages.setLanguageConfiguration(langId, langConfig);
@@ -1009,5 +1014,43 @@ export class Configuration {
 		this.logger.debug("The language configs found are:", this.languageConfigs);
 		this.logger.debug("The supported languages for multi-line blocks:", utils.readJsonFile(this.multiLineLangDefinitionFilePath));
 		this.logger.debug("The supported languages for single-line blocks:", utils.readJsonFile(this.singleLineLangDefinitionFilePath));
+	}
+
+	/**
+	 * Normalize onEnter rules to use consistent API format.
+	 * Converts JSON format (indent: "string") to API format (indentAction: enum).
+	 *
+	 * This prevents the inconsistent format between language configurations in JSON files
+	 * and the dynamically using the API from causing issues with onEnterRules not working properly.
+	 *
+	 * @param {vscode.OnEnterRule[]} rules The onEnter rules to normalize.
+	 */
+	private normalizeOnEnterRules(rules: vscode.OnEnterRule[]): void {
+		if (!rules) return;
+
+		rules.forEach((rule) => {
+			if (rule.action && "indent" in rule.action) {
+				// Convert JSON format to API format
+				const indentValue = (rule.action as any).indent;
+				delete (rule.action as any).indent;
+
+				// Map string values to IndentAction enum values
+				switch (indentValue) {
+					case "indent":
+						rule.action.indentAction = vscode.IndentAction.Indent;
+						break;
+					case "outdent":
+						rule.action.indentAction = vscode.IndentAction.Outdent;
+						break;
+					case "indentOutdent":
+						rule.action.indentAction = vscode.IndentAction.IndentOutdent;
+						break;
+					case "none":
+					default:
+						rule.action.indentAction = vscode.IndentAction.None;
+						break;
+				}
+			}
+		});
 	}
 }
