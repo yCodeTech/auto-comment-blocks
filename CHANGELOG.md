@@ -4,6 +4,16 @@ All notable changes to this extension will be documented in this file.
 
 This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure.
 
+## [1.1.11](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.11) - 2025-10-17
+
+#### Fixed:
+
+-   Fixes [yCodeTech/auto-comment-blocks#13](https://github.com/yCodeTech/auto-comment-blocks/issues/13)
+
+    VScode has inconsistencies between it's API and the language configuration JSON files. In the onEnter rules, JSON files have the property `action.indent` whereas the API has `action.indentAction`. When merging the auto-found language config files and the extension's onEnter comment rules, VScode couldn't handle the mixed formats properly, causing the braces to not expand correctly as documented in the issue.
+
+    Fixed by normalizing the property to the API format and converting it's values.
+
 ## [1.1.10](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.10) - 2025-07-21
 
 #### Fixed:
