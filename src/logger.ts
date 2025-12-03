@@ -6,7 +6,7 @@ import {OutputChannel, window} from "vscode";
  *
  * @class Logger
  */
-export class Logger {
+class Logger {
 	/**************
 	 * Properties *
 	 **************/
@@ -163,3 +163,5 @@ export class Logger {
 		return value;
 	}
 }
+
+export const logger = new Logger();

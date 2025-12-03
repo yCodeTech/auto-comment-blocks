@@ -8,7 +8,7 @@ import isWsl from "is-wsl";
 import {IPackageJson} from "package-json-type";
 
 import {Rules} from "./rules";
-import {Logger} from "./logger";
+import {logger} from "./logger";
 import * as utils from "./utils";
 import {ExtensionData} from "./extensionData";
 
@@ -16,13 +16,6 @@ export class Configuration {
 	/**************
 	 * Properties *
 	 **************/
-
-	/**
-	 * The Logger class instance for logging messages to the Output Channel.
-	 *
-	 * @type {Logger}
-	 */
-	private logger: Logger;
 
 	/**
 	 * This extension data class instance.
@@ -78,11 +71,9 @@ export class Configuration {
 	 * Methods *
 	 ***********/
 
-	public constructor(logger: Logger) {
-		this.logger = logger;
-
+	public constructor() {
 		// Always output extension information to channel on activate.
-		this.logger.debug(`Extension details:`, this.extensionData.getAll());
+		logger.debug(`Extension details:`, this.extensionData.getAll());
 
 		this.findAllLanguageConfigFilePaths();
 		this.setLanguageConfigDefinitions();
@@ -861,7 +852,7 @@ export class Configuration {
 			this.normalizeOnEnterRules(langConfig.onEnterRules);
 		}
 
-		this.logger.debug(`The language config for ${langId}:`, langConfig);
+		logger.debug(`The language config for ${langId}:`, langConfig);
 
 		return vscode.languages.setLanguageConfiguration(langId, langConfig);
 	}
@@ -1004,16 +995,16 @@ export class Configuration {
 			},
 			"Other System Env Variables": process.env,
 		};
-		this.logger.debug("Environment:", env);
+		logger.debug("Environment:", env);
 
 		// Log the extension's user configuration settings.
-		this.logger.debug("Configuration settings:", this.getConfiguration());
+		logger.debug("Configuration settings:", this.getConfiguration());
 
 		// Log the objects for debugging purposes.
-		this.logger.debug("The language config filepaths found are:", this.languageConfigFilePaths);
-		this.logger.debug("The language configs found are:", this.languageConfigs);
-		this.logger.debug("The supported languages for multi-line blocks:", utils.readJsonFile(this.multiLineLangDefinitionFilePath));
-		this.logger.debug("The supported languages for single-line blocks:", utils.readJsonFile(this.singleLineLangDefinitionFilePath));
+		logger.debug("The language config filepaths found are:", this.languageConfigFilePaths);
+		logger.debug("The language configs found are:", this.languageConfigs);
+		logger.debug("The supported languages for multi-line blocks:", utils.readJsonFile(this.multiLineLangDefinitionFilePath));
+		logger.debug("The supported languages for single-line blocks:", utils.readJsonFile(this.singleLineLangDefinitionFilePath));
 	}
 
 	/**
