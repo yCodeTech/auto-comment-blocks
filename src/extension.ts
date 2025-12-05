@@ -3,13 +3,12 @@
 import * as vscode from "vscode";
 
 import {Configuration} from "./configuration";
-import {Logger} from "./logger";
+import {logger} from "./logger";
 import {ExtensionData} from "./extensionData";
 
-const logger = new Logger();
 const extensionData = new ExtensionData();
 logger.setupOutputChannel();
-let configuration = new Configuration(logger);
+let configuration = new Configuration();
 
 const disposables: vscode.Disposable[] = [];
 

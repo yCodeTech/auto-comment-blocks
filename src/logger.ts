@@ -6,7 +6,7 @@ import {OutputChannel, window} from "vscode";
  *
  * @class Logger
  */
-export class Logger {
+class Logger {
 	/**************
 	 * Properties *
 	 **************/
@@ -59,6 +59,15 @@ export class Logger {
 	 */
 	public disposeLogger(): void {
 		this.outputChannel.dispose();
+	}
+
+	/**
+	 * Show the output channel to the user.
+	 */
+	public showChannel(): void {
+		if (this.outputChannel) {
+			this.outputChannel.show();
+		}
 	}
 
 	/**
@@ -163,3 +172,5 @@ export class Logger {
 		return value;
 	}
 }
+
+export const logger = new Logger();
