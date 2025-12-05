@@ -62,6 +62,15 @@ class Logger {
 	}
 
 	/**
+	 * Show the output channel to the user.
+	 */
+	public showChannel(): void {
+		if (this.outputChannel) {
+			this.outputChannel.show();
+		}
+	}
+
+	/**
 	 * Sends a basic info log to the output channel.
 	 *
 	 * @param {string} message The message to be logged.
