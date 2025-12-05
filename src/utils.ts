@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as jsonc from "jsonc-parser";
 import {logger} from "./logger";
+import {window} from "vscode";
 
 /**
  * Read the file and parse the JSON.
@@ -8,6 +9,7 @@ import {logger} from "./logger";
  * @param {string} filepath The path of the file.
  *
  * @returns {any} The JSON file content as an object.
+ * @throws Will throw an error if the JSON file cannot be parsed.
  */
 export function readJsonFile(filepath: string): any {
 	const jsonErrors: jsonc.ParseError[] = [];
@@ -17,10 +19,24 @@ export function readJsonFile(filepath: string): any {
 
 	if (jsonErrors.length > 0) {
 		const errorMessages = constructJsonParseErrorMsg(filepath, fileContent, jsonErrors);
-
-		const error = new Error(`Failed to parse a required JSON file: "${filepath}"\n\n\tParse Errors:\n\n${errorMessages}\n\tStack Trace:`);
+		const errorMsg = "Failed to parse a required JSON file";
+		const error = new Error(`${errorMsg}: "${filepath}"\n\n\tParse Errors:\n\n${errorMessages}\n\tStack Trace:`);
 
 		logger.error(error.stack);
+
+		window
+			.showErrorMessage(
+				`${errorMsg}. The extension cannot continue. Please check the "Auto Comment Blocks" Output Channel for errors.`,
+				"OK",
+				"Open Output Channel"
+			)
+			.then((selection) => {
+				if (selection === "Open Output Channel") {
+					logger.showChannel();
+				}
+			});
+
+		throw error;
 	}
 
 	return jsonContents;
