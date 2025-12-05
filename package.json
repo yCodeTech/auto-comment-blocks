@@ -2,7 +2,7 @@
 	"name": "automatic-comment-blocks",
 	"displayName": "Automatic Comment Blocks",
 	"description": "Provides block comment completion for Javadoc-style multi-line comments and single-line comment blocks for most officially supported languages.",
-	"version": "1.1.11",
+	"version": "1.1.12",
 	"publisher": "ycodetech",
 	"homepage": "https://github.com/ycodetech/auto-comment-blocks",
 	"repository": {
