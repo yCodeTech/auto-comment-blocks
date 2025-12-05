@@ -1,15 +1,59 @@
 import * as fs from "node:fs";
 import * as jsonc from "jsonc-parser";
+import {logger} from "./logger";
 
 /**
  * Read the file and parse the JSON.
  *
  * @param {string} filepath The path of the file.
  *
- * @returns The file content.
+ * @returns {any} The JSON file content as an object.
  */
 export function readJsonFile(filepath: string): any {
-	return jsonc.parse(fs.readFileSync(filepath).toString());
+	const jsonErrors: jsonc.ParseError[] = [];
+
+	const fileContent = fs.readFileSync(filepath).toString();
+	const jsonContents = jsonc.parse(fileContent, jsonErrors) ?? {};
+
+	if (jsonErrors.length > 0) {
+		const errorMessages = constructJsonParseErrorMsg(filepath, fileContent, jsonErrors);
+
+		const error = new Error(`Failed to parse a required JSON file: "${filepath}"\n\n\tParse Errors:\n\n${errorMessages}\n\tStack Trace:`);
+
+		logger.error(error.stack);
+	}
+
+	return jsonContents;
+}
+
+/**
+ * Construct detailed JSON parse error messages with file, line, and column information.
+ *
+ * @param {string} filepath The path of the file.
+ * @param {string} fileContent The content of the file.
+ * @param {jsonc.ParseError[]} jsonErrors The JSON parse errors.
+ *
+ * @returns {string} The constructed error message.
+ */
+function constructJsonParseErrorMsg(filepath: string, fileContent: string, jsonErrors: jsonc.ParseError[]): string {
+	return jsonErrors
+		.map((err, i) => {
+			// Get the error name from the numeric error code.
+			// The name is PascalCased, so we need to format it by adding spaces
+			// before capital letters for readability.
+			const errorName = jsonc
+				.printParseErrorCode(err.error)
+				.replace(/([A-Z])/g, " $1")
+				.trim();
+
+			// Calculate line and column numbers from the error offset.
+			const lineNumber = fileContent.substring(0, err.offset).split("\n").length;
+			const columnNumber = err.offset - fileContent.lastIndexOf("\n", err.offset - 1);
+
+			// Return the formatted error message.
+			return `\tError ${i + 1} - ${errorName} at "${filepath}:${lineNumber}:${columnNumber}"\n`;
+		})
+		.join("\n");
 }
 
 /**
