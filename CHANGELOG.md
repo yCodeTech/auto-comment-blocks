@@ -4,6 +4,20 @@ All notable changes to this extension will be documented in this file.
 
 This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure.
 
+## [1.1.12](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.12) - 2025-12-05
+
+#### Fixed:
+
+-   Fixes [#14](https://github.com/yCodeTech/auto-comment-blocks/issues/14) via PR [#15](https://github.com/yCodeTech/auto-comment-blocks/pull/15)
+
+    The extension crashes on startup with the `Cannot convert undefined or null to object` error. This is caused by the `Object.keys` in `Configuration::setLanguageConfigDefinitions` method because the config JSON file failed to parse in the `readJsonFile` util function which made the config `null`.
+
+    When the "jsonc-parser" package encounters a problem parsing the JSON via its `parse` function, it just returns `null` instead of erroring.
+
+    -   Fixed by adding proper error handling, logging and showing a user error dialog when parse errors occur, directly from `readJsonFile` function.
+
+        If errors occur, the error will be thrown from `readJsonFile` which will fail extension startup and crash, this is to provide easier debugging, instead of waiting for subsequent code that relies on the function from crashing the extension with an unrelated error.
+
 ## [1.1.11](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.11) - 2025-10-17
 
 #### Fixed:
