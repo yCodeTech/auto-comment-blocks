@@ -15,7 +15,7 @@ export function readJsonFile(filepath: string): any {
 	const jsonErrors: jsonc.ParseError[] = [];
 
 	const fileContent = fs.readFileSync(filepath).toString();
-	const jsonContents = jsonc.parse(fileContent, jsonErrors) ?? {};
+	const jsonContents = jsonc.parse(fileContent, jsonErrors, {allowEmptyContent: true}) ?? {};
 
 	if (jsonErrors.length > 0) {
 		const errorMessages = constructJsonParseErrorMsg(filepath, fileContent, jsonErrors);
