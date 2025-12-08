@@ -4,7 +4,7 @@ All notable changes to this extension will be documented in this file.
 
 This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure.
 
-## [Pre-release 1.1.13](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.13) - 2025-12-08
+## [1.1.13 Pre-release 1](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.13-prerelease.1) - 2025-12-08
 
 #### Fixed:
 
