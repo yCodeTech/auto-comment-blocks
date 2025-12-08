@@ -4,6 +4,15 @@ All notable changes to this extension will be documented in this file.
 
 This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure.
 
+## [Pre-release 1.1.13](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.13) - 2025-12-08
+
+#### Fixed:
+
+-   Fixes various errors brought up in comments in [#14](https://github.com/yCodeTech/auto-comment-blocks/issues/14) via PR [#17](https://github.com/yCodeTech/auto-comment-blocks/pull/17)
+
+    -   Fixes `Invalid Symbol` parsing error due to the file being encoded with a Byte Order Mark (BOM). Removed the BOM and explicitly read files as UTF-8 encoding.
+    -   Fixes `Value Expected` parsing error due to the parser erroring on empty files. Added an extra option to prevent erroring and allow empty files.
+
 ## [1.1.12](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.12) - 2025-12-05
 
 #### Fixed:
