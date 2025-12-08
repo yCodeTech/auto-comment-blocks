@@ -1,7 +1,6 @@
 on:
-  push:
-    tags:
-      - "*"
+  release:
+    types: [prereleased, released]
 
 name: Publish Extension to VS Code Marketplace and Open VSX Registry
 jobs:
@@ -13,14 +12,22 @@ jobs:
         with:
           node-version: 20
       - run: npm install
+
       - name: Publish to VS Code Marketplace
         uses: HaaLeo/publish-vscode-extension@v2
         id: publishToVsCodeMarketplace
         with:
           pat: ${{ secrets.VS_CODE_MARKETPLACE_TOKEN }}
+          # If the release is a prerelease, mark the extension as a prerelease in the
+          # VS Code marketplace.
+          preRelease: ${{ github.event.action == 'prereleased' }}
           registryUrl: https://marketplace.visualstudio.com
+
       - name: Publish to Open VSX Registry
         uses: HaaLeo/publish-vscode-extension@v2
         with:
           pat: ${{ secrets.OPEN_VSX_REGISTRY_TOKEN }}
+          # If the release is a prerelease, mark the extension as a prerelease in the
+          # Open VSX Registry.
+          preRelease: ${{ github.event.action == 'prereleased' }}
           extensionFile: ${{ steps.publishToVsCodeMarketplace.outputs.vsixPath }}
