@@ -14,8 +14,11 @@ import {window} from "vscode";
 export function readJsonFile(filepath: string): any {
 	const jsonErrors: jsonc.ParseError[] = [];
 
-	const fileContent = fs.readFileSync(filepath).toString();
-	const jsonContents = jsonc.parse(fileContent, jsonErrors) ?? {};
+	const fileContent = fs
+		.readFileSync(filepath, {encoding: "utf8"})
+		.toString()
+		.replace(/^\uFEFF/, ""); // Remove BOM if present.
+	const jsonContents = jsonc.parse(fileContent, jsonErrors, {allowEmptyContent: true}) ?? {};
 
 	if (jsonErrors.length > 0) {
 		const errorMessages = constructJsonParseErrorMsg(filepath, fileContent, jsonErrors);
