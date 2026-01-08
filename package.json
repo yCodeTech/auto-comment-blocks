@@ -64,7 +64,7 @@
 								"blade",
 								"html"
 							],
-							"markdownDescription": "Add language IDs here to enable multi line comment blocks support for that language. This allows unsupported languages to have comment completion. The default is `['blade', 'html']`"
+							"markdownDescription": "Add language IDs here to enable multi-line comment blocks support for that language. This allows unsupported languages to have comment completion. The default is `['blade', 'html']`"
 						},
 						"slashStyleBlocks": {
 							"type": "array",
@@ -94,14 +94,14 @@
 					"type": "array",
 					"default": [],
 					"markdownDescription": "Add language IDs here to enable `#`-style single-line comment blocks for that language. This allows unsupported languages to have comment completion.",
-					"deprecationMessage": "**Deprecated**: Please use `auto-comment-blocks.supportUnsupportedLanguages` with the property key `slashStyleBlocks` instead.",
+					"deprecationMessage": "**Deprecated**: Please use `auto-comment-blocks.supportUnsupportedLanguages` with the property key `hashStyleBlocks` instead.",
 					"markdownDeprecationMessage": "**Deprecated**: Please use `#auto-comment-blocks.supportUnsupportedLanguages#` with the property key `hashStyleBlocks` instead."
 				},
 				"auto-comment-blocks.semicolonStyleBlocks": {
 					"type": "array",
 					"default": [],
 					"markdownDescription": "Add language IDs here to enable `;`-style single-line comment blocks for that language. This allows unsupported languages to have comment completion.",
-					"deprecationMessage": "**Deprecated**: Please use `auto-comment-blocks.supportUnsupportedLanguages` with the property key `slashStyleBlocks` instead.",
+					"deprecationMessage": "**Deprecated**: Please use `auto-comment-blocks.supportUnsupportedLanguages` with the property key `semicolonStyleBlocks` instead.",
 					"markdownDeprecationMessage": "**Deprecated**: Please use `#auto-comment-blocks.supportUnsupportedLanguages#` with the property key `semicolonStyleBlocks` instead."
 				},
 				"auto-comment-blocks.multiLineStyleBlocks": {
