@@ -81,7 +81,9 @@
 							"default": [],
 							"markdownDescription": "Add language IDs to enable `;`-style single-line comment blocks for that language."
 						}
-					}
+					},
+					"additionalProperties": false,
+					"order": 0
 				},
 				"auto-comment-blocks.slashStyleBlocks": {
 					"type": "array",
