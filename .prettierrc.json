@@ -14,6 +14,24 @@
 			"options": {
 				"printWidth": 5
 			}
+		},
+		{
+			"files": [
+				"*.yml"
+			],
+			"options": {
+				"useTabs": false,
+				"tabWidth": 2
+			}
+		},
+		{
+			"files": [
+				"*.js",
+				"*.ts"
+			],
+			"options": {
+				"quoteProps": "consistent"
+			}
 		}
 	]
 }
