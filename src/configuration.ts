@@ -258,6 +258,17 @@ export class Configuration {
 	}
 
 	/**
+	 * Update the single-line comment language definitions.
+	 */
+	public updateSingleLineCommentLanguageDefinitions() {
+		// Remove all elements from the current Map, so we can update
+		// the definitions with an empty Map.
+		this.singleLineBlocksMap.clear();
+		// Update the definitions.
+		this.setSingleLineCommentLanguageDefinitions();
+	}
+
+	/**
 	 * Is the multi-line comment overridden for the specified language ID?
 	 *
 	 * @param {string} langId Language ID
@@ -279,6 +290,31 @@ export class Configuration {
 		const overriddenList = this.getConfigurationValue<string[]>("overrideDefaultLanguageMultiLineComments");
 
 		return overriddenList[langId];
+	}
+
+	/**
+	 * Get the custom supported language configuration value for the specified key.
+	 *
+	 * Decides which setting to return, either the old or new setting.
+	 *
+	 * @param {string} key - The configuration key to retrieve. Can be one of `"slashStyleBlocks"`, `"hashStyleBlocks"`, or `"semicolonStyleBlocks"`.
+	 * @returns {string[]} An array of strings representing the configuration values.
+	 */
+	private getCustomSupportedLangConfigurationValue(key: "slashStyleBlocks" | "hashStyleBlocks" | "semicolonStyleBlocks"): string[] {
+		/**
+		 * @deprecated since v1.2.0, will be removed in v2.0.0
+		 */
+		// Get the old configuration property.
+		const oldConfigProp = this.getConfigurationValue<string[]>(key);
+
+		// If old config property has a length more than 0 (ie. it has values in the array),
+		// then return the old property array.
+		if (oldConfigProp.length > 0) {
+			return oldConfigProp;
+		}
+
+		// Otherwise, return the property array from the new supportUnsupportedLanguages setting.
+		return this.getConfigurationValue<any>("supportUnsupportedLanguages")[key];
 	}
 
 	/**
@@ -622,7 +658,7 @@ export class Configuration {
 		tempMap.clear();
 
 		// Get user-customized langIds for the //-style and add to the map.
-		let customSlashLangs = this.getConfigurationValue<string[]>("slashStyleBlocks");
+		let customSlashLangs = this.getCustomSupportedLangConfigurationValue("slashStyleBlocks");
 		for (let langId of customSlashLangs) {
 			// If langId is exists (ie. not NULL or empty string) AND
 			// the langId is longer than 0, AND
@@ -633,7 +669,7 @@ export class Configuration {
 		}
 
 		// Get user-customized langIds for the #-style and add to the map.
-		let customHashLangs = this.getConfigurationValue<string[]>("hashStyleBlocks");
+		let customHashLangs = this.getCustomSupportedLangConfigurationValue("hashStyleBlocks");
 		for (let langId of customHashLangs) {
 			// If langId is exists (ie. not NULL or empty string) AND
 			// the langId is longer than 0, AND
@@ -644,7 +680,7 @@ export class Configuration {
 		}
 
 		// Get user-customized langIds for the ;-style and add to the map.
-		let customSemicolonLangs = this.getConfigurationValue<string[]>("semicolonStyleBlocks");
+		let customSemicolonLangs = this.getCustomSupportedLangConfigurationValue("semicolonStyleBlocks");
 		for (let langId of customSemicolonLangs) {
 			// If langId is exists (ie. not NULL or empty string) AND
 			// the langId is longer than 0, AND

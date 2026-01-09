@@ -2,7 +2,7 @@
 	"name": "automatic-comment-blocks",
 	"displayName": "Automatic Comment Blocks",
 	"description": "Provides block comment completion for Javadoc-style multi-line comments and single-line comment blocks for most officially supported languages.",
-	"version": "1.1.13",
+	"version": "1.2.0",
 	"publisher": "ycodetech",
 	"homepage": "https://github.com/ycodetech/auto-comment-blocks",
 	"repository": {
@@ -45,20 +45,66 @@
 					"default": [],
 					"markdownDescription": "Add language IDs here to disable any comment completion for that language."
 				},
+				"auto-comment-blocks.supportUnsupportedLanguages": {
+					"type": "object",
+					"default": {
+						"multiLineStyleBlocks": [
+							"blade",
+							"html"
+						],
+						"slashStyleBlocks": [],
+						"hashStyleBlocks": [],
+						"semicolonStyleBlocks": []
+					},
+					"markdownDescription": "Enables unsupported languages to have comment completion. \n\rProperties: \n- `multiLineStyleBlocks` to enable multi-line block comment support. The default is `['blade', 'html']` \n- `slashStyleBlocks` to enable `//`-style single-line comment support. \n- `hashStyleBlocks` to enable `#`-style single-line comment support. \n- `semicolonStyleBlocks` to enable `;`-style single-line comment support.",
+					"properties": {
+						"multiLineStyleBlocks": {
+							"type": "array",
+							"default": [
+								"blade",
+								"html"
+							],
+							"markdownDescription": "Add language IDs here to enable multi-line comment blocks support for that language. This allows unsupported languages to have comment completion. The default is `['blade', 'html']`"
+						},
+						"slashStyleBlocks": {
+							"type": "array",
+							"default": [],
+							"markdownDescription": "Add language IDs to enable `//`-style single-line comment blocks for that language."
+						},
+						"hashStyleBlocks": {
+							"type": "array",
+							"default": [],
+							"markdownDescription": "Add language IDs to enable `#`-style single-line comment blocks for that language."
+						},
+						"semicolonStyleBlocks": {
+							"type": "array",
+							"default": [],
+							"markdownDescription": "Add language IDs to enable `;`-style single-line comment blocks for that language."
+						}
+					},
+					"additionalProperties": false,
+					"order": 0
+				},
 				"auto-comment-blocks.slashStyleBlocks": {
 					"type": "array",
 					"default": [],
-					"markdownDescription": "Add language IDs here to enable `//` and `///`-style single-line comment blocks for that language. This allows unsupported languages to have comment completion."
+					"markdownDescription": "Add language IDs here to enable `//` and `///`-style single-line comment blocks for that language. This allows unsupported languages to have comment completion.",
+					"deprecationMessage": "**Deprecated**: Please use `auto-comment-blocks.supportUnsupportedLanguages` with the property key `slashStyleBlocks` instead.",
+					"markdownDeprecationMessage": "**Deprecated**: Please use `#auto-comment-blocks.supportUnsupportedLanguages#` with the property key `slashStyleBlocks` instead."
 				},
 				"auto-comment-blocks.hashStyleBlocks": {
 					"type": "array",
 					"default": [],
-					"markdownDescription": "Add language IDs here to enable `#`-style single-line comment blocks for that language. This allows unsupported languages to have comment completion."
+					"markdownDescription": "Add language IDs here to enable `#`-style single-line comment blocks for that language. This allows unsupported languages to have comment completion.",
+					"deprecationMessage": "**Deprecated**: Please use `auto-comment-blocks.supportUnsupportedLanguages` with the property key `hashStyleBlocks` instead.",
+					"markdownDeprecationMessage": "**Deprecated**: Please use `#auto-comment-blocks.supportUnsupportedLanguages#` with the property key `hashStyleBlocks` instead."
 				},
 				"auto-comment-blocks.semicolonStyleBlocks": {
 					"type": "array",
 					"default": [],
-					"markdownDescription": "Add language IDs here to enable `;`-style single-line comment blocks for that language. This allows unsupported languages to have comment completion."
+					"markdownDescription": "Add language IDs here to enable `;`-style single-line comment blocks for that language. This allows unsupported languages to have comment completion.",
+					"deprecationMessage": "**Deprecated**: Please use `auto-comment-blocks.supportUnsupportedLanguages` with the property key `semicolonStyleBlocks` instead.",
+					"markdownDeprecationMessage": "**Deprecated**: Please use `#auto-comment-blocks.supportUnsupportedLanguages#` with the property key `semicolonStyleBlocks` instead."
 				},
 				"auto-comment-blocks.multiLineStyleBlocks": {
 					"type": "array",
@@ -66,7 +112,9 @@
 						"blade",
 						"html"
 					],
-					"markdownDescription": "Add language IDs here to enable multi-line comment blocks support for that language. This allows unsupported languages to have comment completion. The default is `['blade', 'html']`"
+					"markdownDescription": "Add language IDs here to enable multi-line comment blocks support for that language. This allows unsupported languages to have comment completion. The default is `['blade', 'html']`",
+					"deprecationMessage": "**Deprecated**: Please use `auto-comment-blocks.supportUnsupportedLanguages` with the property key `multiLineStyleBlocks` instead.",
+					"markdownDeprecationMessage": "**Deprecated**: Please use `#auto-comment-blocks.supportUnsupportedLanguages#` with the property key `multiLineStyleBlocks` instead."
 				},
 				"auto-comment-blocks.overrideDefaultLanguageMultiLineComments": {
 					"type": "object",
