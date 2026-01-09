@@ -90,7 +90,7 @@ export function activate(context: vscode.ExtensionContext) {
 		if (event.affectsConfiguration(`${extensionName}.supportUnsupportedLanguages`)) {
 			configuration.updateSingleLineCommentLanguageDefinitions();
 
-			const configureCommentBlocksDisposable = configuration.configureCommentBlocks(context);
+			const configureCommentBlocksDisposable = configuration.configureCommentBlocks();
 
 			disposables.push(...configureCommentBlocksDisposable);
 		}
