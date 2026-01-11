@@ -11,6 +11,7 @@ import {Rules} from "./rules";
 import {logger} from "./logger";
 import * as utils from "./utils";
 import {ExtensionData} from "./extensionData";
+import {Settings, SupportUnsupportedLanguages} from "./interfaces/settings";
 
 export class Configuration {
 	/**************
@@ -218,18 +219,16 @@ export class Configuration {
 	/**
 	 * Get value of the specified key from the extension's user configuration settings.
 	 *
-	 * @param {string} key The key of the specific setting.
+	 * @param {K} key The key of the specific setting.
 	 *
-	 * @returns {T} Returns the value of the `key`.
-	 *
-	 * NOTE: Return is typed as `T`, which is a generic type that represents the type that is declared when called (as explained in this StackOverflow answer: https://stackoverflow.com/a/49622066/2358222)
+	 * @returns {Settings[K]} Returns the value of the `key` with proper typing.
 	 *
 	 * @example ```ts
-	 * this.getConfigurationValue<string[]>("disabledLanguages");
+	 * this.getConfigurationValue("disabledLanguages"); // Returns string[] with full type safety
 	 * ```
 	 */
-	public getConfigurationValue<T>(key: string): T {
-		return this.getConfiguration().get<T>(key);
+	public getConfigurationValue<K extends keyof Settings>(key: K): Settings[K] {
+		return this.getConfiguration().get<Settings[K]>(key);
 	}
 
 	/**
@@ -254,7 +253,7 @@ export class Configuration {
 	 * @returns {boolean}
 	 */
 	public isLangIdDisabled(langId: string): boolean {
-		return this.getConfigurationValue<string[]>("disabledLanguages").includes(langId);
+		return this.getConfigurationValue("disabledLanguages").includes(langId);
 	}
 
 	/**
@@ -264,7 +263,7 @@ export class Configuration {
 	 * @returns {boolean}
 	 */
 	private isLangIdMultiLineCommentOverridden(langId: string): boolean {
-		const overriddenList = this.getConfigurationValue<string[]>("overrideDefaultLanguageMultiLineComments");
+		const overriddenList = this.getConfigurationValue("overrideDefaultLanguageMultiLineComments");
 
 		return overriddenList.hasOwnProperty(langId);
 	}
@@ -276,7 +275,7 @@ export class Configuration {
 	 * @returns {string}
 	 */
 	private getOverriddenMultiLineComment(langId: string) {
-		const overriddenList = this.getConfigurationValue<string[]>("overrideDefaultLanguageMultiLineComments");
+		const overriddenList = this.getConfigurationValue("overrideDefaultLanguageMultiLineComments");
 
 		return overriddenList[langId];
 	}
@@ -552,7 +551,7 @@ export class Configuration {
 		// for sanity reasons.
 		this.multiLineBlocksMap.set("supportedLanguages", langArray.sort());
 
-		const multiLineStyleBlocksLangs = this.getConfigurationValue<string[]>("multiLineStyleBlocks");
+		const multiLineStyleBlocksLangs = this.getConfigurationValue("multiLineStyleBlocks");
 
 		// Empty the langArray to reuse it.
 		langArray = [];
@@ -622,7 +621,7 @@ export class Configuration {
 		tempMap.clear();
 
 		// Get user-customized langIds for the //-style and add to the map.
-		let customSlashLangs = this.getConfigurationValue<string[]>("slashStyleBlocks");
+		let customSlashLangs = this.getConfigurationValue("slashStyleBlocks");
 		for (let langId of customSlashLangs) {
 			// If langId is exists (ie. not NULL or empty string) AND
 			// the langId is longer than 0, AND
@@ -633,7 +632,7 @@ export class Configuration {
 		}
 
 		// Get user-customized langIds for the #-style and add to the map.
-		let customHashLangs = this.getConfigurationValue<string[]>("hashStyleBlocks");
+		let customHashLangs = this.getConfigurationValue("hashStyleBlocks");
 		for (let langId of customHashLangs) {
 			// If langId is exists (ie. not NULL or empty string) AND
 			// the langId is longer than 0, AND
@@ -644,7 +643,7 @@ export class Configuration {
 		}
 
 		// Get user-customized langIds for the ;-style and add to the map.
-		let customSemicolonLangs = this.getConfigurationValue<string[]>("semicolonStyleBlocks");
+		let customSemicolonLangs = this.getConfigurationValue("semicolonStyleBlocks");
 		for (let langId of customSemicolonLangs) {
 			// If langId is exists (ie. not NULL or empty string) AND
 			// the langId is longer than 0, AND
@@ -721,12 +720,11 @@ export class Configuration {
 			 * Get the user settings/configuration and set the blade or html comments accordingly.
 			 */
 			if (langId === "blade") {
-				langConfig.comments.blockComment = this.setBladeComments(this.getConfigurationValue<boolean>("bladeOverrideComments"), true);
+				langConfig.comments.blockComment = this.setBladeComments(this.getConfigurationValue("bladeOverrideComments"), true);
 			}
 		}
 
-		let isOnEnter = this.getConfigurationValue<boolean>("singleLineBlockOnEnter");
-
+		let isOnEnter = this.getConfigurationValue("singleLineBlockOnEnter");
 		// Add the single-line onEnter rules to the langConfig.
 		//
 		// If isOnEnter is true AND singleLineStyle isn't false, i.e. is a string,
@@ -906,7 +904,7 @@ export class Configuration {
 			}
 
 			var indentedNewLine = "\n" + line.text.substring(0, line.text.search(indentRegex));
-			let isOnEnter = this.getConfigurationValue<boolean>("singleLineBlockOnEnter");
+			let isOnEnter = this.getConfigurationValue("singleLineBlockOnEnter");
 			if (!isOnEnter) {
 				indentedNewLine += style + " ";
 			}
@@ -928,7 +926,7 @@ export class Configuration {
 		// Only carry out function if languageId is blade.
 		if (langId === "blade" && !this.isLangIdDisabled(langId)) {
 			// Read current value
-			let isOverridden = this.getConfigurationValue<boolean>("bladeOverrideComments");
+			let isOverridden = this.getConfigurationValue("bladeOverrideComments");
 
 			if (isOverridden === false) {
 				// Update to true
@@ -938,7 +936,7 @@ export class Configuration {
 				this.updateConfigurationValue("bladeOverrideComments", false);
 			}
 			// Read new value
-			let bladeOverrideComments = this.getConfigurationValue<boolean>("bladeOverrideComments");
+			let bladeOverrideComments = this.getConfigurationValue("bladeOverrideComments");
 
 			// Set the comments for blade language.
 			this.setBladeComments(bladeOverrideComments);
