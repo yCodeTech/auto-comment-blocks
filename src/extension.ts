@@ -22,7 +22,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const extensionDisplayName = extensionData.get("displayName");
 
-	let disabledLangConfig: string[] = configuration.getConfigurationValue<string[]>("disabledLanguages");
+	let disabledLangConfig: string[] = configuration.getConfigurationValue("disabledLanguages");
 
 	if (disabledLangConfig.length > 0) {
 		vscode.window.showInformationMessage(`${disabledLangConfig.join(", ")} languages are disabled for ${extensionDisplayName}.`);
@@ -41,7 +41,7 @@ export function activate(context: vscode.ExtensionContext) {
 		// If the affected setting is bladeOverrideComments...
 		if (event.affectsConfiguration(`${extensionName}.bladeOverrideComments`)) {
 			// Get the setting.
-			let bladeOverrideComments: boolean = configuration.getConfigurationValue<boolean>("bladeOverrideComments");
+			let bladeOverrideComments: boolean = configuration.getConfigurationValue("bladeOverrideComments");
 
 			configuration.setBladeComments(bladeOverrideComments);
 
