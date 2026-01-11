@@ -5,6 +5,6 @@ export interface Settings {
 	hashStyleBlocks: string[];
 	semicolonStyleBlocks: string[];
 	multiLineStyleBlocks: string[];
-	overrideDefaultLanguageMultiLineComments: string[];
+	overrideDefaultLanguageMultiLineComments: Record<string, string>;
 	bladeOverrideComments: boolean;
 }
