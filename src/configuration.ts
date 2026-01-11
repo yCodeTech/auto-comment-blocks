@@ -11,7 +11,7 @@ import {Rules} from "./rules";
 import {logger} from "./logger";
 import * as utils from "./utils";
 import {ExtensionData} from "./extensionData";
-import {Settings, SupportUnsupportedLanguages} from "./interfaces/settings";
+import {Settings} from "./interfaces/settings";
 
 export class Configuration {
 	/**************
