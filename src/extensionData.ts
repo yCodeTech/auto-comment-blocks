@@ -4,14 +4,15 @@ import isWsl from "is-wsl";
 import {IPackageJson} from "package-json-type";
 
 import {readJsonFile} from "./utils";
+import {ExtensionMetaData} from "./interfaces/extensionMetaData";
 
 export class ExtensionData {
 	/**
 	 * This extension details in the form of a key:value Map object.
 	 *
-	 * @type {Map<string, string>}
+	 * @type {Map<keyof ExtensionMetaData, string>}
 	 */
-	private extensionData = new Map<string, string>();
+	private extensionData = new Map<keyof ExtensionMetaData, string>();
 
 	/**
 	 * The package.json data for this extension.
@@ -52,42 +53,26 @@ export class ExtensionData {
 	 * Set the extension data into the extensionData Map.
 	 */
 	private setExtensionData() {
-		// Set all entries in the extensionData Map.
-		Object.entries(this.createExtensionData()).forEach(([key, value]) => {
-			this.extensionData.set(key, value);
-		});
-	}
-
-	/**
-	 * Create the extension data object for the extensionData Map.
-	 * It also helps for type inference intellisense in the get method.
-	 *
-	 * @returns The extension data object with keys and values.
-	 */
-	private createExtensionData() {
 		// The path to the user extensions.
 		const userExtensionsPath = isWsl
 			? path.join(vscode.env.appRoot, "../../", "extensions")
 			: path.join(this.packageJsonData.extensionPath, "../");
 
-		// Set the keys and values for the Map.
-		// The keys will also be used for type inference in VSCode intellisense.
-		return {
-			id: this.packageJsonData.id,
-			name: this.packageJsonData.contributes.configuration.namespace,
-			displayName: this.packageJsonData.displayName,
-			version: this.packageJsonData.version,
-			userExtensionsPath: userExtensionsPath,
-			// The path to the built-in extensions.
-			// This env variable changes when on WSL to it's WSL-built-in extensions path.
-			builtInExtensionsPath: path.join(vscode.env.appRoot, "extensions"),
+		// Set each key-value pair directly into the Map
+		this.extensionData.set("id", this.packageJsonData.id);
+		this.extensionData.set("name", this.packageJsonData.contributes.configuration.namespace);
+		this.extensionData.set("displayName", this.packageJsonData.displayName);
+		this.extensionData.set("version", this.packageJsonData.version);
+		this.extensionData.set("userExtensionsPath", userExtensionsPath);
+		// The path to the built-in extensions.
+		// This env variable changes when on WSL to it's WSL-built-in extensions path.
+		this.extensionData.set("builtInExtensionsPath", path.join(vscode.env.appRoot, "extensions"));
 
-			// Only set these if running in WSL.
-			...(isWsl && {
-				WindowsUserExtensionsPathFromWsl: path.dirname(process.env.VSCODE_WSL_EXT_LOCATION!),
-				WindowsBuiltInExtensionsPathFromWsl: path.join(process.env.VSCODE_CWD!, "resources/app/extensions"),
-			}),
-		} as const;
+		// Only set these if running in WSL
+		if (isWsl) {
+			this.extensionData.set("WindowsUserExtensionsPathFromWsl", path.dirname(process.env.VSCODE_WSL_EXT_LOCATION!));
+			this.extensionData.set("WindowsBuiltInExtensionsPathFromWsl", path.join(process.env.VSCODE_CWD!, "resources/app/extensions"));
+		}
 	}
 
 	/**
@@ -95,18 +80,18 @@ export class ExtensionData {
 	 *
 	 * @param {K} key The key of the extension detail to get.
 	 *
-	 * @returns {ReturnType<typeof this.createExtensionData>[K] | undefined} The value of the extension detail, or undefined if the key does not exist.
+	 * @returns {ExtensionMetaData[K] | undefined} The value of the extension detail, or undefined if the key does not exist.
 	 */
-	public get<K extends keyof ReturnType<typeof this.createExtensionData>>(key: K): ReturnType<typeof this.createExtensionData>[K] | undefined {
-		return this.extensionData.get(key) as ReturnType<typeof this.createExtensionData>[K] | undefined;
+	public get<K extends keyof ExtensionMetaData>(key: K): ExtensionMetaData[K] | undefined {
+		return this.extensionData.get(key) as ExtensionMetaData[K] | undefined;
 	}
 
 	/**
 	 * Get all extension data.
 	 *
-	 * @returns {ReadonlyMap<string, string>} A read-only Map containing all extension details.
+	 * @returns {ReadonlyMap<keyof ExtensionMetaData, string>} A read-only Map containing all extension details.
 	 */
-	public getAll(): ReadonlyMap<string, string> {
+	public getAll(): ReadonlyMap<keyof ExtensionMetaData, string> {
 		return this.extensionData;
 	}
 }
