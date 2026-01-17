@@ -4,14 +4,15 @@ import isWsl from "is-wsl";
 import {IPackageJson} from "package-json-type";
 
 import {readJsonFile} from "./utils";
+import {ExtensionMetaData} from "./interfaces/extensionMetaData";
 
 export class ExtensionData {
 	/**
 	 * This extension details in the form of a key:value Map object.
 	 *
-	 * @type {Map<string, string>}
+	 * @type {Map<keyof ExtensionMetaData, string>}
 	 */
-	private extensionData = new Map<string, string>();
+	private extensionData = new Map<keyof ExtensionMetaData, string>();
 
 	/**
 	 * The package.json data for this extension.
@@ -79,18 +80,18 @@ export class ExtensionData {
 	 *
 	 * @param {K} key The key of the extension detail to get.
 	 *
-	 * @returns {ReturnType<typeof this.createExtensionData>[K] | undefined} The value of the extension detail, or undefined if the key does not exist.
+	 * @returns {ExtensionMetaData[K] | undefined} The value of the extension detail, or undefined if the key does not exist.
 	 */
-	public get<K extends keyof ReturnType<typeof this.createExtensionData>>(key: K): ReturnType<typeof this.createExtensionData>[K] | undefined {
-		return this.extensionData.get(key) as ReturnType<typeof this.createExtensionData>[K] | undefined;
+	public get<K extends keyof ExtensionMetaData>(key: K): ExtensionMetaData[K] | undefined {
+		return this.extensionData.get(key) as ExtensionMetaData[K] | undefined;
 	}
 
 	/**
 	 * Get all extension data.
 	 *
-	 * @returns {ReadonlyMap<string, string>} A read-only Map containing all extension details.
+	 * @returns {ReadonlyMap<keyof ExtensionMetaData, string>} A read-only Map containing all extension details.
 	 */
-	public getAll(): ReadonlyMap<string, string> {
+	public getAll(): ReadonlyMap<keyof ExtensionMetaData, string> {
 		return this.extensionData;
 	}
 }
