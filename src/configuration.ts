@@ -533,9 +533,9 @@ export class Configuration {
 	 * Set the multi-line comments language definitions.
 	 */
 	private setMultiLineCommentLanguageDefinitions() {
-		let langArray = [];
+		let langArray: string[] = [];
 
-		this.languageConfigs.forEach((config: any, langId: string) => {
+		this.languageConfigs.forEach((config: vscode.LanguageConfiguration, langId: string) => {
 			// If the config object has own property of comments AND the comments key has
 			// own property of blockComment...
 			if (Object.hasOwn(config, "comments") && Object.hasOwn(config.comments, "blockComment")) {
@@ -581,7 +581,7 @@ export class Configuration {
 	private setSingleLineCommentLanguageDefinitions() {
 		let style: string;
 		const tempMap: Map<string, string> = new Map();
-		this.languageConfigs.forEach((config: any, langId: string) => {
+		this.languageConfigs.forEach((config: vscode.LanguageConfiguration, langId: string) => {
 			// console.log(langId, config.comments.lineComment);
 			let style: string = "";
 
@@ -702,7 +702,7 @@ export class Configuration {
 	 */
 	private setLanguageConfiguration(langId: string, multiLine?: boolean, singleLineStyle?: string): vscode.Disposable {
 		const internalLangConfig: vscode.LanguageConfiguration = this.getLanguageConfig(langId);
-		const defaultMultiLineConfig: any = utils.readJsonFile(`${__dirname}/../../config/default-multi-line-config.json`);
+		const defaultMultiLineConfig: vscode.LanguageConfiguration = utils.readJsonFile(`${__dirname}/../../config/default-multi-line-config.json`);
 
 		let langConfig = {...internalLangConfig};
 
