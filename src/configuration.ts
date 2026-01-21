@@ -179,28 +179,34 @@ export class Configuration {
 	 * If `true`, it returns the comments, if `false` (default), it sets the comments to
 	 * the language directly.
 	 *
+	 * @returns {vscode.CharacterPair | void} Returns the blade comments if `onStart` is `true`, otherwise nothing.
+	 *
 	 */
-	public setBladeComments(bladeOverrideComments: boolean, onStart: boolean = false): any {
+	public setBladeComments(bladeOverrideComments: boolean, onStart: boolean = false): vscode.CharacterPair | void {
 		// Is enabled AND blade langId is NOT set as disabled...
 		if (bladeOverrideComments === true && !this.isLangIdDisabled("blade")) {
+			const bladeComments: vscode.CharacterPair = ["{{--", "--}}"];
+
 			if (onStart) {
-				return ["{{--", "--}}"];
+				return bladeComments;
 			} else {
 				vscode.languages.setLanguageConfiguration("blade", {
 					comments: {
-						blockComment: ["{{--", "--}}"],
+						blockComment: bladeComments,
 					},
 				});
 			}
 		}
 		// Is disabled OR blade langId is set as disabled...
 		else if (!bladeOverrideComments || this.isLangIdDisabled("blade")) {
+			const htmlComments: vscode.CharacterPair = ["<!--", "-->"];
+
 			if (onStart) {
-				return ["<!--", "-->"];
+				return htmlComments;
 			} else {
 				vscode.languages.setLanguageConfiguration("blade", {
 					comments: {
-						blockComment: ["<!--", "-->"],
+						blockComment: htmlComments,
 					},
 				});
 			}
