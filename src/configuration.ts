@@ -583,16 +583,16 @@ export class Configuration {
 		const tempMap: Map<string, string> = new Map();
 		this.languageConfigs.forEach((config: vscode.LanguageConfiguration, langId: string) => {
 			// console.log(langId, config.comments.lineComment);
-			let style: string = "";
+			let style: SingleLineCommentStyle | null = null;
 
 			// If the config object has own property of comments AND the comments key has
 			// own property of lineComment...
 			if (Object.hasOwn(config, "comments") && Object.hasOwn(config.comments, "lineComment")) {
-				let lineComment = config.comments.lineComment;
+				let lineComment: LineComment = config.comments.lineComment as LineComment;
 
 				// Line comments can be a string or an object with a "comment" key.
 				// If the lineComment is an object, get the "comment" key value.
-				if (Object.hasOwn(lineComment, "comment")) {
+				if (typeof lineComment === "object" && lineComment !== null && Object.hasOwn(lineComment, "comment")) {
 					lineComment = lineComment.comment;
 				}
 
@@ -609,10 +609,10 @@ export class Configuration {
 					style = ";";
 				}
 
-				// If style is NOT an empty string, (i.e. not an unsupported single-line
+				// If style is NOT null, (i.e. not an unsupported single-line
 				// comment like bat's @rem), AND
 				// the langId isn't set as disabled...
-				if (style != "" && !this.isLangIdDisabled(langId)) {
+				if (style !== null && !this.isLangIdDisabled(langId)) {
 					// Set the langId and it's style into the Map.
 					tempMap.set(langId, style);
 				}
