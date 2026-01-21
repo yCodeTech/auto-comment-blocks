@@ -12,6 +12,7 @@ import {logger} from "./logger";
 import * as utils from "./utils";
 import {ExtensionData} from "./extensionData";
 import {Settings} from "./interfaces/settings";
+import {LineComment, SingleLineCommentStyle} from "./interfaces/commentStyles";
 
 export class Configuration {
 	/**************
