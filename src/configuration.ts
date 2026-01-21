@@ -242,13 +242,13 @@ export class Configuration {
 	 *
 	 * @param {string} key The key of the specific setting.
 
-	 * @param {any} value The value to update the setting with.
+	 * @param {unknown} value The value to update the setting with.
 	 *
 	 * @example ```ts
 	 * this.updateConfigurationValue("bladeOverrideComments", true);
 	 * ```
 	 */
-	public updateConfigurationValue(key: string, value: any) {
+	public updateConfigurationValue(key: string, value: unknown) {
 		// .update(config key, new value, global)
 		this.getConfiguration().update(key, value, true);
 	}
