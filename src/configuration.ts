@@ -604,8 +604,8 @@ export class Configuration {
 				else if (lineComment === "#") {
 					style = "#";
 				}
-				// If the lineComment includes a ";" (; or ;;)...
-				else if (lineComment.includes(";")) {
+				// If the lineComment is ";" or ";;"...
+				else if (lineComment === ";" || lineComment === ";;") {
 					style = ";";
 				}
 
