@@ -579,7 +579,6 @@ export class Configuration {
 	 * Set the single-line comments language definitions.
 	 */
 	private setSingleLineCommentLanguageDefinitions() {
-		let style: string;
 		const tempMap: Map<string, string> = new Map();
 		this.languageConfigs.forEach((config: vscode.LanguageConfiguration, langId: string) => {
 			// console.log(langId, config.comments.lineComment);
