@@ -726,7 +726,12 @@ export class Configuration {
 			 * Get the user settings/configuration and set the blade or html comments accordingly.
 			 */
 			if (langId === "blade") {
-				langConfig.comments.blockComment = this.setBladeComments(this.getConfigurationValue("bladeOverrideComments"), true);
+				const bladeComments = this.setBladeComments(this.getConfigurationValue("bladeOverrideComments"), true);
+
+				// If bladeComments is has a value...
+				if (bladeComments) {
+					langConfig.comments.blockComment = bladeComments;
+				}
 			}
 		}
 
