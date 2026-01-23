@@ -18,7 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	disposables.push(...configureCommentBlocksDisposable, ...registerCommandsDisposable);
 
-	const extensionName = extensionData.get("name");
+	const extensionName = extensionData.get("namespace");
 
 	const extensionDisplayName = extensionData.get("displayName");
 

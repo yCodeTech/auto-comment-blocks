@@ -60,7 +60,8 @@ export class ExtensionData {
 
 		// Set each key-value pair directly into the Map
 		this.extensionData.set("id", this.packageJsonData.id);
-		this.extensionData.set("name", this.packageJsonData.contributes.configuration.namespace);
+		this.extensionData.set("name", this.packageJsonData.name);
+		this.extensionData.set("namespace", this.packageJsonData.contributes.configuration.namespace);
 		this.extensionData.set("displayName", this.packageJsonData.displayName);
 		this.extensionData.set("version", this.packageJsonData.version);
 		this.extensionData.set("userExtensionsPath", userExtensionsPath);

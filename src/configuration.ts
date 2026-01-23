@@ -220,7 +220,7 @@ export class Configuration {
 	 * @returns {vscode.WorkspaceConfiguration}
 	 */
 	public getConfiguration(): vscode.WorkspaceConfiguration {
-		return vscode.workspace.getConfiguration(this.extensionData.get("name"), null);
+		return vscode.workspace.getConfiguration(this.extensionData.get("namespace"), null);
 	}
 
 	/**
@@ -932,7 +932,7 @@ export class Configuration {
 	 */
 	private handleChangeBladeMultiLineBlock(textEditor: vscode.TextEditor) {
 		let langId = textEditor.document.languageId;
-		const extensionName = this.extensionData.get("name");
+		const extensionName = this.extensionData.get("namespace");
 
 		// Only carry out function if languageId is blade.
 		if (langId === "blade" && !this.isLangIdDisabled(langId)) {
