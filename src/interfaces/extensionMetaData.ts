@@ -30,6 +30,13 @@ export interface ExtensionMetaData {
 	 * Directly from package.json "version" key.
 	 */
 	version: string;
+
+}
+
+/**
+ * Extension discovery paths configuration for this extension
+ */
+export interface ExtensionPaths {
 	/**
 	 * The path to the user extensions.
 	 */

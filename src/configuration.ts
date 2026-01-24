@@ -76,6 +76,7 @@ export class Configuration {
 	public constructor() {
 		// Always output extension information to channel on activate.
 		logger.debug(`Extension details:`, this.extensionData.getAll());
+		logger.debug(`Extension Discovery Paths:`, this.extensionData.getAllExtensionDiscoveryPaths());
 
 		this.findAllLanguageConfigFilePaths();
 		this.setLanguageConfigDefinitions();
@@ -309,8 +310,8 @@ export class Configuration {
 		// If running in WSL...
 		if (isWsl) {
 			// Get the Windows user and built-in extensions paths.
-			const windowsUserExtensionsPath = this.extensionData.get("WindowsUserExtensionsPathFromWsl");
-			const windowsBuiltInExtensionsPath = this.extensionData.get("WindowsBuiltInExtensionsPathFromWsl");
+			const windowsUserExtensionsPath = this.extensionData.getExtensionDiscoveryPath("WindowsUserExtensionsPathFromWsl");
+			const windowsBuiltInExtensionsPath = this.extensionData.getExtensionDiscoveryPath("WindowsBuiltInExtensionsPathFromWsl");
 
 			// Read the paths and create arrays of the extensions.
 			const windowsBuiltInExtensions = this.readExtensionsFromDirectory(windowsBuiltInExtensionsPath);
@@ -320,8 +321,8 @@ export class Configuration {
 			extensions.push(...windowsBuiltInExtensions, ...windowsUserExtensions);
 		}
 
-		const userExtensionsPath = this.extensionData.get("userExtensionsPath");
-		const builtInExtensionsPath = this.extensionData.get("builtInExtensionsPath");
+		const userExtensionsPath = this.extensionData.getExtensionDiscoveryPath("userExtensionsPath");
+		const builtInExtensionsPath = this.extensionData.getExtensionDiscoveryPath("builtInExtensionsPath");
 
 		// Read the paths and create arrays of the extensions.
 		const userExtensions = this.readExtensionsFromDirectory(userExtensionsPath);
@@ -971,25 +972,25 @@ export class Configuration {
 	private logDebugInfo() {
 		// The path to the built-in extensions. The env variable changes when on WSL.
 		// So we can use it for both Windows and WSL.
-		const builtInExtensionsPath = this.extensionData.get("builtInExtensionsPath");
+		const builtInExtensionsPath = this.extensionData.getExtensionDiscoveryPath("builtInExtensionsPath");
 
 		let extensionsPaths = {};
 
 		if (isWsl) {
 			// Get the Windows user and built-in extensions paths.
-			const windowsUserExtensionsPath = this.extensionData.get("WindowsUserExtensionsPathFromWsl");
-			const windowsBuiltInExtensionsPath = this.extensionData.get("WindowsBuiltInExtensionsPathFromWsl");
+			const windowsUserExtensionsPath = this.extensionData.getExtensionDiscoveryPath("WindowsUserExtensionsPathFromWsl");
+			const windowsBuiltInExtensionsPath = this.extensionData.getExtensionDiscoveryPath("WindowsBuiltInExtensionsPathFromWsl");
 
 			extensionsPaths = {
 				"Windows-installed Built-in Extensions Path": windowsBuiltInExtensionsPath,
 				"Windows-installed User Extensions Path": windowsUserExtensionsPath,
 				"WSL-installed Built-in Extensions Path": builtInExtensionsPath,
-				"WSL-installed User Extensions Path": this.extensionData.get("userExtensionsPath"),
+				"WSL-installed User Extensions Path": this.extensionData.getExtensionDiscoveryPath("userExtensionsPath"),
 			};
 		} else {
 			extensionsPaths = {
 				"Built-in Extensions Path": builtInExtensionsPath,
-				"User Extensions Path": this.extensionData.get("userExtensionsPath"),
+				"User Extensions Path": this.extensionData.getExtensionDiscoveryPath("userExtensionsPath"),
 			};
 		}
 
