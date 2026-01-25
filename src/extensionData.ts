@@ -47,11 +47,6 @@ export class ExtensionData {
 
 		packageJSON.extensionPath = extensionPath;
 
-		// The configuration settings namespace is a shortened version of the extension name.
-		// We just need to replace "automatic" with "auto" in the name.
-		const settingsNamespace: string = packageJSON.name.replace("automatic", "auto");
-		// Set the namespace to the packageJSON `configuration` object as a new `namespace` key.
-		packageJSON.contributes.configuration.namespace = settingsNamespace;
 
 		return packageJSON;
 	}
@@ -66,7 +61,11 @@ export class ExtensionData {
 		// Set each key-value pair directly into the Map
 		this.extensionData.set("id", id);
 		this.extensionData.set("name", this.packageJsonData.name);
-		this.extensionData.set("namespace", this.packageJsonData.contributes.configuration.namespace);
+		// The configuration settings namespace is a shortened version of the extension name.
+		// We just need to replace "automatic" with "auto" in the name.
+		const settingsNamespace: string = this.packageJsonData.name.replace("automatic", "auto");
+
+		this.extensionData.set("namespace", settingsNamespace);
 		this.extensionData.set("displayName", this.packageJsonData.displayName);
 		this.extensionData.set("version", this.packageJsonData.version);
 	}
