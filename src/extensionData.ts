@@ -45,8 +45,6 @@ export class ExtensionData {
 
 		const packageJSON: IPackageJson = readJsonFile(path.join(extensionPath, "package.json"));
 
-		// Set the id (publisher.name) into the packageJSON object as a new `id` key.
-		packageJSON.id = `${packageJSON.publisher}.${packageJSON.name}`;
 		packageJSON.extensionPath = extensionPath;
 
 		// The configuration settings namespace is a shortened version of the extension name.
@@ -62,9 +60,11 @@ export class ExtensionData {
 	 * Set the extension data into the extensionData Map.
 	 */
 	private setExtensionData() {
+		// Create the extension ID (publisher.name).
+		const id = `${this.packageJsonData.publisher}.${this.packageJsonData.name}`;
 
 		// Set each key-value pair directly into the Map
-		this.extensionData.set("id", this.packageJsonData.id);
+		this.extensionData.set("id", id);
 		this.extensionData.set("name", this.packageJsonData.name);
 		this.extensionData.set("namespace", this.packageJsonData.contributes.configuration.namespace);
 		this.extensionData.set("displayName", this.packageJsonData.displayName);
