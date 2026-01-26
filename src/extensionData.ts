@@ -40,19 +40,24 @@ export class ExtensionData {
 		this.extensionPath = path.join(__dirname, "../../");
 
 		this.packageJsonData = this.getExtensionPackageJsonData();
-		this.setExtensionData();
+
+		// Only proceed with extension data setup if packageJsonData is NOT null.
+		if (this.packageJsonData !== null) {
+			this.setExtensionData();
+		}
+
 		this.setExtensionDiscoveryPaths();
 	}
 
 	/**
 	 * Get the names, id, and version of this extension from package.json.
 	 *
-	 * @returns {IPackageJson} The package.json data for this extension, with extra custom keys.
+	 * @returns {IPackageJson | null} The package.json data for this extension, with extra custom keys.
 	 */
-	private getExtensionPackageJsonData(): IPackageJson {
+	private getExtensionPackageJsonData(): IPackageJson | null {
 		// Get the package.json file path.
 		const packageJSONPath = path.join(this.extensionPath, "package.json");
-		return readJsonFile(packageJSONPath);
+		return readJsonFile(packageJSONPath, false);
 	}
 
 	/**
