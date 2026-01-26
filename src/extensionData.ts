@@ -88,10 +88,7 @@ export class ExtensionData {
 
 	private setExtensionDiscoveryPaths() {
 		// The path to the user extensions.
-		// const userExtensionsPath = isWsl ? path.join(vscode.env.appRoot, "../../", "extensions") : path.join(this.extensionPath, "../");
-
-		//TODO: REMOVE THIS BEFORE RELEASE. FOR TESTING ONLY.
-		const userExtensionsPath = isWsl ? path.join(vscode.env.appRoot, "../../", "extensions") : "C:\\Users\\Stuart\\.vscode\\extensions";
+		const userExtensionsPath = isWsl ? path.join(vscode.env.appRoot, "../../", "extensions") : path.join(this.extensionPath, "../");
 
 		this.extensionDiscoveryPaths.set("userExtensionsPath", userExtensionsPath);
 		// The path to the built-in extensions.
