@@ -7,11 +7,26 @@ import {window} from "vscode";
  * Read the file and parse the JSON.
  *
  * @param {string} filepath The path of the file.
+ * @param {boolean} [throwOnFileMissing=true] Whether to throw an error if the file doesn't exist.
+ * If `false`, returns `null`. Default is `true`.
  *
- * @returns {any} The JSON file content as an object.
- * @throws Will throw an error if the JSON file cannot be parsed.
+ * @returns {any | null} The JSON file content as an object, or `null` if file doesn't exist and `throwOnFileMissing` is `false`.
+ * @throws Will throw an error if the JSON file cannot be parsed or if file doesn't exist and `throwOnFileMissing` is `true`.
  */
-export function readJsonFile(filepath: string): any {
+export function readJsonFile(filepath: string, throwOnFileMissing: boolean = true): any | null {
+	// Check if file exists first.
+	// If file doesn't exist...
+	if (!fs.existsSync(filepath)) {
+		// If throwOnFileMissing param is true, throw an error.
+		if (throwOnFileMissing) {
+			const error = new Error(`JSON file not found: "${filepath}"`);
+			logger.error(error.stack);
+			throw error;
+		}
+		// Otherwise just return null.
+		return null;
+	}
+
 	const jsonErrors: jsonc.ParseError[] = [];
 
 	const fileContent = fs
@@ -31,7 +46,7 @@ export function readJsonFile(filepath: string): any {
 			.showErrorMessage(
 				`${errorMsg}. The extension cannot continue. Please check the "Auto Comment Blocks" Output Channel for errors.`,
 				"OK",
-				"Open Output Channel"
+				"Open Output Channel",
 			)
 			.then((selection) => {
 				if (selection === "Open Output Channel") {

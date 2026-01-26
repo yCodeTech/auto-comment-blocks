@@ -495,16 +495,17 @@ export class Configuration {
 
 				// Get the package.json file path.
 				const packageJSONPath = path.join(extensionPath, "package.json");
+				const packageJSON: IPackageJson = utils.readJsonFile(packageJSONPath, false);
 
-				// If the package.json file exists...
-				if (fs.existsSync(packageJSONPath)) {
-					const packageJSON: IPackageJson = utils.readJsonFile(packageJSONPath);
-
-					const id = `${packageJSON.publisher}.${packageJSON.name}`;
-
-					// Push the extension data object into the array.
-					foundExtensions.push({id, extensionPath, packageJSON});
+				if (packageJSON === null) {
+					return;
 				}
+
+				const id = `${packageJSON.publisher}.${packageJSON.name}`;
+
+				// Push the extension data object into the array.
+				foundExtensions.push({id, extensionPath, packageJSON});
+				
 			}
 		});
 
