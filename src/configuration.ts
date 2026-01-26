@@ -13,6 +13,7 @@ import * as utils from "./utils";
 import {ExtensionData} from "./extensionData";
 import {Settings} from "./interfaces/settings";
 import {LineComment, SingleLineCommentStyle} from "./interfaces/commentStyles";
+import {ExtensionMetaData} from "./interfaces/extensionMetaData";
 
 export class Configuration {
 	/**************
@@ -166,7 +167,7 @@ export class Configuration {
 			"auto-comment-blocks.changeBladeMultiLineBlock",
 			(textEditor, edit, args) => {
 				this.handleChangeBladeMultiLineBlock(textEditor);
-			}
+			},
 		);
 		return [singleLineBlockCommand, changeBladeMultiLineBlockCommand];
 	}
@@ -305,7 +306,7 @@ export class Configuration {
 	 * (built-in and 3rd party).
 	 */
 	private findAllLanguageConfigFilePaths() {
-		const extensions: any[] = [];
+		const extensions: ExtensionMetaData[] = [];
 
 		// If running in WSL...
 		if (isWsl) {
@@ -477,12 +478,11 @@ export class Configuration {
 	 *
 	 * @param {string} extensionsPath The path where extensions are stored.
 	 *
-	 * @returns {Array<{ id: string; extensionPath: string; packageJSON: IPackageJson }>}
+	 * @returns {ExtensionMetaData[]}
 	 */
-	private readExtensionsFromDirectory(extensionsPath: string): Array<{id: string; extensionPath: string; packageJSON: IPackageJson}> {
+	private readExtensionsFromDirectory(extensionsPath: string): ExtensionMetaData[] {
 		// Create an array to hold the found extensions.
-		const foundExtensions: Array<{id: string; extensionPath: string; packageJSON: IPackageJson}> = [];
-
+		const foundExtensions: ExtensionMetaData[] = [];
 		fs.readdirSync(extensionsPath).forEach((extensionName) => {
 			const extensionPath = path.join(extensionsPath, extensionName);
 
@@ -493,19 +493,14 @@ export class Configuration {
 					return;
 				}
 
-				// Get the package.json file path.
-				const packageJSONPath = path.join(extensionPath, "package.json");
-				const packageJSON: IPackageJson = utils.readJsonFile(packageJSONPath, false);
+				const extensionData = new ExtensionData(extensionPath).getAll();
 
-				if (packageJSON === null) {
+				if (extensionData === null) {
 					return;
 				}
 
-				const id = `${packageJSON.publisher}.${packageJSON.name}`;
-
 				// Push the extension data object into the array.
-				foundExtensions.push({id, extensionPath, packageJSON});
-				
+				foundExtensions.push(extensionData);
 			}
 		});
 
@@ -959,7 +954,7 @@ export class Configuration {
 		else if (langId == "blade" && this.isLangIdDisabled(langId)) {
 			vscode.window.showInformationMessage(
 				`Blade is set as disabled in the "${extensionName}.disabledLanguages" setting. The "${extensionName}.bladeOverrideComments" setting will have no affect.`,
-				"OK"
+				"OK",
 			);
 
 			// Set the comments for blade language.

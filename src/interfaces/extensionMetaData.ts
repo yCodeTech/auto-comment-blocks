@@ -1,3 +1,8 @@
+import {IPackageJson} from "package-json-type";
+
+// Utility types for cleaner Map typing
+export type ExtensionMetaDataValue = ExtensionMetaData[keyof ExtensionMetaData];
+
 /**
  * Extension metadata for a VSCode extension
  */
@@ -35,6 +40,11 @@ export interface ExtensionMetaData {
 	 * The absolute path to the extension.
 	 */
 	extensionPath: string;
+
+	/**
+	 * The full package.json data
+	 */
+	packageJSON: IPackageJson;
 }
 
 /**

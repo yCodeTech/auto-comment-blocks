@@ -4,15 +4,15 @@ import isWsl from "is-wsl";
 import {IPackageJson} from "package-json-type";
 
 import {readJsonFile} from "./utils";
-import {ExtensionMetaData, ExtensionPaths} from "./interfaces/extensionMetaData";
+import {ExtensionMetaData, ExtensionPaths, ExtensionMetaDataValue} from "./interfaces/extensionMetaData";
 
 export class ExtensionData {
 	/**
-	 * This extension details in the form of a key:value Map object.
+	 * Extension data in the form of a key:value Map object.
 	 *
-	 * @type {Map<keyof ExtensionMetaData, string>}
+	 * @type {Map<keyof ExtensionMetaData, ExtensionMetaDataValue>}
 	 */
-	private extensionData = new Map<keyof ExtensionMetaData, string>();
+	private extensionData = new Map<keyof ExtensionMetaData, ExtensionMetaDataValue>();
 
 	/**
 	 * Extension discovery paths in the form of a key:value Map object.
@@ -22,7 +22,7 @@ export class ExtensionData {
 	private extensionDiscoveryPaths = new Map<keyof ExtensionPaths, string>();
 
 	/**
-	 * The absolute path of the extension.
+	 * The absolute path of the requested extension.
 	 *
 	 * @type {string}
 	 */
@@ -35,9 +35,9 @@ export class ExtensionData {
 	 */
 	private packageJsonData: IPackageJson;
 
-	public constructor() {
-		// Set the path to this extension's path.
-		this.extensionPath = path.join(__dirname, "../../");
+	public constructor(extensionPath: string | null = null) {
+		// Set the path if provided, otherwise default to this extension's path.
+		this.extensionPath = extensionPath ?? path.join(__dirname, "../../");
 
 		this.packageJsonData = this.getExtensionPackageJsonData();
 
@@ -70,14 +70,20 @@ export class ExtensionData {
 		// Set each key-value pair directly into the Map
 		this.extensionData.set("id", id);
 		this.extensionData.set("name", this.packageJsonData.name);
-		// The configuration settings namespace is a shortened version of the extension name.
-		// We just need to replace "automatic" with "auto" in the name.
-		const settingsNamespace: string = this.packageJsonData.name.replace("automatic", "auto");
 
-		this.extensionData.set("namespace", settingsNamespace);
+		// Only set the namespace if it dealing with this extension.
+		if (this.packageJsonData.name === "automatic-comment-blocks") {
+			// The configuration settings namespace is a shortened version of the extension name.
+			// We just need to replace "automatic" with "auto" in the name.
+			const settingsNamespace: string = this.packageJsonData.name.replace("automatic", "auto");
+
+			this.extensionData.set("namespace", settingsNamespace);
+		}
+
 		this.extensionData.set("displayName", this.packageJsonData.displayName);
 		this.extensionData.set("version", this.packageJsonData.version);
 		this.extensionData.set("extensionPath", this.extensionPath);
+		this.extensionData.set("packageJSON", this.packageJsonData);
 	}
 
 	private setExtensionDiscoveryPaths() {
@@ -111,12 +117,17 @@ export class ExtensionData {
 	}
 
 	/**
-	 * Get all extension data.
+	 * Get all extension data as a plain object.
 	 *
-	 * @returns {ReadonlyMap<keyof ExtensionMetaData, string>} A read-only Map containing all extension details.
+	 * @returns {ExtensionMetaData} A plain object containing all extension details.
 	 */
-	public getAll(): ReadonlyMap<keyof ExtensionMetaData, string> {
-		return this.extensionData;
+	public getAll(): ExtensionMetaData | null {
+		// If no data, return null
+		if (this.extensionData.size === 0) {
+			return null;
+		}
+
+		return Object.fromEntries(this.extensionData) as unknown as ExtensionMetaData;
 	}
 
 	/**
