@@ -21,6 +21,12 @@ export class ExtensionData {
 	 */
 	private extensionDiscoveryPaths = new Map<keyof ExtensionPaths, string>();
 
+	/**
+	 * The absolute path of the extension.
+	 *
+	 * @type {string}
+	 */
+	private readonly extensionPath: string;
 
 	/**
 	 * The package.json data for this extension.
@@ -30,6 +36,9 @@ export class ExtensionData {
 	private packageJsonData: IPackageJson;
 
 	public constructor() {
+		// Set the path to this extension's path.
+		this.extensionPath = path.join(__dirname, "../../");
+
 		this.packageJsonData = this.getExtensionPackageJsonData();
 		this.setExtensionData();
 		this.setExtensionDiscoveryPaths();
@@ -41,14 +50,9 @@ export class ExtensionData {
 	 * @returns {IPackageJson} The package.json data for this extension, with extra custom keys.
 	 */
 	private getExtensionPackageJsonData(): IPackageJson {
-		const extensionPath = path.join(__dirname, "../../");
-
-		const packageJSON: IPackageJson = readJsonFile(path.join(extensionPath, "package.json"));
-
-		packageJSON.extensionPath = extensionPath;
-
-
-		return packageJSON;
+		// Get the package.json file path.
+		const packageJSONPath = path.join(this.extensionPath, "package.json");
+		return readJsonFile(packageJSONPath);
 	}
 
 	/**
@@ -68,6 +72,7 @@ export class ExtensionData {
 		this.extensionData.set("namespace", settingsNamespace);
 		this.extensionData.set("displayName", this.packageJsonData.displayName);
 		this.extensionData.set("version", this.packageJsonData.version);
+		this.extensionData.set("extensionPath", this.extensionPath);
 	}
 
 	private setExtensionDiscoveryPaths() {

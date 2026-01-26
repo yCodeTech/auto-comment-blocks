@@ -31,6 +31,10 @@ export interface ExtensionMetaData {
 	 */
 	version: string;
 
+	/**
+	 * The absolute path to the extension.
+	 */
+	extensionPath: string;
 }
 
 /**
