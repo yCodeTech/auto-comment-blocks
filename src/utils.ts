@@ -2,6 +2,7 @@ import * as fs from "node:fs";
 import * as jsonc from "jsonc-parser";
 import {logger} from "./logger";
 import {window} from "vscode";
+import {JsonObject, JsonValue} from "./interfaces/utils";
 
 /**
  * Read the file and parse the JSON.
@@ -10,10 +11,11 @@ import {window} from "vscode";
  * @param {boolean} [throwOnFileMissing=true] Whether to throw an error if the file doesn't exist.
  * If `false`, returns `null`. Default is `true`.
  *
- * @returns {any | null} The JSON file content as an object, or `null` if file doesn't exist and `throwOnFileMissing` is `false`.
+ * @returns {T | null} The JSON file content as the passed T type (defaulting to a JSON object)
+ * or `null` if file doesn't exist and `throwOnFileMissing` is `false`.
  * @throws Will throw an error if the JSON file cannot be parsed or if file doesn't exist and `throwOnFileMissing` is `true`.
  */
-export function readJsonFile(filepath: string, throwOnFileMissing: boolean = true): any | null {
+export function readJsonFile<T extends JsonValue = JsonObject>(filepath: string, throwOnFileMissing: boolean = true): T | null {
 	// Check if file exists first.
 	// If file doesn't exist...
 	if (!fs.existsSync(filepath)) {
@@ -46,7 +48,7 @@ export function readJsonFile(filepath: string, throwOnFileMissing: boolean = tru
 			.showErrorMessage(
 				`${errorMsg}. The extension cannot continue. Please check the "Auto Comment Blocks" Output Channel for errors.`,
 				"OK",
-				"Open Output Channel",
+				"Open Output Channel"
 			)
 			.then((selection) => {
 				if (selection === "Open Output Channel") {
@@ -57,7 +59,7 @@ export function readJsonFile(filepath: string, throwOnFileMissing: boolean = tru
 		throw error;
 	}
 
-	return jsonContents;
+	return jsonContents as T;
 }
 
 /**
@@ -94,10 +96,10 @@ function constructJsonParseErrorMsg(filepath: string, fileContent: string, jsonE
  * Read the file and parse the JSON.
  *
  * @param {string} filepath The path of the file.
- * @param {any} data The data to write into the file.
+ * @param {T} data The data to write into the file.
  * @returns The file content.
  */
-export function writeJsonFile(filepath: string, data: any): any {
+export function writeJsonFile<T>(filepath: string, data: T) {
 	// Write the updated JSON back into the file and add tab indentation
 	// to make it easier to read.
 	fs.writeFileSync(filepath, JSON.stringify(data, null, "\t"));
@@ -122,7 +124,7 @@ export function ensureDirExists(dir: string) {
  * @param key The key to check in the object
  * @returns {RegExp} The reconstructed regex pattern.
  */
-export function reconstructRegex(obj: any, key: string) {
+export function reconstructRegex(obj: unknown, key: string) {
 	// If key has a "pattern" key, then it's an object...
 	if (Object.hasOwn(obj[key], "pattern")) {
 		return new RegExp(obj[key].pattern);
@@ -139,7 +141,7 @@ export function reconstructRegex(obj: any, key: string) {
  * Code based on this StackOverflow answer https://stackoverflow.com/a/45728850/2358222
  *
  * @param {Map<string, Map<string, string>>} m The Map to convert to an object.
- * @returns {object} The converted object.
+ * @returns {JsonObject} The converted object.
  *
  * @example
  * reverseMapping(
@@ -165,8 +167,8 @@ export function reconstructRegex(obj: any, key: string) {
  * 	}
  * }
  */
-export function convertMapToReversedObject(m: Map<string, Map<string, string>>): object {
-	const result: any = {};
+export function convertMapToReversedObject(m: Map<string, Map<string, string>>): JsonObject {
+	const result: JsonObject = {};
 
 	// Convert a nested key:value Map from inside another Map into an key:array object,
 	// while reversing/switching the keys and values. The Map's values are now the keys of

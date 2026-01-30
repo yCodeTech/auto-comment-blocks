@@ -61,7 +61,7 @@ export class ExtensionData {
 	private getExtensionPackageJsonData(): IPackageJson | null {
 		// Get the package.json file path.
 		const packageJSONPath = path.join(this.extensionPath, "package.json");
-		return readJsonFile(packageJSONPath, false);
+		return readJsonFile<IPackageJson>(packageJSONPath, false);
 	}
 
 	/**
