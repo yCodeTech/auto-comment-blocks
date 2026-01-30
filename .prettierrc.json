@@ -30,7 +30,8 @@
 				"*.ts"
 			],
 			"options": {
-				"quoteProps": "consistent"
+				"quoteProps": "consistent",
+				"trailingComma": "es5"
 			}
 		}
 	]
