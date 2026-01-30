@@ -37,6 +37,10 @@ export class ExtensionData {
 
 	public constructor(extensionPath: string | null = null) {
 		// Set the path if provided, otherwise default to this extension's path.
+		//
+		// For this extension's path, we use `__dirname` and go up two levels
+		// (from "out/src" to the extension root). This path is also used to locate all other
+		// user-installed extensions later for the `userExtensionsPath` discovery path.
 		this.extensionPath = extensionPath ?? path.join(__dirname, "../../");
 
 		this.packageJsonData = this.getExtensionPackageJsonData();
@@ -88,6 +92,9 @@ export class ExtensionData {
 
 	private setExtensionDiscoveryPaths() {
 		// The path to the user extensions.
+		//
+		// On Windows/Linux/Mac: ~/.vscode[-server|remote]/extensions
+		// On WSL: ~/.vscode-[server|remote]/extensions
 		const userExtensionsPath = isWsl ? path.join(vscode.env.appRoot, "../../", "extensions") : path.join(this.extensionPath, "../");
 
 		this.extensionDiscoveryPaths.set("userExtensionsPath", userExtensionsPath);
