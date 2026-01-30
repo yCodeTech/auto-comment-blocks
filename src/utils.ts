@@ -219,8 +219,7 @@ export function mergeArraysBy<T>(primaryArray: T[], secondaryArray: T[], key: ke
 	// Start with primary array (avoids side effects)
 	const merged = [...primary];
 
-	// Add items from secondary array that don't exist in primary,
-	// removing any duplicates.
+	// Add items from secondary array that don't exist in primary, removing any duplicates.
 	secondary.forEach((item) => {
 		// Test all items in the merged array to check if the value of the key
 		// already exists in the merged array.

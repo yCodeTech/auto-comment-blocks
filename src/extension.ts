@@ -32,7 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
 	 * When the configuration/user settings are changed, set the extension
 	 * to reflect the settings and output a message to the user.
 	 */
-	vscode.workspace.onDidChangeConfiguration((event: any) => {
+	vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) => {
 		// TODO: Work on automatically updating the languages instead of making the user reload the extension.
 
 		/**

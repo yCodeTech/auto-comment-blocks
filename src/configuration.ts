@@ -379,7 +379,7 @@ export class Configuration {
 		this.languageConfigFilePaths.forEach((paths, langId) => {
 			// Loop through the paths array...
 			paths.forEach((filepath) => {
-				let config = utils.readJsonFile(filepath);
+				let config = utils.readJsonFile(filepath) as vscode.LanguageConfiguration;
 
 				// If the config JSON has more than 0 keys (ie. not empty)
 				if (Object.keys(config).length > 0) {
@@ -514,7 +514,8 @@ export class Configuration {
 	 * @returns {string[]} An array of language ID strings.
 	 */
 	private getMultiLineLanguages(key: "supportedLanguages" | "customSupportedLanguages"): string[] {
-		return this.multiLineBlocksMap.get(key);
+		// The non-null assertion operator (!) ensures that the key is never undefined.
+		return this.multiLineBlocksMap.get(key)!;
 	}
 
 	/**
@@ -524,7 +525,8 @@ export class Configuration {
 	 * @returns {Map<string, string>} The Map of the languages and styles.
 	 */
 	private getSingleLineLanguages(key: "supportedLanguages" | "customSupportedLanguages"): Map<string, string> {
-		return this.singleLineBlocksMap.get(key);
+		// The non-null assertion operator (!) ensures that the key is never undefined.
+		return this.singleLineBlocksMap.get(key)!;
 	}
 
 	/**
@@ -1028,6 +1030,7 @@ export class Configuration {
 		rules.forEach((rule) => {
 			if (rule.action && "indent" in rule.action) {
 				// Convert JSON format to API format
+				// Usage of the `any` type is necessary here because `rule.action`
 				const indentValue = (rule.action as any).indent;
 				delete (rule.action as any).indent;
 
