@@ -119,11 +119,11 @@ export function ensureDirExists(dir: string) {
  * Reconstruct the regex pattern because vscode doesn't like the regex pattern as a string,
  * or some patterns are not working as expected.
  *
- * @param obj The object
- * @param key The key to check in the object
+ * @param {unknown} obj The object
+ * @param {string} key The key to check in the object
  * @returns {RegExp} The reconstructed regex pattern.
  */
-export function reconstructRegex(obj: unknown, key: string) {
+export function reconstructRegex(obj: unknown, key: string): RegExp {
 	// If key has a "pattern" key, then it's an object...
 	if (Object.hasOwn(obj[key], "pattern")) {
 		return new RegExp(obj[key].pattern);
