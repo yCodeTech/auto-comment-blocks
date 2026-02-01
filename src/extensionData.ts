@@ -90,6 +90,9 @@ export class ExtensionData {
 		this.extensionData.set("packageJSON", this.packageJsonData);
 	}
 
+	/**
+	 * Set the extension discovery paths into the extensionDiscoveryPaths Map.
+	 */
 	private setExtensionDiscoveryPaths() {
 		// The path to the user extensions.
 		//
