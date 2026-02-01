@@ -714,10 +714,18 @@ export class Configuration {
 		let langConfig = {...internalLangConfig};
 
 		if (multiLine) {
-			langConfig.autoClosingPairs = utils.mergeArraysBy(defaultMultiLineConfig.autoClosingPairs, internalLangConfig?.autoClosingPairs, "open");
+			langConfig.autoClosingPairs = utils.mergeArraysBy<vscode.AutoClosingPair>(
+				defaultMultiLineConfig.autoClosingPairs,
+				internalLangConfig?.autoClosingPairs,
+				"open"
+			);
 
 			// Add the multi-line onEnter rules to the langConfig.
-			langConfig.onEnterRules = utils.mergeArraysBy(Rules.multilineEnterRules, internalLangConfig?.onEnterRules, "beforeText");
+			langConfig.onEnterRules = utils.mergeArraysBy<vscode.OnEnterRule>(
+				Rules.multilineEnterRules,
+				internalLangConfig?.onEnterRules,
+				"beforeText"
+			);
 
 			// Only assign the default config comments if it doesn't already exist.
 			// (nullish assignment operator ??=)
@@ -750,15 +758,15 @@ export class Configuration {
 		if (isOnEnter && singleLineStyle) {
 			// //-style comments
 			if (singleLineStyle === "//") {
-				langConfig.onEnterRules = utils.mergeArraysBy(Rules.slashEnterRules, langConfig?.onEnterRules, "beforeText");
+				langConfig.onEnterRules = utils.mergeArraysBy<vscode.OnEnterRule>(Rules.slashEnterRules, langConfig?.onEnterRules, "beforeText");
 			}
 			// #-style comments
 			else if (singleLineStyle === "#") {
-				langConfig.onEnterRules = utils.mergeArraysBy(Rules.hashEnterRules, langConfig?.onEnterRules, "beforeText");
+				langConfig.onEnterRules = utils.mergeArraysBy<vscode.OnEnterRule>(Rules.hashEnterRules, langConfig?.onEnterRules, "beforeText");
 			}
 			// ;-style comments
 			else if (singleLineStyle === ";") {
-				langConfig.onEnterRules = utils.mergeArraysBy(Rules.semicolonEnterRules, langConfig?.onEnterRules, "beforeText");
+				langConfig.onEnterRules = utils.mergeArraysBy<vscode.OnEnterRule>(Rules.semicolonEnterRules, langConfig?.onEnterRules, "beforeText");
 			}
 		}
 		// If isOnEnter is false AND singleLineStyle isn't false, i.e. a string.
