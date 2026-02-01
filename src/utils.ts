@@ -96,10 +96,9 @@ function constructJsonParseErrorMsg(filepath: string, fileContent: string, jsonE
  * Read the file and parse the JSON.
  *
  * @param {string} filepath The path of the file.
- * @param {T} data The data to write into the file.
- * @returns The file content.
+ * @param {JsonValue} data The data to write into the file.
  */
-export function writeJsonFile<T>(filepath: string, data: T) {
+export function writeJsonFile(filepath: string, data: JsonValue) {
 	// Write the updated JSON back into the file and add tab indentation
 	// to make it easier to read.
 	fs.writeFileSync(filepath, JSON.stringify(data, null, "\t"));
@@ -141,7 +140,7 @@ export function reconstructRegex(obj: unknown, key: string) {
  * Code based on this StackOverflow answer https://stackoverflow.com/a/45728850/2358222
  *
  * @param {Map<string, Map<string, string>>} m The Map to convert to an object.
- * @returns {JsonObject} The converted object.
+ * @returns {T} The converted object.
  *
  * @example
  * reverseMapping(
@@ -167,8 +166,8 @@ export function reconstructRegex(obj: unknown, key: string) {
  * 	}
  * }
  */
-export function convertMapToReversedObject(m: Map<string, Map<string, string>>): JsonObject {
-	const result: JsonObject = {};
+export function convertMapToReversedObject<T extends JsonValue = JsonObject>(m: Map<string, Map<string, string>>): T {
+	const result = {};
 
 	// Convert a nested key:value Map from inside another Map into an key:array object,
 	// while reversing/switching the keys and values. The Map's values are now the keys of
@@ -192,7 +191,7 @@ export function convertMapToReversedObject(m: Map<string, Map<string, string>>):
 		// as the key.
 		result[key] = Object.keys(o).reduce((r, k) => Object.assign(r, {[o[k]]: (r[o[k]] || []).concat(k)}), {});
 	}
-	return result;
+	return result as T;
 }
 
 /**
