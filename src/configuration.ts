@@ -12,7 +12,7 @@ import {logger} from "./logger";
 import * as utils from "./utils";
 import {ExtensionData} from "./extensionData";
 import {Settings} from "./interfaces/settings";
-import {LineComment, SingleLineCommentStyle} from "./interfaces/commentStyles";
+import {ExtraSingleLineCommentStyles, LineComment, SingleLineCommentStyle} from "./interfaces/commentStyles";
 import {ExtensionMetaData} from "./interfaces/extensionMetaData";
 import {JsonObject, JsonArray, MultiLineLanguageDefinitions, SingleLineLanguageDefinitions} from "./interfaces/utils";
 
@@ -38,20 +38,24 @@ export class Configuration {
 	private readonly languageConfigs = new Map<string, vscode.LanguageConfiguration>();
 
 	/**
-	 * A key:value Map object of supported language IDs and their single-line style comments.
+	 * A key:value Map object of supported and custom supported language IDs
+	 * and their single-line style comments.
 	 *
-	 * @property {string} key Language ID.
-	 * @property {string} value Style of line comment.
+	 * @property {string} - Map key can be either "customSupportedLanguages"
+	 * or "supportedLanguages".
+	 * @property {Map<string, SingleLineCommentStyle>} - Map value is an inner Map object of
+	 * language IDs and their single-line comment styles.
 	 */
-	private singleLineBlocksMap: Map<string, Map<string, string>> = new Map();
+	private singleLineBlocksMap: Map<"customSupportedLanguages" | "supportedLanguages", Map<string, SingleLineCommentStyle>> = new Map();
 
 	/**
 	 * A Map object of an array of supported language IDs for multi-line block comments.
 	 *
-	 * @property {string} key - "languages"
-	 * @property {string[]} value - Array of language IDs.
+	 * @property {string} - Map key can be either "customSupportedLanguages"
+	 * or "supportedLanguages".
+	 * @property {string[]} - Map value is an array of language IDs.
 	 */
-	private multiLineBlocksMap: Map<string, string[]> = new Map();
+	private multiLineBlocksMap: Map<"customSupportedLanguages" | "supportedLanguages", string[]> = new Map();
 
 	/**
 	 * The directory where the auto-generated language definitions are stored.
@@ -525,9 +529,9 @@ export class Configuration {
 	 * Get the single-line languages and styles.
 	 *
 	 * @param {"supportedLanguages" | "customSupportedLanguages"} key A stringed key, either `"supportedLanguages"` or `"customSupportedLanguages"`
-	 * @returns {Map<string, string>} The Map of the languages and styles.
+	 * @returns {Map<string, SingleLineCommentStyle>} The Map of the languages and styles.
 	 */
-	private getSingleLineLanguages(key: "supportedLanguages" | "customSupportedLanguages"): Map<string, string> {
+	private getSingleLineLanguages(key: "supportedLanguages" | "customSupportedLanguages"): Map<string, SingleLineCommentStyle> {
 		// The non-null assertion operator (!) ensures that the key is never undefined.
 		return this.singleLineBlocksMap.get(key)!;
 	}
@@ -582,7 +586,8 @@ export class Configuration {
 	 * Set the single-line comments language definitions.
 	 */
 	private setSingleLineCommentLanguageDefinitions() {
-		const tempMap: Map<string, string> = new Map();
+		const tempMap: Map<string, SingleLineCommentStyle> = new Map();
+
 		this.languageConfigs.forEach((config: vscode.LanguageConfiguration, langId: string) => {
 			// console.log(langId, config.comments.lineComment);
 			let style: SingleLineCommentStyle | null = null;
@@ -691,7 +696,7 @@ export class Configuration {
 	 *
 	 * @param {string} langId - The language ID for which the configuration is being set.
 	 * @param {boolean} multiLine - Optional. If `true`, sets multi-line comment configuration.
-	 * @param {string} singleLineStyle - Optional. Specifies the style of single-line comments (e.g., `"//"`, `"#"`, `";"`).
+	 * @param {SingleLineCommentStyle} singleLineStyle - Optional. Specifies the style of single-line comments (e.g., `"//"`, `"#"`, `";"`).
 	 *
 	 * @returns {vscode.Disposable}
 	 *
@@ -708,7 +713,7 @@ export class Configuration {
 	 * Note: This method ensures that the language configuration is correctly set and avoids issues
 	 * with rogue characters being inserted on new lines.
 	 */
-	private setLanguageConfiguration(langId: string, multiLine?: boolean, singleLineStyle?: string): vscode.Disposable {
+	private setLanguageConfiguration(langId: string, multiLine?: boolean, singleLineStyle?: SingleLineCommentStyle): vscode.Disposable {
 		const internalLangConfig: vscode.LanguageConfiguration = this.getLanguageConfig(langId);
 		const defaultMultiLineConfig = utils.readJsonFile(`${__dirname}/../../config/default-multi-line-config.json`) as vscode.LanguageConfiguration;
 
@@ -895,7 +900,7 @@ export class Configuration {
 
 		// Get the langId from the auto-supported langs. If it doesn't exist, try getting it from
 		// the custom-supported langs instead.
-		var style = singleLineLangs.get(langId) ?? customSingleLineLangs.get(langId);
+		var style: SingleLineCommentStyle | ExtraSingleLineCommentStyles = singleLineLangs.get(langId) ?? customSingleLineLangs.get(langId);
 
 		if (style && textEditor.selection.isEmpty) {
 			let line = textEditor.document.lineAt(textEditor.selection.active);
