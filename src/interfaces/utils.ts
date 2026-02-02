@@ -32,3 +32,8 @@ export interface MultiLineLanguageDefinitions extends JsonObject {
 	supportedLanguages: string[];
 	customSupportedLanguages: string[];
 }
+
+/**
+ * Language ID
+ */
+export type LanguageId = string;

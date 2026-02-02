@@ -14,7 +14,7 @@ import {ExtensionData} from "./extensionData";
 import {Settings} from "./interfaces/settings";
 import {ExtraSingleLineCommentStyles, LineComment, SingleLineCommentStyle} from "./interfaces/commentStyles";
 import {ExtensionMetaData} from "./interfaces/extensionMetaData";
-import {JsonObject, JsonArray, MultiLineLanguageDefinitions, SingleLineLanguageDefinitions} from "./interfaces/utils";
+import {JsonObject, JsonArray, LanguageId, MultiLineLanguageDefinitions, SingleLineLanguageDefinitions} from "./interfaces/utils";
 
 export class Configuration {
 	/**************
@@ -30,12 +30,12 @@ export class Configuration {
 	/**
 	 * A key:value Map object of language IDs and their config file paths.
 	 */
-	private languageConfigFilePaths = new Map<string, string[]>();
+	private languageConfigFilePaths: Map<LanguageId, string[]> = new Map();
 
 	/**
 	 * A key:value Map object of language IDs and their configs.
 	 */
-	private readonly languageConfigs = new Map<string, vscode.LanguageConfiguration>();
+	private readonly languageConfigs: Map<LanguageId, vscode.LanguageConfiguration> = new Map();
 
 	/**
 	 * A key:value Map object of supported and custom supported language IDs
@@ -43,19 +43,19 @@ export class Configuration {
 	 *
 	 * @property {string} - Map key can be either "customSupportedLanguages"
 	 * or "supportedLanguages".
-	 * @property {Map<string, SingleLineCommentStyle>} - Map value is an inner Map object of
+	 * @property {Map<LanguageId, SingleLineCommentStyle>} - Map value is an inner Map object of
 	 * language IDs and their single-line comment styles.
 	 */
-	private singleLineBlocksMap: Map<"customSupportedLanguages" | "supportedLanguages", Map<string, SingleLineCommentStyle>> = new Map();
+	private singleLineBlocksMap: Map<"customSupportedLanguages" | "supportedLanguages", Map<LanguageId, SingleLineCommentStyle>> = new Map();
 
 	/**
 	 * A Map object of an array of supported language IDs for multi-line block comments.
 	 *
 	 * @property {string} - Map key can be either "customSupportedLanguages"
 	 * or "supportedLanguages".
-	 * @property {string[]} - Map value is an array of language IDs.
+	 * @property {LanguageId[]} - Map value is an array of language IDs.
 	 */
-	private multiLineBlocksMap: Map<"customSupportedLanguages" | "supportedLanguages", string[]> = new Map();
+	private multiLineBlocksMap: Map<"customSupportedLanguages" | "supportedLanguages", LanguageId[]> = new Map();
 
 	/**
 	 * The directory where the auto-generated language definitions are stored.
@@ -265,20 +265,20 @@ export class Configuration {
 
 	/**
 	 * Is the language ID disabled?
-	 * @param {string} langId Language ID
+	 * @param {LanguageId} langId Language ID
 	 * @returns {boolean}
 	 */
-	public isLangIdDisabled(langId: string): boolean {
+	public isLangIdDisabled(langId: LanguageId): boolean {
 		return this.getConfigurationValue("disabledLanguages").includes(langId);
 	}
 
 	/**
 	 * Is the multi-line comment overridden for the specified language ID?
 	 *
-	 * @param {string} langId Language ID
+	 * @param {LanguageId} langId Language ID
 	 * @returns {boolean}
 	 */
-	private isLangIdMultiLineCommentOverridden(langId: string): boolean {
+	private isLangIdMultiLineCommentOverridden(langId: LanguageId): boolean {
 		const overriddenList = this.getConfigurationValue("overrideDefaultLanguageMultiLineComments");
 
 		return overriddenList.hasOwnProperty(langId);
@@ -287,10 +287,10 @@ export class Configuration {
 	/**
 	 * Get the overridden multi-line comment for the specified language ID.
 	 *
-	 * @param {string} langId Language ID
+	 * @param {LanguageId} langId Language ID
 	 * @returns {string} The overridden multi-line comment style.
 	 */
-	private getOverriddenMultiLineComment(langId: string): string {
+	private getOverriddenMultiLineComment(langId: LanguageId): string {
 		const overriddenList = this.getConfigurationValue("overrideDefaultLanguageMultiLineComments");
 
 		return overriddenList[langId];
@@ -349,7 +349,7 @@ export class Configuration {
 			if (Object.hasOwn(packageJSON, "contributes") && Object.hasOwn(packageJSON.contributes, "languages")) {
 				// Loop through the languages...
 				for (let language of packageJSON.contributes.languages) {
-					const langId = language.id;
+					const langId: LanguageId = language.id;
 					// Get the languages to skip.
 					let skipLangs = this.getLanguagesToSkip();
 
@@ -466,10 +466,10 @@ export class Configuration {
 	/**
 	 * Get the config of the specified language.
 	 *
-	 * @param langId Language ID
+	 * @param {LanguageId} langId Language ID
 	 * @returns {vscode.LanguageConfiguration | undefined}
 	 */
-	private getLanguageConfig(langId: string): vscode.LanguageConfiguration | undefined {
+	private getLanguageConfig(langId: LanguageId): vscode.LanguageConfiguration | undefined {
 		if (this.languageConfigs.has(langId)) {
 			return this.languageConfigs.get(langId);
 		}
@@ -518,9 +518,9 @@ export class Configuration {
 	 * Get the multi-line languages from the Map.
 	 *
 	 * @param {"supportedLanguages" | "customSupportedLanguages"} key A stringed key, either `"supportedLanguages"` or `"customSupportedLanguages"`
-	 * @returns {string[]} An array of language ID strings.
+	 * @returns {LanguageId[]} An array of language ID strings.
 	 */
-	private getMultiLineLanguages(key: "supportedLanguages" | "customSupportedLanguages"): string[] {
+	private getMultiLineLanguages(key: "supportedLanguages" | "customSupportedLanguages"): LanguageId[] {
 		// The non-null assertion operator (!) ensures that the key is never undefined.
 		return this.multiLineBlocksMap.get(key)!;
 	}
@@ -529,9 +529,9 @@ export class Configuration {
 	 * Get the single-line languages and styles.
 	 *
 	 * @param {"supportedLanguages" | "customSupportedLanguages"} key A stringed key, either `"supportedLanguages"` or `"customSupportedLanguages"`
-	 * @returns {Map<string, SingleLineCommentStyle>} The Map of the languages and styles.
+	 * @returns {Map<LanguageId, SingleLineCommentStyle>} The Map of the languages and styles.
 	 */
-	private getSingleLineLanguages(key: "supportedLanguages" | "customSupportedLanguages"): Map<string, SingleLineCommentStyle> {
+	private getSingleLineLanguages(key: "supportedLanguages" | "customSupportedLanguages"): Map<LanguageId, SingleLineCommentStyle> {
 		// The non-null assertion operator (!) ensures that the key is never undefined.
 		return this.singleLineBlocksMap.get(key)!;
 	}
@@ -540,9 +540,9 @@ export class Configuration {
 	 * Set the multi-line comments language definitions.
 	 */
 	private setMultiLineCommentLanguageDefinitions() {
-		let langArray: string[] = [];
+		let langArray: LanguageId[] = [];
 
-		this.languageConfigs.forEach((config: vscode.LanguageConfiguration, langId: string) => {
+		this.languageConfigs.forEach((config: vscode.LanguageConfiguration, langId: LanguageId) => {
 			// If the config object has own property of comments AND the comments key has
 			// own property of blockComment...
 			if (Object.hasOwn(config, "comments") && Object.hasOwn(config.comments, "blockComment")) {
@@ -586,9 +586,9 @@ export class Configuration {
 	 * Set the single-line comments language definitions.
 	 */
 	private setSingleLineCommentLanguageDefinitions() {
-		const tempMap: Map<string, SingleLineCommentStyle> = new Map();
+		const tempMap: Map<LanguageId, SingleLineCommentStyle> = new Map();
 
-		this.languageConfigs.forEach((config: vscode.LanguageConfiguration, langId: string) => {
+		this.languageConfigs.forEach((config: vscode.LanguageConfiguration, langId: LanguageId) => {
 			// console.log(langId, config.comments.lineComment);
 			let style: SingleLineCommentStyle | null = null;
 
@@ -694,7 +694,7 @@ export class Configuration {
 	/**
 	 * Sets the language configuration for a given language ID.
 	 *
-	 * @param {string} langId - The language ID for which the configuration is being set.
+	 * @param {LanguageId} langId - The language ID for which the configuration is being set.
 	 * @param {boolean} multiLine - Optional. If `true`, sets multi-line comment configuration.
 	 * @param {SingleLineCommentStyle} singleLineStyle - Optional. Specifies the style of single-line comments (e.g., `"//"`, `"#"`, `";"`).
 	 *
@@ -713,7 +713,7 @@ export class Configuration {
 	 * Note: This method ensures that the language configuration is correctly set and avoids issues
 	 * with rogue characters being inserted on new lines.
 	 */
-	private setLanguageConfiguration(langId: string, multiLine?: boolean, singleLineStyle?: SingleLineCommentStyle): vscode.Disposable {
+	private setLanguageConfiguration(langId: LanguageId, multiLine?: boolean, singleLineStyle?: SingleLineCommentStyle): vscode.Disposable {
 		const internalLangConfig: vscode.LanguageConfiguration = this.getLanguageConfig(langId);
 		const defaultMultiLineConfig = utils.readJsonFile(`${__dirname}/../../config/default-multi-line-config.json`) as vscode.LanguageConfiguration;
 
@@ -894,7 +894,7 @@ export class Configuration {
 	 * @param {vscode.TextEditorEdit} edit The text editor edits.
 	 */
 	private handleSingleLineBlock(textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit) {
-		let langId = textEditor.document.languageId;
+		let langId: LanguageId = textEditor.document.languageId;
 		const singleLineLangs = this.getSingleLineLanguages("supportedLanguages");
 		const customSingleLineLangs = this.getSingleLineLanguages("customSupportedLanguages");
 
@@ -952,7 +952,7 @@ export class Configuration {
 	 * @param {vscode.TextEditor} textEditor The text editor.
 	 */
 	private handleChangeBladeMultiLineBlock(textEditor: vscode.TextEditor) {
-		let langId = textEditor.document.languageId;
+		let langId: LanguageId = textEditor.document.languageId;
 		const extensionName = this.extensionData.get("namespace");
 
 		// Only carry out function if languageId is blade.
