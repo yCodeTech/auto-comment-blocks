@@ -33,7 +33,7 @@ class Logger {
 	/**
 	 * Override the output channel
 	 *
-	 * @param {OutputChannel} channel A vscode output channel.
+	 * @param {OutputChannel} channelOverride A vscode output channel.
 	 */
 	public setupOutputChannel(channelOverride?: OutputChannel): void {
 		if (channelOverride) {
