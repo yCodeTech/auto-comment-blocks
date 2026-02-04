@@ -14,9 +14,10 @@ const disposables: vscode.Disposable[] = [];
 
 export function activate(context: vscode.ExtensionContext) {
 	const configureCommentBlocksDisposable = configuration.configureCommentBlocks();
-	const registerCommandsDisposable = configuration.registerCommands();
 
-	disposables.push(...configureCommentBlocksDisposable, ...registerCommandsDisposable);
+	configuration.registerCommands(context);
+
+	disposables.push(...configureCommentBlocksDisposable);
 
 	const extensionName = extensionData.get("namespace");
 
