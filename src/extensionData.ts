@@ -1,10 +1,12 @@
 import * as vscode from "vscode";
 import * as path from "path";
+import * as fs from "fs";
 import isWsl from "is-wsl";
 import {IPackageJson} from "package-json-type";
 
 import {readJsonFile} from "./utils";
 import {ExtensionMetaData, ExtensionPaths, ExtensionMetaDataValue} from "./interfaces/extensionMetaData";
+import {logger} from "./logger";
 
 export class ExtensionData {
 	/**
@@ -94,20 +96,39 @@ export class ExtensionData {
 	 * Set the extension discovery paths into the extensionDiscoveryPaths Map.
 	 */
 	private setExtensionDiscoveryPaths() {
-		// Get the DEV_USER_EXTENSIONS_PATH env variable if it exists.
-		const devUserExtensionsPath = process.env.DEV_USER_EXTENSIONS_PATH;
-
-		// The path to the user extensions.
+		// The default path to the user extensions.
 		//
 		// On Windows/Linux/Mac: ~/.vscode[-server|remote]/extensions
 		// On WSL: ~/.vscode-[server|remote]/extensions
 		//
 		// Because the extensionPath is created from __dirname and retrieves where this extension
 		// is located, in extension testing/development mode, this path will point to the local
-		// development path, not the actual user extensions path. So we use the custom
-		// DEV_USER_EXTENSIONS_PATH env variable to override it.
-		const userExtensionsPath =
-			devUserExtensionsPath || (isWsl ? path.join(vscode.env.appRoot, "../../", "extensions") : path.join(this.extensionPath, "../"));
+		// development path, not the actual user extensions path.
+		const defaultUserExtensionsPath = isWsl ? path.join(vscode.env.appRoot, "../../", "extensions") : path.join(this.extensionPath, "../");
+
+		// Get the DEV_USER_EXTENSIONS_PATH env variable if it exists.
+		let devUserExtensionsPath = process.env.DEV_USER_EXTENSIONS_PATH;
+
+		// Validate and sanitize DEV_USER_EXTENSIONS_PATH if provided
+		if (devUserExtensionsPath) {
+			// Trim whitespace and resolve the path to an absolute path
+			devUserExtensionsPath = path.resolve(devUserExtensionsPath.trim());
+
+			// Check if the path exists and is a directory
+			try {
+				const stats = fs.statSync(devUserExtensionsPath);
+				if (!stats.isDirectory()) {
+					logger.error(`DEV_USER_EXTENSIONS_PATH is not a directory: ${devUserExtensionsPath}. Falling back to default path.`);
+					devUserExtensionsPath = undefined;
+				}
+			} catch (error) {
+				logger.error(`DEV_USER_EXTENSIONS_PATH does not exist or is not accessible: ${devUserExtensionsPath}. Falling back to default path.`, error as Error);
+				devUserExtensionsPath = undefined;
+			}
+		}
+
+		// Use the validated dev path or fall back to the default path
+		const userExtensionsPath = devUserExtensionsPath || defaultUserExtensionsPath;
 
 		this.extensionDiscoveryPaths.set("userExtensionsPath", userExtensionsPath);
 		// The path to the built-in extensions.
