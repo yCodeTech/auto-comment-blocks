@@ -115,15 +115,25 @@ export class ExtensionData {
 			devUserExtensionsPath = path.resolve(devUserExtensionsPath.trim());
 
 			// Check if the path exists and is a directory
-			try {
-				const stats = fs.statSync(devUserExtensionsPath);
-				if (!stats.isDirectory()) {
-					logger.error(`DEV_USER_EXTENSIONS_PATH is not a directory: ${devUserExtensionsPath}. Falling back to default path.`);
+			if (!fs.existsSync(devUserExtensionsPath)) {
+				logger.error(`DEV_USER_EXTENSIONS_PATH does not exist: ${devUserExtensionsPath}. Falling back to default path.`);
+				devUserExtensionsPath = undefined;
+			} else {
+				try {
+					const stats = fs.statSync(devUserExtensionsPath);
+					if (!stats.isDirectory()) {
+						logger.error(`DEV_USER_EXTENSIONS_PATH is not a directory: ${devUserExtensionsPath}. Falling back to default path.`);
+						devUserExtensionsPath = undefined;
+					}
+				} catch (error) {
+					const nodeError = error as NodeJS.ErrnoException;
+					const errorCode = nodeError.code || "UNKNOWN";
+					const errorMessage = errorCode === "EACCES" 
+						? `Permission denied accessing DEV_USER_EXTENSIONS_PATH: ${devUserExtensionsPath}. Falling back to default path.`
+						: `Error accessing DEV_USER_EXTENSIONS_PATH: ${devUserExtensionsPath} (${errorCode}). Falling back to default path.`;
+					logger.error(errorMessage, error as Error);
 					devUserExtensionsPath = undefined;
 				}
-			} catch (error) {
-				logger.error(`DEV_USER_EXTENSIONS_PATH does not exist or is not accessible: ${devUserExtensionsPath}. Falling back to default path.`, error as Error);
-				devUserExtensionsPath = undefined;
 			}
 		}
 
