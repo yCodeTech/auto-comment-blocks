@@ -81,6 +81,18 @@
 				}
 			}
 		},
+		"commands": [
+			{
+				"command": "auto-comment-blocks.singleLineBlock",
+				"title": "Continue Single-Line Comment Block",
+				"category": "Auto Comment Blocks"
+			},
+			{
+				"command": "auto-comment-blocks.changeBladeMultiLineBlock",
+				"title": "Toggle Blade Multi-Line Comment Style",
+				"category": "Auto Comment Blocks"
+			}
+		],
 		"keybindings": [
 			{
 				"command": "auto-comment-blocks.singleLineBlock",
