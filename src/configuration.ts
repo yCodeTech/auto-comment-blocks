@@ -15,6 +15,7 @@ import {Settings} from "./interfaces/settings";
 import {ExtraSingleLineCommentStyles, LineComment, SingleLineCommentStyle} from "./interfaces/commentStyles";
 import {ExtensionMetaData} from "./interfaces/extensionMetaData";
 import {JsonObject, JsonArray, LanguageId, MultiLineLanguageDefinitions, SingleLineLanguageDefinitions} from "./interfaces/utils";
+import {CommandRegistration} from "./interfaces/commands";
 
 export class Configuration {
 	/**************
@@ -161,22 +162,25 @@ export class Configuration {
 
 	/**
 	 * Register some VSCode commands.
-	 *
-	 * @returns {vscode.Disposable[]}
 	 */
-	public registerCommands(): vscode.Disposable[] {
-		const singleLineBlockCommand = vscode.commands.registerTextEditorCommand("auto-comment-blocks.singleLineBlock", (textEditor, edit, args) => {
-			this.handleSingleLineBlock(textEditor, edit);
+	public registerCommands(context: vscode.ExtensionContext) {
+		const namespace = this.extensionData.get("namespace");
+
+		const commands: CommandRegistration[] = [
+			{
+				command: "singleLineBlock",
+				handler: this.handleSingleLineBlock.bind(this),
+			},
+			{
+				command: "changeBladeMultiLineBlock",
+				handler: this.handleChangeBladeMultiLineBlock.bind(this),
+			},
+		];
+
+		commands.forEach(({command, handler}) => {
+			const namespacedCommand = `${namespace}.${command}`;
+			context.subscriptions.push(vscode.commands.registerTextEditorCommand(namespacedCommand, handler));
 		});
-
-		const changeBladeMultiLineBlockCommand = vscode.commands.registerTextEditorCommand(
-			"auto-comment-blocks.changeBladeMultiLineBlock",
-			(textEditor, edit, args) => {
-				this.handleChangeBladeMultiLineBlock(textEditor);
-			}
-		);
-
-		return [singleLineBlockCommand, changeBladeMultiLineBlockCommand];
 	}
 
 	/**
