@@ -33,7 +33,7 @@ class Logger {
 	/**
 	 * Override the output channel
 	 *
-	 * @param {OutputChannel} channel A vscode output channel.
+	 * @param {OutputChannel} channelOverride A vscode output channel.
 	 */
 	public setupOutputChannel(channelOverride?: OutputChannel): void {
 		if (channelOverride) {
@@ -84,9 +84,9 @@ class Logger {
 	 * This is helpful for logging objects and arrays.
 	 *
 	 * @param {string} message The message to be logged.
-	 * @param {unknown} data Extra data that is useful for debugging, like an object or array.
+	 * @param {unknown} data [Optional] Extra data that is useful for debugging, like an object or array.
 	 */
-	public debug(message: string, data: unknown): void {
+	public debug(message: string, data?: unknown): void {
 		if (this.debugMode) {
 			this.logMessage("DEBUG", message, data);
 		}

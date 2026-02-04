@@ -18,11 +18,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 	disposables.push(...configureCommentBlocksDisposable, ...registerCommandsDisposable);
 
-	const extensionName = extensionData.get("name");
+	const extensionName = extensionData.get("namespace");
 
 	const extensionDisplayName = extensionData.get("displayName");
 
-	let disabledLangConfig: string[] = configuration.getConfigurationValue<string[]>("disabledLanguages");
+	let disabledLangConfig: string[] = configuration.getConfigurationValue("disabledLanguages");
 
 	if (disabledLangConfig.length > 0) {
 		vscode.window.showInformationMessage(`${disabledLangConfig.join(", ")} languages are disabled for ${extensionDisplayName}.`);
@@ -32,7 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
 	 * When the configuration/user settings are changed, set the extension
 	 * to reflect the settings and output a message to the user.
 	 */
-	vscode.workspace.onDidChangeConfiguration((event: any) => {
+	vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) => {
 		// TODO: Work on automatically updating the languages instead of making the user reload the extension.
 
 		/**
@@ -41,7 +41,7 @@ export function activate(context: vscode.ExtensionContext) {
 		// If the affected setting is bladeOverrideComments...
 		if (event.affectsConfiguration(`${extensionName}.bladeOverrideComments`)) {
 			// Get the setting.
-			let bladeOverrideComments: boolean = configuration.getConfigurationValue<boolean>("bladeOverrideComments");
+			let bladeOverrideComments: boolean = configuration.getConfigurationValue("bladeOverrideComments");
 
 			configuration.setBladeComments(bladeOverrideComments);
 

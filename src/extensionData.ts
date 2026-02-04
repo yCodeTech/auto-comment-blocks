@@ -4,14 +4,29 @@ import isWsl from "is-wsl";
 import {IPackageJson} from "package-json-type";
 
 import {readJsonFile} from "./utils";
+import {ExtensionMetaData, ExtensionPaths, ExtensionMetaDataValue} from "./interfaces/extensionMetaData";
 
 export class ExtensionData {
 	/**
-	 * This extension details in the form of a key:value Map object.
+	 * Extension data in the form of a key:value Map object.
 	 *
-	 * @type {Map<string, string>}
+	 * @type {Map<keyof ExtensionMetaData, ExtensionMetaDataValue>}
 	 */
-	private extensionData = new Map<string, string>();
+	private extensionData = new Map<keyof ExtensionMetaData, ExtensionMetaDataValue>();
+
+	/**
+	 * Extension discovery paths in the form of a key:value Map object.
+	 *
+	 * @type {Map<keyof ExtensionPaths, string>}
+	 */
+	private extensionDiscoveryPaths = new Map<keyof ExtensionPaths, string>();
+
+	/**
+	 * The absolute path of the requested extension.
+	 *
+	 * @type {string}
+	 */
+	private readonly extensionPath: string;
 
 	/**
 	 * The package.json data for this extension.
@@ -20,74 +35,81 @@ export class ExtensionData {
 	 */
 	private packageJsonData: IPackageJson;
 
-	public constructor() {
+	public constructor(extensionPath: string | null = null) {
+		// Set the path if provided, otherwise default to this extension's path.
+		//
+		// For this extension's path, we use `__dirname` and go up two levels
+		// (from "out/src" to the extension root). This path is also used to locate all other
+		// user-installed extensions later for the `userExtensionsPath` discovery path.
+		this.extensionPath = extensionPath ?? path.join(__dirname, "../../");
+
 		this.packageJsonData = this.getExtensionPackageJsonData();
-		this.setExtensionData();
+
+		// Only proceed with extension data setup if packageJsonData is NOT null.
+		if (this.packageJsonData !== null) {
+			this.setExtensionData();
+		}
+
+		this.setExtensionDiscoveryPaths();
 	}
 
 	/**
 	 * Get the names, id, and version of this extension from package.json.
 	 *
-	 * @returns {IPackageJson} The package.json data for this extension, with extra custom keys.
+	 * @returns {IPackageJson | null} The package.json data for this extension, with extra custom keys.
 	 */
-	private getExtensionPackageJsonData(): IPackageJson {
-		const extensionPath = path.join(__dirname, "../../");
-
-		const packageJSON: IPackageJson = readJsonFile(path.join(extensionPath, "package.json"));
-
-		// Set the id (publisher.name) into the packageJSON object as a new `id` key.
-		packageJSON.id = `${packageJSON.publisher}.${packageJSON.name}`;
-		packageJSON.extensionPath = extensionPath;
-
-		// The configuration settings namespace is a shortened version of the extension name.
-		// We just need to replace "automatic" with "auto" in the name.
-		const settingsNamespace: string = packageJSON.name.replace("automatic", "auto");
-		// Set the namespace to the packageJSON `configuration` object as a new `namespace` key.
-		packageJSON.contributes.configuration.namespace = settingsNamespace;
-
-		return packageJSON;
+	private getExtensionPackageJsonData(): IPackageJson | null {
+		// Get the package.json file path.
+		const packageJSONPath = path.join(this.extensionPath, "package.json");
+		return readJsonFile<IPackageJson>(packageJSONPath, false);
 	}
 
 	/**
 	 * Set the extension data into the extensionData Map.
 	 */
 	private setExtensionData() {
-		// Set all entries in the extensionData Map.
-		Object.entries(this.createExtensionData()).forEach(([key, value]) => {
-			this.extensionData.set(key, value);
-		});
+		// Create the extension ID (publisher.name).
+		const id = `${this.packageJsonData.publisher}.${this.packageJsonData.name}`;
+
+		// Set each key-value pair directly into the Map
+		this.extensionData.set("id", id);
+		this.extensionData.set("name", this.packageJsonData.name);
+
+		// Only set the namespace if it dealing with this extension.
+		if (this.packageJsonData.name === "automatic-comment-blocks") {
+			// The configuration settings namespace is a shortened version of the extension name.
+			// We just need to replace "automatic" with "auto" in the name.
+			const settingsNamespace: string = this.packageJsonData.name.replace("automatic", "auto");
+
+			this.extensionData.set("namespace", settingsNamespace);
+		}
+
+		this.extensionData.set("displayName", this.packageJsonData.displayName);
+		this.extensionData.set("version", this.packageJsonData.version);
+		this.extensionData.set("extensionPath", this.extensionPath);
+		this.extensionData.set("packageJSON", this.packageJsonData);
 	}
 
 	/**
-	 * Create the extension data object for the extensionData Map.
-	 * It also helps for type inference intellisense in the get method.
-	 *
-	 * @returns The extension data object with keys and values.
+	 * Set the extension discovery paths into the extensionDiscoveryPaths Map.
 	 */
-	private createExtensionData() {
+	private setExtensionDiscoveryPaths() {
 		// The path to the user extensions.
-		const userExtensionsPath = isWsl
-			? path.join(vscode.env.appRoot, "../../", "extensions")
-			: path.join(this.packageJsonData.extensionPath, "../");
+		//
+		// On Windows/Linux/Mac: ~/.vscode[-server|remote]/extensions
+		// On WSL: ~/.vscode-[server|remote]/extensions
+		const userExtensionsPath = isWsl ? path.join(vscode.env.appRoot, "../../", "extensions") : path.join(this.extensionPath, "../");
 
-		// Set the keys and values for the Map.
-		// The keys will also be used for type inference in VSCode intellisense.
-		return {
-			id: this.packageJsonData.id,
-			name: this.packageJsonData.contributes.configuration.namespace,
-			displayName: this.packageJsonData.displayName,
-			version: this.packageJsonData.version,
-			userExtensionsPath: userExtensionsPath,
-			// The path to the built-in extensions.
-			// This env variable changes when on WSL to it's WSL-built-in extensions path.
-			builtInExtensionsPath: path.join(vscode.env.appRoot, "extensions"),
+		this.extensionDiscoveryPaths.set("userExtensionsPath", userExtensionsPath);
+		// The path to the built-in extensions.
+		// This env variable changes when on WSL to it's WSL-built-in extensions path.
+		this.extensionDiscoveryPaths.set("builtInExtensionsPath", path.join(vscode.env.appRoot, "extensions"));
 
-			// Only set these if running in WSL.
-			...(isWsl && {
-				WindowsUserExtensionsPathFromWsl: path.dirname(process.env.VSCODE_WSL_EXT_LOCATION!),
-				WindowsBuiltInExtensionsPathFromWsl: path.join(process.env.VSCODE_CWD!, "resources/app/extensions"),
-			}),
-		} as const;
+		// Only set these if running in WSL
+		if (isWsl) {
+			this.extensionDiscoveryPaths.set("WindowsUserExtensionsPathFromWsl", path.dirname(process.env.VSCODE_WSL_EXT_LOCATION!));
+			this.extensionDiscoveryPaths.set("WindowsBuiltInExtensionsPathFromWsl", path.join(process.env.VSCODE_CWD!, "resources/app/extensions"));
+		}
 	}
 
 	/**
@@ -95,18 +117,43 @@ export class ExtensionData {
 	 *
 	 * @param {K} key The key of the extension detail to get.
 	 *
-	 * @returns {ReturnType<typeof this.createExtensionData>[K] | undefined} The value of the extension detail, or undefined if the key does not exist.
+	 * @returns {ExtensionMetaData[K] | undefined} The value of the extension detail, or undefined if the key does not exist.
 	 */
-	public get<K extends keyof ReturnType<typeof this.createExtensionData>>(key: K): ReturnType<typeof this.createExtensionData>[K] | undefined {
-		return this.extensionData.get(key) as ReturnType<typeof this.createExtensionData>[K] | undefined;
+	public get<K extends keyof ExtensionMetaData>(key: K): ExtensionMetaData[K] | undefined {
+		return this.extensionData.get(key) as ExtensionMetaData[K] | undefined;
 	}
 
 	/**
-	 * Get all extension data.
+	 * Get all extension data as a plain object.
 	 *
-	 * @returns {ReadonlyMap<string, string>} A read-only Map containing all extension details.
+	 * @returns {ExtensionMetaData} A plain object containing all extension details.
 	 */
-	public getAll(): ReadonlyMap<string, string> {
-		return this.extensionData;
+	public getAll(): ExtensionMetaData | null {
+		// If no data, return null
+		if (this.extensionData.size === 0) {
+			return null;
+		}
+
+		return Object.fromEntries(this.extensionData) as unknown as ExtensionMetaData;
+	}
+
+	/**
+	 * Get the extension discovery paths by a specified key.
+	 *
+	 * @param {K} key The key of the specific path to get.
+	 *
+	 * @returns {ExtensionPaths[K] | undefined} The value of the extension detail, or undefined if the key does not exist.
+	 */
+	public getExtensionDiscoveryPath<K extends keyof ExtensionPaths>(key: K): ExtensionPaths[K] | undefined {
+		return this.extensionDiscoveryPaths.get(key) as ExtensionPaths[K] | undefined;
+	}
+
+	/**
+	 * Get all extension discovery paths.
+	 *
+	 * @returns {ReadonlyMap<keyof ExtensionPaths, string>} A read-only Map containing all extension discovery paths.
+	 */
+	public getAllExtensionDiscoveryPaths(): ReadonlyMap<keyof ExtensionPaths, string> {
+		return this.extensionDiscoveryPaths;
 	}
 }

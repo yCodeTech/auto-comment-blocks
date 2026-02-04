@@ -2,22 +2,41 @@ import * as fs from "node:fs";
 import * as jsonc from "jsonc-parser";
 import {logger} from "./logger";
 import {window} from "vscode";
+import {JsonObject, JsonValue} from "./interfaces/utils";
 
 /**
  * Read the file and parse the JSON.
  *
  * @param {string} filepath The path of the file.
+ * @param {boolean} [throwOnFileMissing=true] Whether to throw an error if the file doesn't exist.
+ * If `false`, returns `null`. Default is `true`.
  *
- * @returns {any} The JSON file content as an object.
- * @throws Will throw an error if the JSON file cannot be parsed.
+ * @returns {T | null} The JSON file content as the passed T type (defaulting to a JSON object)
+ * or `null` if file doesn't exist and `throwOnFileMissing` is `false`.
+ * @throws Will throw an error if the JSON file cannot be parsed or if file doesn't exist and `throwOnFileMissing` is `true`.
  */
-export function readJsonFile(filepath: string): any {
+export function readJsonFile<T extends JsonValue = JsonObject>(filepath: string, throwOnFileMissing: boolean = true): T | null {
+	// Check if file exists first.
+	// If file doesn't exist...
+	if (!fs.existsSync(filepath)) {
+		// If throwOnFileMissing param is true, throw an error.
+		if (throwOnFileMissing) {
+			const error = new Error(`JSON file not found: "${filepath}"`);
+			logger.error(error.stack);
+			throw error;
+		}
+		// Otherwise just return null.
+		return null;
+	}
+
 	const jsonErrors: jsonc.ParseError[] = [];
 
+	// Read the contents of the JSON file.
 	const fileContent = fs
 		.readFileSync(filepath, {encoding: "utf8"})
 		.toString()
 		.replace(/^\uFEFF/, ""); // Remove BOM if present.
+
 	const jsonContents = jsonc.parse(fileContent, jsonErrors, {allowEmptyContent: true}) ?? {};
 
 	if (jsonErrors.length > 0) {
@@ -42,7 +61,7 @@ export function readJsonFile(filepath: string): any {
 		throw error;
 	}
 
-	return jsonContents;
+	return jsonContents as T;
 }
 
 /**
@@ -79,10 +98,9 @@ function constructJsonParseErrorMsg(filepath: string, fileContent: string, jsonE
  * Read the file and parse the JSON.
  *
  * @param {string} filepath The path of the file.
- * @param {any} data The data to write into the file.
- * @returns The file content.
+ * @param {JsonValue} data The data to write into the file.
  */
-export function writeJsonFile(filepath: string, data: any): any {
+export function writeJsonFile(filepath: string, data: JsonValue) {
 	// Write the updated JSON back into the file and add tab indentation
 	// to make it easier to read.
 	fs.writeFileSync(filepath, JSON.stringify(data, null, "\t"));
@@ -103,11 +121,11 @@ export function ensureDirExists(dir: string) {
  * Reconstruct the regex pattern because vscode doesn't like the regex pattern as a string,
  * or some patterns are not working as expected.
  *
- * @param obj The object
- * @param key The key to check in the object
+ * @param {unknown} obj The object
+ * @param {string} key The key to check in the object
  * @returns {RegExp} The reconstructed regex pattern.
  */
-export function reconstructRegex(obj: any, key: string) {
+export function reconstructRegex(obj: unknown, key: string): RegExp {
 	// If key has a "pattern" key, then it's an object...
 	if (Object.hasOwn(obj[key], "pattern")) {
 		return new RegExp(obj[key].pattern);
@@ -124,7 +142,7 @@ export function reconstructRegex(obj: any, key: string) {
  * Code based on this StackOverflow answer https://stackoverflow.com/a/45728850/2358222
  *
  * @param {Map<string, Map<string, string>>} m The Map to convert to an object.
- * @returns {object} The converted object.
+ * @returns {T} The converted object.
  *
  * @example
  * reverseMapping(
@@ -150,8 +168,8 @@ export function reconstructRegex(obj: any, key: string) {
  * 	}
  * }
  */
-export function convertMapToReversedObject(m: Map<string, Map<string, string>>): object {
-	const result: any = {};
+export function convertMapToReversedObject<T extends JsonValue = JsonObject>(m: Map<string, Map<string, string>>): T {
+	const result = {};
 
 	// Convert a nested key:value Map from inside another Map into an key:array object,
 	// while reversing/switching the keys and values. The Map's values are now the keys of
@@ -175,7 +193,7 @@ export function convertMapToReversedObject(m: Map<string, Map<string, string>>):
 		// as the key.
 		result[key] = Object.keys(o).reduce((r, k) => Object.assign(r, {[o[k]]: (r[o[k]] || []).concat(k)}), {});
 	}
-	return result;
+	return result as T;
 }
 
 /**
@@ -204,8 +222,7 @@ export function mergeArraysBy<T>(primaryArray: T[], secondaryArray: T[], key: ke
 	// Start with primary array (avoids side effects)
 	const merged = [...primary];
 
-	// Add items from secondary array that don't exist in primary,
-	// removing any duplicates.
+	// Add items from secondary array that don't exist in primary, removing any duplicates.
 	secondary.forEach((item) => {
 		// Test all items in the merged array to check if the value of the key
 		// already exists in the merged array.
