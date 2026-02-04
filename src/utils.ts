@@ -1,4 +1,5 @@
 import * as fs from "node:fs";
+import * as path from "node:path";
 import * as jsonc from "jsonc-parser";
 import {logger} from "./logger";
 import {window} from "vscode";
@@ -236,4 +237,16 @@ export function mergeArraysBy<T>(primaryArray: T[], secondaryArray: T[], key: ke
 	});
 
 	return merged;
+}
+
+/**
+ * Add development environment variables from a local .env file located in the project root.
+ */
+export function addDevEnvVariables() {
+	// Try to load the local .env file from the project root.
+	try {
+		process.loadEnvFile(path.join(__dirname, "../../.env"));
+	} catch (error) {
+		// Ignore errors if the .env file doesn't exist
+	}
 }

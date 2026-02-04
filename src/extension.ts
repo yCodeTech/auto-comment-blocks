@@ -5,6 +5,9 @@ import * as vscode from "vscode";
 import {Configuration} from "./configuration";
 import {logger} from "./logger";
 import {ExtensionData} from "./extensionData";
+import {addDevEnvVariables} from "./utils";
+
+addDevEnvVariables();
 
 const extensionData = new ExtensionData();
 logger.setupOutputChannel();
