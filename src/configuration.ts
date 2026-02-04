@@ -749,7 +749,7 @@ export class Configuration {
 			if (langId === "blade") {
 				const bladeComments = this.setBladeComments(this.getConfigurationValue("bladeOverrideComments"), true);
 
-				// If bladeComments is has a value...
+				// If bladeComments has a value...
 				if (bladeComments) {
 					langConfig.comments.blockComment = bladeComments;
 				}

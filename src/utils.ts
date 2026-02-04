@@ -31,10 +31,12 @@ export function readJsonFile<T extends JsonValue = JsonObject>(filepath: string,
 
 	const jsonErrors: jsonc.ParseError[] = [];
 
+	// Read the contents of the JSON file.
 	const fileContent = fs
 		.readFileSync(filepath, {encoding: "utf8"})
 		.toString()
 		.replace(/^\uFEFF/, ""); // Remove BOM if present.
+
 	const jsonContents = jsonc.parse(fileContent, jsonErrors, {allowEmptyContent: true}) ?? {};
 
 	if (jsonErrors.length > 0) {
