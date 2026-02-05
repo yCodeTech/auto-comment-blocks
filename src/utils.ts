@@ -240,17 +240,10 @@ export function mergeArraysBy<T>(primaryArray: T[], secondaryArray: T[], key: ke
 }
 
 /**
- * Add development environment variables from a local .env file located in the project root.
- * Validates and sanitizes specific environment variables after loading.
+ * Validate and sanitize the DEV_USER_EXTENSIONS_PATH environment variable.
+ * Removes invalid paths from the environment with logged errors.
  */
-export function addDevEnvVariables() {
-	// Try to load the local .env file from the project root.
-	try {
-		process.loadEnvFile(path.join(__dirname, "../../.env"));
-	} catch (error) {
-		// Ignore errors if the .env file doesn't exist
-	}
-
+function validateDevEnvVariables() {
 	// Validate DEV_USER_EXTENSIONS_PATH if it was loaded
 	if (process.env.DEV_USER_EXTENSIONS_PATH) {
 		let devPath = process.env.DEV_USER_EXTENSIONS_PATH;
@@ -286,4 +279,19 @@ export function addDevEnvVariables() {
 			delete process.env.DEV_USER_EXTENSIONS_PATH;
 		}
 	}
+}
+
+/**
+ * Add development environment variables from a local .env file located in the project root.
+ */
+export function addDevEnvVariables() {
+	// Try to load the local .env file from the project root.
+	try {
+		process.loadEnvFile(path.join(__dirname, "../../.env"));
+	} catch (error) {
+		// Ignore errors if the .env file doesn't exist
+	}
+
+	// Validate the loaded environment variables
+	validateDevEnvVariables();
 }

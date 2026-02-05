@@ -95,7 +95,6 @@ export class ExtensionData {
 	 */
 	private setExtensionDiscoveryPaths() {
 		// Get the DEV_USER_EXTENSIONS_PATH env variable if it exists.
-		// This variable is validated and sanitized by addDevEnvVariables() in utils.ts
 		const devUserExtensionsPath = process.env.DEV_USER_EXTENSIONS_PATH;
 
 		// The path to the user extensions.
