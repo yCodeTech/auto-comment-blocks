@@ -259,28 +259,31 @@ export function addDevEnvVariables() {
 		devPath = path.resolve(devPath.trim());
 
 		// Check if the path exists and is a directory
-		if (!fs.existsSync(devPath)) {
-			logger.error(`DEV_USER_EXTENSIONS_PATH does not exist: ${devPath}. Removing from environment.`);
-			delete process.env.DEV_USER_EXTENSIONS_PATH;
-		} else {
-			try {
-				const stats = fs.statSync(devPath);
-				if (!stats.isDirectory()) {
-					logger.error(`DEV_USER_EXTENSIONS_PATH is not a directory: ${devPath}. Removing from environment.`);
-					delete process.env.DEV_USER_EXTENSIONS_PATH;
-				} else {
-					// Update the environment variable with the sanitized (trimmed and resolved) path
-					process.env.DEV_USER_EXTENSIONS_PATH = devPath;
-				}
-			} catch (error) {
-				const nodeError = error as NodeJS.ErrnoException;
-				const errorCode = nodeError.code || "UNKNOWN";
-				const errorMessage = errorCode === "EACCES" 
-					? `Permission denied accessing DEV_USER_EXTENSIONS_PATH: ${devPath}. Removing from environment.`
-					: `Error accessing DEV_USER_EXTENSIONS_PATH: ${devPath} (${errorCode}). Removing from environment.`;
-				logger.error(errorMessage, error as Error);
+		try {
+			const stats = fs.statSync(devPath);
+			if (!stats.isDirectory()) {
+				logger.error(`DEV_USER_EXTENSIONS_PATH is not a directory: ${devPath}. Removing from environment.`);
 				delete process.env.DEV_USER_EXTENSIONS_PATH;
+			} else {
+				// Update the environment variable with the sanitized (trimmed and resolved) path
+				process.env.DEV_USER_EXTENSIONS_PATH = devPath;
 			}
+		} catch (error) {
+			const nodeError = error as NodeJS.ErrnoException;
+			const errorCode = nodeError.code || "UNKNOWN";
+			
+			// Provide specific error messages based on the error code
+			let errorMessage: string;
+			if (errorCode === "ENOENT") {
+				errorMessage = `DEV_USER_EXTENSIONS_PATH does not exist: ${devPath}. Removing from environment.`;
+			} else if (errorCode === "EACCES") {
+				errorMessage = `Permission denied accessing DEV_USER_EXTENSIONS_PATH: ${devPath}. Removing from environment.`;
+			} else {
+				errorMessage = `Error accessing DEV_USER_EXTENSIONS_PATH: ${devPath} (${errorCode}). Removing from environment.`;
+			}
+			
+			logger.error(errorMessage, error as Error);
+			delete process.env.DEV_USER_EXTENSIONS_PATH;
 		}
 	}
 }
