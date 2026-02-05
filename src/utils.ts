@@ -241,6 +241,7 @@ export function mergeArraysBy<T>(primaryArray: T[], secondaryArray: T[], key: ke
 
 /**
  * Add development environment variables from a local .env file located in the project root.
+ * Validates and sanitizes specific environment variables after loading.
  */
 export function addDevEnvVariables() {
 	// Try to load the local .env file from the project root.
@@ -248,5 +249,38 @@ export function addDevEnvVariables() {
 		process.loadEnvFile(path.join(__dirname, "../../.env"));
 	} catch (error) {
 		// Ignore errors if the .env file doesn't exist
+	}
+
+	// Validate DEV_USER_EXTENSIONS_PATH if it was loaded
+	if (process.env.DEV_USER_EXTENSIONS_PATH) {
+		let devPath = process.env.DEV_USER_EXTENSIONS_PATH;
+
+		// Trim whitespace and resolve the path to an absolute path
+		devPath = path.resolve(devPath.trim());
+
+		// Check if the path exists and is a directory
+		if (!fs.existsSync(devPath)) {
+			logger.error(`DEV_USER_EXTENSIONS_PATH does not exist: ${devPath}. Removing from environment.`);
+			delete process.env.DEV_USER_EXTENSIONS_PATH;
+		} else {
+			try {
+				const stats = fs.statSync(devPath);
+				if (!stats.isDirectory()) {
+					logger.error(`DEV_USER_EXTENSIONS_PATH is not a directory: ${devPath}. Removing from environment.`);
+					delete process.env.DEV_USER_EXTENSIONS_PATH;
+				} else {
+					// Update the environment variable with the sanitized (trimmed and resolved) path
+					process.env.DEV_USER_EXTENSIONS_PATH = devPath;
+				}
+			} catch (error) {
+				const nodeError = error as NodeJS.ErrnoException;
+				const errorCode = nodeError.code || "UNKNOWN";
+				const errorMessage = errorCode === "EACCES" 
+					? `Permission denied accessing DEV_USER_EXTENSIONS_PATH: ${devPath}. Removing from environment.`
+					: `Error accessing DEV_USER_EXTENSIONS_PATH: ${devPath} (${errorCode}). Removing from environment.`;
+				logger.error(errorMessage, error as Error);
+				delete process.env.DEV_USER_EXTENSIONS_PATH;
+			}
+		}
 	}
 }

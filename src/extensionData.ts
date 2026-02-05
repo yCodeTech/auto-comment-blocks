@@ -1,12 +1,10 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import * as fs from "fs";
 import isWsl from "is-wsl";
 import {IPackageJson} from "package-json-type";
 
 import {readJsonFile} from "./utils";
 import {ExtensionMetaData, ExtensionPaths, ExtensionMetaDataValue} from "./interfaces/extensionMetaData";
-import {logger} from "./logger";
 
 export class ExtensionData {
 	/**
@@ -96,49 +94,21 @@ export class ExtensionData {
 	 * Set the extension discovery paths into the extensionDiscoveryPaths Map.
 	 */
 	private setExtensionDiscoveryPaths() {
-		// The default path to the user extensions.
+		// Get the DEV_USER_EXTENSIONS_PATH env variable if it exists.
+		// This variable is validated and sanitized by addDevEnvVariables() in utils.ts
+		const devUserExtensionsPath = process.env.DEV_USER_EXTENSIONS_PATH;
+
+		// The path to the user extensions.
 		//
 		// On Windows/Linux/Mac: ~/.vscode[-server|remote]/extensions
 		// On WSL: ~/.vscode-[server|remote]/extensions
 		//
 		// Because the extensionPath is created from __dirname and retrieves where this extension
 		// is located, in extension testing/development mode, this path will point to the local
-		// development path, not the actual user extensions path.
-		const defaultUserExtensionsPath = isWsl ? path.join(vscode.env.appRoot, "../../", "extensions") : path.join(this.extensionPath, "../");
-
-		// Get the DEV_USER_EXTENSIONS_PATH env variable if it exists.
-		let devUserExtensionsPath = process.env.DEV_USER_EXTENSIONS_PATH;
-
-		// Validate and sanitize DEV_USER_EXTENSIONS_PATH if provided
-		if (devUserExtensionsPath) {
-			// Trim whitespace and resolve the path to an absolute path
-			devUserExtensionsPath = path.resolve(devUserExtensionsPath.trim());
-
-			// Check if the path exists and is a directory
-			if (!fs.existsSync(devUserExtensionsPath)) {
-				logger.error(`DEV_USER_EXTENSIONS_PATH does not exist: ${devUserExtensionsPath}. Falling back to default path.`);
-				devUserExtensionsPath = undefined;
-			} else {
-				try {
-					const stats = fs.statSync(devUserExtensionsPath);
-					if (!stats.isDirectory()) {
-						logger.error(`DEV_USER_EXTENSIONS_PATH is not a directory: ${devUserExtensionsPath}. Falling back to default path.`);
-						devUserExtensionsPath = undefined;
-					}
-				} catch (error) {
-					const nodeError = error as NodeJS.ErrnoException;
-					const errorCode = nodeError.code || "UNKNOWN";
-					const errorMessage = errorCode === "EACCES" 
-						? `Permission denied accessing DEV_USER_EXTENSIONS_PATH: ${devUserExtensionsPath}. Falling back to default path.`
-						: `Error accessing DEV_USER_EXTENSIONS_PATH: ${devUserExtensionsPath} (${errorCode}). Falling back to default path.`;
-					logger.error(errorMessage, error as Error);
-					devUserExtensionsPath = undefined;
-				}
-			}
-		}
-
-		// Use the validated dev path or fall back to the default path
-		const userExtensionsPath = devUserExtensionsPath || defaultUserExtensionsPath;
+		// development path, not the actual user extensions path. So we use the custom
+		// DEV_USER_EXTENSIONS_PATH env variable to override it.
+		const userExtensionsPath =
+			devUserExtensionsPath || (isWsl ? path.join(vscode.env.appRoot, "../../", "extensions") : path.join(this.extensionPath, "../"));
 
 		this.extensionDiscoveryPaths.set("userExtensionsPath", userExtensionsPath);
 		// The path to the built-in extensions.
