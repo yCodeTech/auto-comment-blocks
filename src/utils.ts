@@ -265,7 +265,7 @@ function validateDevEnvVariables() {
 		let devPath = path.resolve(process.env.DEV_USER_EXTENSIONS_PATH.trim());
 
 		let stats: fs.Stats;
-		let errorMsg: string;
+		let errorMsg: string = "";
 		let errorData: Error;
 
 		// Get the file system stats for the path to check if it exists.
