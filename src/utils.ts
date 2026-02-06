@@ -1,4 +1,5 @@
 import * as fs from "node:fs";
+import * as path from "node:path";
 import * as jsonc from "jsonc-parser";
 import {logger} from "./logger";
 import {window} from "vscode";
@@ -236,4 +237,76 @@ export function mergeArraysBy<T>(primaryArray: T[], secondaryArray: T[], key: ke
 	});
 
 	return merged;
+}
+
+/**
+ * Add development environment variables from a local .env file located in the project root.
+ */
+export function addDevEnvVariables() {
+	// Try to load the local .env file from the project root.
+	try {
+		process.loadEnvFile(path.join(__dirname, "../../.env"));
+	} catch (error) {
+		// Ignore errors if the .env file doesn't exist
+	}
+
+	// Validate the loaded environment variables
+	validateDevEnvVariables();
+}
+
+/**
+ * Validate and sanitize the `DEV_USER_EXTENSIONS_PATH` environment variable.
+ * Removes invalid paths from the environment with logged errors.
+ */
+function validateDevEnvVariables() {
+	// Validate DEV_USER_EXTENSIONS_PATH if it was loaded
+	if (process.env.DEV_USER_EXTENSIONS_PATH) {
+		// Trim whitespace and resolve the path to an absolute path
+		let devPath = path.resolve(process.env.DEV_USER_EXTENSIONS_PATH.trim());
+
+		let stats: fs.Stats;
+		let errorMsg: string = "";
+		let errorData: Error;
+
+		// Get the file system stats for the path to check if it exists.
+		// statSync throws an exception if the no file system data exists for the path,
+		// so we catch it to handle errors gracefully.
+		try {
+			stats = fs.statSync(devPath);
+		} catch (error) {
+			const nodeError = error as NodeJS.ErrnoException;
+			const errorCode = nodeError.code || "UNKNOWN";
+
+			// Handle specific file system errors with user-friendly messages.
+			const errorMessages = {
+				ENOENT: "Path from env variable 'DEV_USER_EXTENSIONS_PATH' does not exist",
+				EACCES: "Permission denied accessing path from env variable 'DEV_USER_EXTENSIONS_PATH'",
+				UNKNOWN: "Unknown error accessing the path from env variable 'DEV_USER_EXTENSIONS_PATH'",
+			};
+
+			errorMsg = `${errorCode}: ${errorMessages[errorCode]}: "${devPath}". Removing from environment.`;
+
+			errorData = error as Error;
+
+			delete process.env.DEV_USER_EXTENSIONS_PATH;
+		}
+
+		// If stats has data AND the path is NOT a directory
+		if (stats && !stats.isDirectory()) {
+			errorMsg = `DEV_USER_EXTENSIONS_PATH is not a directory: "${devPath}". Removing from environment.`;
+		}
+
+		// If there was an error...
+		if (errorMsg.length > 0) {
+			// Delete the environment variable to prevent issues later on and log the error.
+			delete process.env.DEV_USER_EXTENSIONS_PATH;
+			logger.error(errorMsg, errorData);
+		}
+		// Otherwise, if there are no errors...
+		else {
+			// Update the environment variable with the sanitized path and log a success message.
+			process.env.DEV_USER_EXTENSIONS_PATH = devPath;
+			logger.info(`Loaded DEV_USER_EXTENSIONS_PATH: "${devPath}"`);
+		}
+	}
 }

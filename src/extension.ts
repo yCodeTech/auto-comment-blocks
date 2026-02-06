@@ -5,9 +5,12 @@ import * as vscode from "vscode";
 import {Configuration} from "./configuration";
 import {logger} from "./logger";
 import {ExtensionData} from "./extensionData";
+import {addDevEnvVariables} from "./utils";
+
+logger.setupOutputChannel();
+addDevEnvVariables();
 
 const extensionData = new ExtensionData();
-logger.setupOutputChannel();
 let configuration = new Configuration();
 
 const disposables: vscode.Disposable[] = [];

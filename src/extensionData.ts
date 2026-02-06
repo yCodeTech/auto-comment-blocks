@@ -94,11 +94,20 @@ export class ExtensionData {
 	 * Set the extension discovery paths into the extensionDiscoveryPaths Map.
 	 */
 	private setExtensionDiscoveryPaths() {
+		// Get the DEV_USER_EXTENSIONS_PATH env variable if it exists.
+		const devUserExtensionsPath = process.env.DEV_USER_EXTENSIONS_PATH;
+
 		// The path to the user extensions.
 		//
 		// On Windows/Linux/Mac: ~/.vscode[-server|remote]/extensions
 		// On WSL: ~/.vscode-[server|remote]/extensions
-		const userExtensionsPath = isWsl ? path.join(vscode.env.appRoot, "../../", "extensions") : path.join(this.extensionPath, "../");
+		//
+		// Because the extensionPath is created from __dirname and retrieves where this extension
+		// is located, in extension testing/development mode, this path will point to the local
+		// development path, not the actual user extensions path. So we use the custom
+		// DEV_USER_EXTENSIONS_PATH env variable to override it.
+		const userExtensionsPath =
+			devUserExtensionsPath || (isWsl ? path.join(vscode.env.appRoot, "../../", "extensions") : path.join(this.extensionPath, "../"));
 
 		this.extensionDiscoveryPaths.set("userExtensionsPath", userExtensionsPath);
 		// The path to the built-in extensions.
