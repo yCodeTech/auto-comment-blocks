@@ -151,7 +151,7 @@ jobs:
           }
 
           # Create commit message
-          COMMIT_MESSAGE="chore: version bump
+          COMMIT_MESSAGE="chore: version bump"
 
           git commit -m "$COMMIT_MESSAGE" || {
             echo "❌ Failed to commit changes"
