@@ -145,7 +145,7 @@ jobs:
           set -e  # Exit on any error
 
           # Stage and commit changes
-          git add package.json package-lock.json || {
+          git add package.json || {
             echo "❌ Failed to stage files"
             exit 1
           }
