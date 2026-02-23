@@ -3,7 +3,6 @@
 on:
   release:
     types: [prereleased, released]
-  workflow_dispatch:
 
 env:
   TAG_NAME: ${{ github.ref_name }}
