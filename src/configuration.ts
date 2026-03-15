@@ -12,7 +12,7 @@ import {logger} from "./logger";
 import * as utils from "./utils";
 import {ExtensionData} from "./extensionData";
 import {Settings} from "./interfaces/settings";
-import {ExtraSingleLineCommentStyles, LineComment, SingleLineCommentStyle} from "./interfaces/commentStyles";
+import {ExtraSingleLineCommentStyles, SingleLineCommentStyle} from "./interfaces/commentStyles";
 import {ExtensionMetaData} from "./interfaces/extensionMetaData";
 import {JsonObject, JsonArray, LanguageId, MultiLineLanguageDefinitions, SingleLineLanguageDefinitions} from "./interfaces/utils";
 import {CommandRegistration} from "./interfaces/commands";
@@ -599,7 +599,7 @@ export class Configuration {
 			// If the config object has own property of comments AND the comments key has
 			// own property of lineComment...
 			if (Object.hasOwn(config, "comments") && Object.hasOwn(config.comments, "lineComment")) {
-				let lineComment: LineComment = config.comments.lineComment as LineComment;
+				let lineComment = config.comments.lineComment;
 
 				// Line comments can be a string or an object with a "comment" key.
 				// If the lineComment is an object, get the "comment" key value.
