@@ -4,6 +4,17 @@ All notable changes to this extension will be documented in this file.
 
 This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure.
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed update vscode types package and clean up now unused line comment types ([#26](https://github.com/yCodeTech/auto-comment-blocks/pull/26)) by @yCodeTech
+
+    VScode updated their types to include the LineComment typings and released 1.110 of @types/vscode package. So our temporary custom `LineComment` type and `LineCommentConfig` interface is now redundant.
+    - Updated @types/vscode package to 1.110.
+    - Removed the temporary `LineComment` type and `LineCommentConfig` interface, and removed the references in configuration file.
+      <!-- end -->
+
 ## [1.1.14](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.14) - 2026-02-23
 
 This release focuses on improving the code quality, maintainability and readability of the code. There are no new features or breaking changes in this release, but it includes various fixes from the previous pre-release.
