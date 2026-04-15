@@ -1,7 +1,7 @@
 # Automatic Comment Blocks
 
-<a href="https://marketplace.visualstudio.com/items?itemName=yCodeTech.automatic-comment-blocks"><img alt="Visual Studio Marketplace Version" src="https://img.shields.io/visual-studio-marketplace/v/yCodeTech.automatic-comment-blocks?style=for-the-badge"></a>&nbsp;&nbsp;
-<a href="https://marketplace.visualstudio.com/items?itemName=yCodeTech.automatic-comment-blocks"><img alt="Visual Studio Marketplace Installs" src="https://img.shields.io/visual-studio-marketplace/i/yCodeTech.automatic-comment-blocks?style=for-the-badge&label=VS%20Code%20Installs"></a>&nbsp;&nbsp;
+<a href="https://marketplace.visualstudio.com/items?itemName=yCodeTech.automatic-comment-blocks"><img alt="Visual Studio Marketplace Version" src="https://img.shields.io/open-vsx/v/yCodeTech/automatic-comment-blocks?label=version&style=for-the-badge"></a>&nbsp;&nbsp;
+<a href="https://marketplace.visualstudio.com/items?itemName=yCodeTech.automatic-comment-blocks"><img alt="Visual Studio Marketplace Installs" src="https://img.shields.io/badge/VS_Code_Installs-~1.5k-brightgreen?style=for-the-badge"></a>&nbsp;&nbsp;
 <a href="https://open-vsx.org/extension/ycodetech/automatic-comment-blocks"><img alt="Open VSX Registry Installs" src="https://img.shields.io/open-vsx/dt/yCodeTech/automatic-comment-blocks?style=for-the-badge&label=Open%20VSX%20Downloads"></a>
 
 A VScode extension that provides block comment completion for Javadoc-style multi-line comments and single-line comment blocks for [_all_ supported languages](#as-of-v110-this-extension-now-automatically-adds-language-support-and-no-longer-keeps-hardcoded-language-support).
