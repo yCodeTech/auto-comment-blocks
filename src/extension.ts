@@ -7,15 +7,20 @@ import {logger} from "./logger";
 import {ExtensionData} from "./extensionData";
 import {addDevEnvVariables} from "./utils";
 
-logger.setupOutputChannel();
-addDevEnvVariables();
-
-const extensionData = new ExtensionData();
-let configuration = new Configuration();
-
 const disposables: vscode.Disposable[] = [];
 
 export function activate(context: vscode.ExtensionContext) {
+	// Setup logger first
+	logger.setupOutputChannel();
+
+	// Only load dev environment variables when not in production
+	if (context.extensionMode !== vscode.ExtensionMode.Production) {
+		addDevEnvVariables();
+	}
+
+	// Initialize extension data and configuration
+	const extensionData = new ExtensionData();
+	const configuration = new Configuration();
 	const configureCommentBlocksDisposable = configuration.configureCommentBlocks();
 
 	configuration.registerCommands(context);
