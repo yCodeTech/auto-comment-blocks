@@ -7,8 +7,6 @@ import {logger} from "./logger";
 import {ExtensionData} from "./extensionData";
 import {addDevEnvVariables} from "./utils";
 
-const disposables: vscode.Disposable[] = [];
-
 export function activate(context: vscode.ExtensionContext) {
 	// Setup logger first
 	logger.setupOutputChannel();
@@ -21,15 +19,16 @@ export function activate(context: vscode.ExtensionContext) {
 	// Initialize extension data and configuration
 	const extensionData = new ExtensionData();
 	const configuration = new Configuration();
+	const extensionName = extensionData.get("namespace");
+	const extensionDisplayName = extensionData.get("displayName");
+
+	// Store disposables for cleanup
+	const disposables: vscode.Disposable[] = [];
 	const configureCommentBlocksDisposable = configuration.configureCommentBlocks();
 
 	configuration.registerCommands(context);
 
 	disposables.push(...configureCommentBlocksDisposable);
-
-	const extensionName = extensionData.get("namespace");
-
-	const extensionDisplayName = extensionData.get("displayName");
 
 	let disabledLangConfig: string[] = configuration.getConfigurationValue("disabledLanguages");
 
