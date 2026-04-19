@@ -583,6 +583,29 @@ export class Configuration {
 	}
 
 	/**
+	 * Add custom single-line languages to the map from a configuration setting.
+	 *
+	 * @param tempMap The temp map to add languages to.
+	 * @param settingKey The configuration setting key to read languages from.
+	 * @param style The comment style to associate with these languages.
+	 */
+	private addCustomSingleLineLanguages(
+		tempMap: Map<LanguageId, SingleLineCommentStyle>,
+		settingKey: "slashStyleBlocks" | "hashStyleBlocks" | "semicolonStyleBlocks",
+		style: SingleLineCommentStyle
+	): void {
+		const customLangs = this.getConfigurationValue(settingKey);
+		for (const langId of customLangs) {
+			// If langId exists (ie. not NULL or empty string) AND
+			// the langId is longer than 0, AND
+			// the langId isn't set as disabled...
+			if (langId && langId.length > 0 && !this.isLangIdDisabled(langId)) {
+				tempMap.set(langId, style);
+			}
+		}
+	}
+
+	/**
 	 * Set the single-line comments language definitions.
 	 */
 	private setSingleLineCommentLanguageDefinitions() {
@@ -633,38 +656,10 @@ export class Configuration {
 		// Empty the tempMap to reuse it.
 		tempMap.clear();
 
-		// Get user-customized langIds for the //-style and add to the map.
-		let customSlashLangs = this.getConfigurationValue("slashStyleBlocks");
-		for (let langId of customSlashLangs) {
-			// If langId is exists (ie. not NULL or empty string) AND
-			// the langId is longer than 0, AND
-			// the langId isn't set as disabled...
-			if (langId && langId.length > 0) {
-				tempMap.set(langId, "//");
-			}
-		}
-
-		// Get user-customized langIds for the #-style and add to the map.
-		let customHashLangs = this.getConfigurationValue("hashStyleBlocks");
-		for (let langId of customHashLangs) {
-			// If langId is exists (ie. not NULL or empty string) AND
-			// the langId is longer than 0, AND
-			// the langId isn't set as disabled...
-			if (langId && langId.length > 0 && !this.isLangIdDisabled(langId)) {
-				tempMap.set(langId, "#");
-			}
-		}
-
-		// Get user-customized langIds for the ;-style and add to the map.
-		let customSemicolonLangs = this.getConfigurationValue("semicolonStyleBlocks");
-		for (let langId of customSemicolonLangs) {
-			// If langId is exists (ie. not NULL or empty string) AND
-			// the langId is longer than 0, AND
-			// the langId isn't set as disabled...
-			if (langId && langId.length > 0 && !this.isLangIdDisabled(langId)) {
-				tempMap.set(langId, ";");
-			}
-		}
+		// Add user-customized langIds for each comment style.
+		this.addCustomSingleLineLanguages(tempMap, "slashStyleBlocks", "//");
+		this.addCustomSingleLineLanguages(tempMap, "hashStyleBlocks", "#");
+		this.addCustomSingleLineLanguages(tempMap, "semicolonStyleBlocks", ";");
 
 		// Set the customSupportedLanguages tempMap into the singleLineBlocksMap,
 		// sorted in ascending order, for sanity reasons.
