@@ -25,10 +25,10 @@ export function activate(context: vscode.ExtensionContext) {
 	// Store disposables for cleanup
 	const disposables: vscode.Disposable[] = [];
 	const configureCommentBlocksDisposable = configuration.configureCommentBlocks();
+	disposables.push(...configureCommentBlocksDisposable);
 
 	configuration.registerCommands(context);
 
-	disposables.push(...configureCommentBlocksDisposable);
 
 	let disabledLangConfig: string[] = configuration.getConfigurationValue("disabledLanguages");
 
