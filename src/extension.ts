@@ -24,14 +24,16 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Store disposables for cleanup
 	const disposables: vscode.Disposable[] = [];
-	const configureCommentBlocksDisposable = configuration.configureCommentBlocks();
-	disposables.push(...configureCommentBlocksDisposable);
+	let commentBlocksDisposables: vscode.Disposable[] = [];
+
+	// Initial configuration
+	commentBlocksDisposables = configuration.configureCommentBlocks();
+	disposables.push(...commentBlocksDisposables);
 
 	configuration.registerCommands(context);
 
-
-	let disabledLangConfig: string[] = configuration.getConfigurationValue("disabledLanguages");
-
+	// Show disabled languages message
+	const disabledLangConfig: string[] = configuration.getConfigurationValue("disabledLanguages");
 	if (disabledLangConfig.length > 0) {
 		vscode.window.showInformationMessage(`${disabledLangConfig.join(", ")} languages are disabled for ${extensionDisplayName}.`);
 	}
@@ -85,8 +87,14 @@ export function activate(context: vscode.ExtensionContext) {
 	 */
 	const documentOpenDisposable = vscode.workspace.onDidOpenTextDocument(() => {
 		logger.info("Active editor language changed, re-configuring comment blocks.");
-		const configureCommentBlocksDisposable = configuration.configureCommentBlocks();
-		disposables.push(...configureCommentBlocksDisposable);
+
+		// Dispose of old comment block configurations to prevent memory leaks
+		commentBlocksDisposables.forEach((disposable) => disposable.dispose());
+		commentBlocksDisposables = [];
+
+		// Create new comment block configurations
+		commentBlocksDisposables = configuration.configureCommentBlocks();
+		disposables.push(...commentBlocksDisposables);
 	});
 
 	disposables.push(documentOpenDisposable);
