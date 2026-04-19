@@ -184,46 +184,42 @@ export class Configuration {
 	}
 
 	/**
+	 * Get the appropriate comment style for the blade language. Either blade or html comments.
+	 *
+	 * @param bladeOverrideComments A boolean indicating whether or not the user setting
+	 * "Blade Override Comments" is enabled.
+	 *
+	 * @returns {vscode.CharacterPair} The appropriate comment style for the blade language.
+	 */
+	private getBladeOrHtmlComments(bladeOverrideComments: boolean): vscode.CharacterPair {
+		// If blade override is enabled AND blade langId is NOT set as disabled,
+		// return the blade comments.
+		if (bladeOverrideComments === true && !this.isLangIdDisabled("blade")) {
+			return ["{{--", "--}}"];
+		}
+
+		// Otherwise, return the html comments.
+		return ["<!--", "-->"];
+	}
+
+	/**
 	 * Sets the block comments for the blade language determined by the user setting.
 	 *
-	 * @param bladeOverrideComments A boolean indicating whether or not the user setting "Blade Override Comments" is enabled.
-	 *
-	 * @param [onStart=false] A boolean indicating whether or not the method was called
-	 * on starting the extension.
-	 * If `true`, it returns the comments, if `false` (default), it sets the comments to
-	 * the language directly.
-	 *
-	 * @returns {vscode.CharacterPair | void} Returns the blade comments if `onStart` is `true`, otherwise nothing.
-	 *
+	 * @param bladeOverrideComments A boolean indicating whether or not the user setting
+	 * "Blade Override Comments" is enabled.
 	 */
-	public setBladeComments(bladeOverrideComments: boolean, onStart: boolean = false): vscode.CharacterPair | void {
-		// Is enabled AND blade langId is NOT set as disabled...
-		if (bladeOverrideComments === true && !this.isLangIdDisabled("blade")) {
-			const bladeComments: vscode.CharacterPair = ["{{--", "--}}"];
+	public setBladeComments(bladeOverrideComments: boolean): void {
+		// If blade langId is NOT set as disabled...
+		if (!this.isLangIdDisabled("blade")) {
+			// Get blade or html comments.
+			const comments = this.getBladeOrHtmlComments(bladeOverrideComments);
 
-			if (onStart) {
-				return bladeComments;
-			} else {
-				vscode.languages.setLanguageConfiguration("blade", {
-					comments: {
-						blockComment: bladeComments,
-					},
-				});
-			}
-		}
-		// Is disabled OR blade langId is set as disabled...
-		else if (!bladeOverrideComments || this.isLangIdDisabled("blade")) {
-			const htmlComments: vscode.CharacterPair = ["<!--", "-->"];
-
-			if (onStart) {
-				return htmlComments;
-			} else {
-				vscode.languages.setLanguageConfiguration("blade", {
-					comments: {
-						blockComment: htmlComments,
-					},
-				});
-			}
+			// Set the comments into the language config for blade.
+			vscode.languages.setLanguageConfiguration("blade", {
+				comments: {
+					blockComment: comments,
+				},
+			});
 		}
 	}
 
@@ -587,6 +583,29 @@ export class Configuration {
 	}
 
 	/**
+	 * Add custom single-line languages to the map from a configuration setting.
+	 *
+	 * @param tempMap The temp map to add languages to.
+	 * @param settingKey The configuration setting key to read languages from.
+	 * @param style The comment style to associate with these languages.
+	 */
+	private addCustomSingleLineLanguages(
+		tempMap: Map<LanguageId, SingleLineCommentStyle>,
+		settingKey: "slashStyleBlocks" | "hashStyleBlocks" | "semicolonStyleBlocks",
+		style: SingleLineCommentStyle
+	): void {
+		const customLangs = this.getConfigurationValue(settingKey);
+		for (const langId of customLangs) {
+			// If langId exists (ie. not NULL or empty string) AND
+			// the langId is longer than 0, AND
+			// the langId isn't set as disabled...
+			if (langId && langId.length > 0 && !this.isLangIdDisabled(langId)) {
+				tempMap.set(langId, style);
+			}
+		}
+	}
+
+	/**
 	 * Set the single-line comments language definitions.
 	 */
 	private setSingleLineCommentLanguageDefinitions() {
@@ -637,38 +656,10 @@ export class Configuration {
 		// Empty the tempMap to reuse it.
 		tempMap.clear();
 
-		// Get user-customized langIds for the //-style and add to the map.
-		let customSlashLangs = this.getConfigurationValue("slashStyleBlocks");
-		for (let langId of customSlashLangs) {
-			// If langId is exists (ie. not NULL or empty string) AND
-			// the langId is longer than 0, AND
-			// the langId isn't set as disabled...
-			if (langId && langId.length > 0) {
-				tempMap.set(langId, "//");
-			}
-		}
-
-		// Get user-customized langIds for the #-style and add to the map.
-		let customHashLangs = this.getConfigurationValue("hashStyleBlocks");
-		for (let langId of customHashLangs) {
-			// If langId is exists (ie. not NULL or empty string) AND
-			// the langId is longer than 0, AND
-			// the langId isn't set as disabled...
-			if (langId && langId.length > 0 && !this.isLangIdDisabled(langId)) {
-				tempMap.set(langId, "#");
-			}
-		}
-
-		// Get user-customized langIds for the ;-style and add to the map.
-		let customSemicolonLangs = this.getConfigurationValue("semicolonStyleBlocks");
-		for (let langId of customSemicolonLangs) {
-			// If langId is exists (ie. not NULL or empty string) AND
-			// the langId is longer than 0, AND
-			// the langId isn't set as disabled...
-			if (langId && langId.length > 0 && !this.isLangIdDisabled(langId)) {
-				tempMap.set(langId, ";");
-			}
-		}
+		// Add user-customized langIds for each comment style.
+		this.addCustomSingleLineLanguages(tempMap, "slashStyleBlocks", "//");
+		this.addCustomSingleLineLanguages(tempMap, "hashStyleBlocks", "#");
+		this.addCustomSingleLineLanguages(tempMap, "semicolonStyleBlocks", ";");
 
 		// Set the customSupportedLanguages tempMap into the singleLineBlocksMap,
 		// sorted in ascending order, for sanity reasons.
@@ -751,7 +742,7 @@ export class Configuration {
 			 * Get the user settings/configuration and set the blade or html comments accordingly.
 			 */
 			if (langId === "blade") {
-				const bladeComments = this.setBladeComments(this.getConfigurationValue("bladeOverrideComments"), true);
+				const bladeComments = this.getBladeOrHtmlComments(this.getConfigurationValue("bladeOverrideComments"));
 
 				// If bladeComments has a value...
 				if (bladeComments) {
@@ -904,12 +895,12 @@ export class Configuration {
 
 		// Get the langId from the auto-supported langs. If it doesn't exist, try getting it from
 		// the custom-supported langs instead.
-		var style: SingleLineCommentStyle | ExtraSingleLineCommentStyles = singleLineLangs.get(langId) ?? customSingleLineLangs.get(langId);
+		let style: SingleLineCommentStyle | ExtraSingleLineCommentStyles = singleLineLangs.get(langId) ?? customSingleLineLangs.get(langId);
 
 		if (style && textEditor.selection.isEmpty) {
 			let line = textEditor.document.lineAt(textEditor.selection.active);
 			let isCommentLine = true;
-			var indentRegex: RegExp;
+			let indentRegex: RegExp;
 
 			if (style === "//" && line.text.search(/^\s*\/\/\s*/) !== -1) {
 				indentRegex = /\//;
@@ -939,7 +930,7 @@ export class Configuration {
 				return;
 			}
 
-			var indentedNewLine = "\n" + line.text.substring(0, line.text.search(indentRegex));
+			let indentedNewLine = "\n" + line.text.substring(0, line.text.search(indentRegex));
 			let isOnEnter = this.getConfigurationValue("singleLineBlockOnEnter");
 			if (!isOnEnter) {
 				indentedNewLine += style + " ";
