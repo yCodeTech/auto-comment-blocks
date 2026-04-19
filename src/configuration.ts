@@ -904,12 +904,12 @@ export class Configuration {
 
 		// Get the langId from the auto-supported langs. If it doesn't exist, try getting it from
 		// the custom-supported langs instead.
-		var style: SingleLineCommentStyle | ExtraSingleLineCommentStyles = singleLineLangs.get(langId) ?? customSingleLineLangs.get(langId);
+		let style: SingleLineCommentStyle | ExtraSingleLineCommentStyles = singleLineLangs.get(langId) ?? customSingleLineLangs.get(langId);
 
 		if (style && textEditor.selection.isEmpty) {
 			let line = textEditor.document.lineAt(textEditor.selection.active);
 			let isCommentLine = true;
-			var indentRegex: RegExp;
+			let indentRegex: RegExp;
 
 			if (style === "//" && line.text.search(/^\s*\/\/\s*/) !== -1) {
 				indentRegex = /\//;
@@ -939,7 +939,7 @@ export class Configuration {
 				return;
 			}
 
-			var indentedNewLine = "\n" + line.text.substring(0, line.text.search(indentRegex));
+			let indentedNewLine = "\n" + line.text.substring(0, line.text.search(indentRegex));
 			let isOnEnter = this.getConfigurationValue("singleLineBlockOnEnter");
 			if (!isOnEnter) {
 				indentedNewLine += style + " ";
