@@ -13,6 +13,18 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     VScode updated their types to include the LineComment typings and released 1.110 of @types/vscode package. So our temporary custom `LineComment` type and `LineCommentConfig` interface is now redundant.
     - Updated @types/vscode package to 1.110.
     - Removed the temporary `LineComment` type and `LineCommentConfig` interface, and removed the references in configuration file.
+        <!-- end -->
+
+### Changed
+
+- Refactored extension activation and performance improvements ([#29](https://github.com/yCodeTech/auto-comment-blocks/pull/29)) by @yCodeTech
+    - Refactored the `activate` function to set up the logger first, initialize extension data and configuration.
+
+    - Ensured that development environment variables are only loaded when not in production mode, i.e. in development or testing modes.
+
+    - Consolidated multiple configuration change handlers into a single handler that checks for a list of settings requiring extension reload. If any are changed, a single reload prompt is shown using the new `showReloadMessage` helper function, reducing code duplication.
+
+    - Improved performance and event handling to prevent memory leaks by properly disposing of old comment configurations.
       <!-- end -->
 
 ## [1.1.14](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.14) - 2026-02-23
