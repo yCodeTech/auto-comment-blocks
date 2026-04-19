@@ -40,7 +40,7 @@ export function activate(context: vscode.ExtensionContext) {
 	 * When the configuration/user settings are changed, set the extension
 	 * to reflect the settings and output a message to the user.
 	 */
-	vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) => {
+	const configChangeDisposable = vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) => {
 		// TODO: Work on automatically updating the languages instead of making the user reload the extension.
 
 		/**
@@ -74,20 +74,26 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
+	disposables.push(configChangeDisposable);
 
-	// An event that is emitted when a text document is opened or when the
-	// language id of a text document has been changed. As described in
-	// https://github.com/microsoft/vscode/blob/4e8fbaef741afebd24684b88cac47c2f44dfb8eb/src/vscode-dts/vscode.d.ts#L13716-L13728
-
-	// Called when active editor language is changed, so re-configure the comment blocks.
-	vscode.workspace.onDidOpenTextDocument(() => {
+	/**
+	 * An event that is emitted when a text document is opened or when the
+	 * language id of a text document has been changed. As described in
+	 * https://github.com/microsoft/vscode/blob/4e8fbaef741afebd24684b88cac47c2f44dfb8eb/src/vscode-dts/vscode.d.ts#L13716-L13728
+	 *
+	 * Called when active editor language is changed, so re-configure the comment blocks.
+	 */
+	const documentOpenDisposable = vscode.workspace.onDidOpenTextDocument(() => {
 		logger.info("Active editor language changed, re-configuring comment blocks.");
 		const configureCommentBlocksDisposable = configuration.configureCommentBlocks();
 		disposables.push(...configureCommentBlocksDisposable);
 	});
 
+	disposables.push(documentOpenDisposable);
+
 	context.subscriptions.push(...disposables);
 }
+
 export function deactivate() {
 	logger.disposeLogger();
 }
