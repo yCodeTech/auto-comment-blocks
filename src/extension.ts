@@ -44,13 +44,10 @@ export function activate(context: vscode.ExtensionContext) {
 		// TODO: Work on automatically updating the languages instead of making the user reload the extension.
 
 		/**
-		 * Blade Override Comments
+		 * Blade Override Comments - can be updated without reload
 		 */
-		// If the affected setting is bladeOverrideComments...
 		if (event.affectsConfiguration(`${extensionName}.bladeOverrideComments`)) {
-			// Get the setting.
-			let bladeOverrideComments: boolean = configuration.getConfigurationValue("bladeOverrideComments");
-
+			const bladeOverrideComments: boolean = configuration.getConfigurationValue("bladeOverrideComments");
 			configuration.setBladeComments(bladeOverrideComments);
 
 			if (!configuration.isLangIdDisabled("blade")) {
@@ -58,102 +55,25 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		}
 
-		/**
-		 * Disabled Languages
-		 */
-		if (event.affectsConfiguration(`${extensionName}.disabledLanguages`)) {
-			vscode.window
-				.showInformationMessage(
-					`The ${extensionName}.disabledLanguages setting has been changed. Please reload the Extension Host to take effect.`,
-					"Reload"
-				)
-				.then((selection) => {
-					if (selection === "Reload") {
-						vscode.commands.executeCommand("workbench.action.restartExtensionHost");
-					}
-				});
-		}
+		// Settings that require an extension host reload when changed.
+		const reloadRequiredSettings = [
+			"disabledLanguages",
+			"overrideDefaultLanguageMultiLineComments",
+			"multiLineStyleBlocks",
+			"slashStyleBlocks",
+			"hashStyleBlocks",
+			"semicolonStyleBlocks",
+		];
 
-		/**
-		 * Override Default Language Block Comments
-		 */
-		if (event.affectsConfiguration(`${extensionName}.overrideDefaultLanguageMultiLineComments`)) {
-			vscode.window
-				.showInformationMessage(
-					`The ${extensionName}.overrideDefaultLanguageMultiLineComments setting has been changed. Please reload the Extension Host to take effect.`,
-					"Reload"
-				)
-				.then((selection) => {
-					if (selection === "Reload") {
-						vscode.commands.executeCommand("workbench.action.restartExtensionHost");
-					}
-				});
-		}
-
-		/**
-		 * Multi-line style Block Comments
-		 */
-		if (event.affectsConfiguration(`${extensionName}.multiLineStyleBlocks`)) {
-			vscode.window
-				.showInformationMessage(
-					`The ${extensionName}.multiLineStyleBlocks setting has been changed. Please reload the Extension Host to take effect.`,
-					"Reload"
-				)
-				.then((selection) => {
-					if (selection === "Reload") {
-						vscode.commands.executeCommand("workbench.action.restartExtensionHost");
-					}
-				});
-		}
-
-		/**
-		 * //-style single-line comments
-		 */
-		if (event.affectsConfiguration(`${extensionName}.slashStyleBlocks`)) {
-			vscode.window
-				.showInformationMessage(
-					`The ${extensionName}.slashStyleBlocks setting has been changed. Please reload the Extension Host to take effect.`,
-					"Reload"
-				)
-				.then((selection) => {
-					if (selection === "Reload") {
-						vscode.commands.executeCommand("workbench.action.restartExtensionHost");
-					}
-				});
-		}
-
-		/**
-		 * #-style single-line comments
-		 */
-		if (event.affectsConfiguration(`${extensionName}.hashStyleBlocks`)) {
-			vscode.window
-				.showInformationMessage(
-					`The ${extensionName}.hashStyleBlocks setting has been changed. Please reload the Extension Host to take effect.`,
-					"Reload"
-				)
-				.then((selection) => {
-					if (selection === "Reload") {
-						vscode.commands.executeCommand("workbench.action.restartExtensionHost");
-					}
-				});
-		}
-
-		/**
-		 * ;-style single-line comments
-		 */
-		if (event.affectsConfiguration(`${extensionName}.semicolonStyleBlocks`)) {
-			vscode.window
-				.showInformationMessage(
-					`The ${extensionName}.semicolonStyleBlocks setting has been changed. Please reload the Extension Host to take effect.`,
-					"Reload"
-				)
-				.then((selection) => {
-					if (selection === "Reload") {
-						vscode.commands.executeCommand("workbench.action.restartExtensionHost");
-					}
-				});
+		// Settings that require extension host reload
+		for (const setting of reloadRequiredSettings) {
+			if (event.affectsConfiguration(`${extensionName}.${setting}`)) {
+				showReloadMessage(extensionName, setting);
+				break; // Only show one reload message at a time
+			}
 		}
 	});
+
 
 	// An event that is emitted when a text document is opened or when the
 	// language id of a text document has been changed. As described in
@@ -170,4 +90,22 @@ export function activate(context: vscode.ExtensionContext) {
 }
 export function deactivate() {
 	logger.disposeLogger();
+}
+
+/**
+ * Shows a message prompting the user to reload the extension host.
+ * @param extensionName The namespace of the extension
+ * @param settingName The name of the setting that was changed
+ */
+function showReloadMessage(extensionName: string, settingName: string): void {
+	vscode.window
+		.showInformationMessage(
+			`The ${extensionName}.${settingName} setting has been changed. Please reload the Extension Host to take effect.`,
+			"Reload"
+		)
+		.then((selection) => {
+			if (selection === "Reload") {
+				vscode.commands.executeCommand("workbench.action.restartExtensionHost");
+			}
+		});
 }
