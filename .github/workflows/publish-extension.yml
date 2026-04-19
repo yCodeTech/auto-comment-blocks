@@ -120,7 +120,7 @@ jobs:
           RELEASE_URL="https://github.com/${REPO}/releases/tag/${TAG_NAME}"
           NEW_HEADING="## [${VERSION}](${RELEASE_URL}) - ${CURRENT_DATE}"
 
-          sed -i "s/^## \[Unreleased\]/${NEW_HEADING}/" CHANGELOG.md
+          sed -i "s|^## \[Unreleased\]|${NEW_HEADING}|" CHANGELOG.md
 
           echo "✅ Updated CHANGELOG.md:"
           echo "   [Unreleased] → [${VERSION}]"
