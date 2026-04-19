@@ -184,46 +184,42 @@ export class Configuration {
 	}
 
 	/**
+	 * Get the appropriate comment style for the blade language. Either blade or html comments.
+	 *
+	 * @param bladeOverrideComments A boolean indicating whether or not the user setting
+	 * "Blade Override Comments" is enabled.
+	 *
+	 * @returns {vscode.CharacterPair} The appropriate comment style for the blade language.
+	 */
+	private getBladeOrHtmlComments(bladeOverrideComments: boolean): vscode.CharacterPair {
+		// If blade override is enabled AND blade langId is NOT set as disabled,
+		// return the blade comments.
+		if (bladeOverrideComments === true && !this.isLangIdDisabled("blade")) {
+			return ["{{--", "--}}"];
+		}
+
+		// Otherwise, return the html comments.
+		return ["<!--", "-->"];
+	}
+
+	/**
 	 * Sets the block comments for the blade language determined by the user setting.
 	 *
-	 * @param bladeOverrideComments A boolean indicating whether or not the user setting "Blade Override Comments" is enabled.
-	 *
-	 * @param [onStart=false] A boolean indicating whether or not the method was called
-	 * on starting the extension.
-	 * If `true`, it returns the comments, if `false` (default), it sets the comments to
-	 * the language directly.
-	 *
-	 * @returns {vscode.CharacterPair | void} Returns the blade comments if `onStart` is `true`, otherwise nothing.
-	 *
+	 * @param bladeOverrideComments A boolean indicating whether or not the user setting
+	 * "Blade Override Comments" is enabled.
 	 */
-	public setBladeComments(bladeOverrideComments: boolean, onStart: boolean = false): vscode.CharacterPair | void {
-		// Is enabled AND blade langId is NOT set as disabled...
-		if (bladeOverrideComments === true && !this.isLangIdDisabled("blade")) {
-			const bladeComments: vscode.CharacterPair = ["{{--", "--}}"];
+	public setBladeComments(bladeOverrideComments: boolean): void {
+		// If blade langId is NOT set as disabled...
+		if (!this.isLangIdDisabled("blade")) {
+			// Get blade or html comments.
+			const comments = this.getBladeOrHtmlComments(bladeOverrideComments);
 
-			if (onStart) {
-				return bladeComments;
-			} else {
-				vscode.languages.setLanguageConfiguration("blade", {
-					comments: {
-						blockComment: bladeComments,
-					},
-				});
-			}
-		}
-		// Is disabled OR blade langId is set as disabled...
-		else if (!bladeOverrideComments || this.isLangIdDisabled("blade")) {
-			const htmlComments: vscode.CharacterPair = ["<!--", "-->"];
-
-			if (onStart) {
-				return htmlComments;
-			} else {
-				vscode.languages.setLanguageConfiguration("blade", {
-					comments: {
-						blockComment: htmlComments,
-					},
-				});
-			}
+			// Set the comments into the language config for blade.
+			vscode.languages.setLanguageConfiguration("blade", {
+				comments: {
+					blockComment: comments,
+				},
+			});
 		}
 	}
 
@@ -751,7 +747,7 @@ export class Configuration {
 			 * Get the user settings/configuration and set the blade or html comments accordingly.
 			 */
 			if (langId === "blade") {
-				const bladeComments = this.setBladeComments(this.getConfigurationValue("bladeOverrideComments"), true);
+				const bladeComments = this.getBladeOrHtmlComments(this.getConfigurationValue("bladeOverrideComments"));
 
 				// If bladeComments has a value...
 				if (bladeComments) {
