@@ -13,7 +13,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     VScode updated their types to include the LineComment typings and released 1.110 of @types/vscode package. So our temporary custom `LineComment` type and `LineCommentConfig` interface is now redundant.
     - Updated @types/vscode package to 1.110.
     - Removed the temporary `LineComment` type and `LineCommentConfig` interface, and removed the references in configuration file.
-        <!-- end -->
+          <!-- end -->
 
 ### Changed
 
@@ -25,6 +25,14 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     - Consolidated multiple configuration change handlers into a single handler that checks for a list of settings requiring extension reload. If any are changed, a single reload prompt is shown using the new `showReloadMessage` helper function, reducing code duplication.
 
     - Improved performance and event handling to prevent memory leaks by properly disposing of old comment configurations.
+        <!-- end -->
+
+- Refactored configuration class ([#30](https://github.com/yCodeTech/auto-comment-blocks/pull/30)) by @yCodeTech
+    - Extracted the logic for determining the appropriate Blade or HTML comment style into a new private method `getBladeOrHtmlComments`, simplifying the public API and improving clarity. The `setBladeComments` method now only sets the configuration and no longer returns values based on an `onStart` flag (the flag was removed in favour using the new private method directly).
+
+    - Replaced repetitive code for adding custom single-line comment languages with a new private method `addCustomSingleLineLanguages`, reducing duplication and improving maintainability.
+
+    - Replaced `var` with `let` for variable declarations in several places to align with modern best practices.
       <!-- end -->
 
 ## [1.1.14](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.14) - 2026-02-23
