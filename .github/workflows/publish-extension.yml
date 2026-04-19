@@ -97,6 +97,36 @@ jobs:
             echo "✅ Successfully updated package version to $VERSION"
           fi
 
+      - name: Update Changelog Release Heading
+        run: |
+          VERSION="${{ needs.validate-release-version.outputs.version }}"
+          TAG_NAME="${{ env.TAG_NAME }}"
+          REPO="${{ github.repository }}"
+          CURRENT_DATE=$(date +%Y-%m-%d)
+
+          # Check if CHANGELOG.md exists
+          if [ ! -f "CHANGELOG.md" ]; then
+            echo "⚠️  CHANGELOG.md not found, skipping changelog update"
+            exit 0
+          fi
+
+          # Check if Unreleased section exists
+          if ! grep -q "^## \[Unreleased\]" CHANGELOG.md; then
+            echo "ℹ️  No [Unreleased] section found in CHANGELOG.md, skipping update"
+            exit 0
+          fi
+
+          # Replace [Unreleased] with versioned release heading
+          RELEASE_URL="https://github.com/${REPO}/releases/tag/${TAG_NAME}"
+          NEW_HEADING="## [${VERSION}](${RELEASE_URL}) - ${CURRENT_DATE}"
+
+          sed -i "s/^## \[Unreleased\]/${NEW_HEADING}/" CHANGELOG.md
+
+          echo "✅ Updated CHANGELOG.md:"
+          echo "   [Unreleased] → [${VERSION}]"
+          echo "   Date: ${CURRENT_DATE}"
+          echo "   URL: ${RELEASE_URL}"
+
       - name: Check for Changes
         id: git-check
         run: |
@@ -145,13 +175,13 @@ jobs:
           set -e  # Exit on any error
 
           # Stage and commit changes
-          git add package.json || {
+          git add package.json CHANGELOG.md || {
             echo "❌ Failed to stage files"
             exit 1
           }
 
           # Create commit message
-          COMMIT_MESSAGE="chore: version bump"
+          COMMIT_MESSAGE="chore: version bump and update changelog"
 
           git commit -m "$COMMIT_MESSAGE" || {
             echo "❌ Failed to commit changes"
