@@ -322,8 +322,8 @@ export class Configuration {
 			const windowsBuiltInExtensionsPath = this.extensionData.getExtensionDiscoveryPath("WindowsBuiltInExtensionsPathFromWsl");
 
 			// Read the paths and create arrays of the extensions.
-			const windowsBuiltInExtensions = this.readExtensionsFromDirectory(windowsBuiltInExtensionsPath);
-			const windowsUserExtensions = this.readExtensionsFromDirectory(windowsUserExtensionsPath);
+			const windowsBuiltInExtensions = windowsBuiltInExtensionsPath ? this.readExtensionsFromDirectory(windowsBuiltInExtensionsPath) : [];
+			const windowsUserExtensions = windowsUserExtensionsPath ? this.readExtensionsFromDirectory(windowsUserExtensionsPath) : [];
 
 			// Combine the built-in and user extensions into the extensions array.
 			extensions.push(...windowsBuiltInExtensions, ...windowsUserExtensions);

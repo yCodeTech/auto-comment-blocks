@@ -17,7 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	// Initialize extension data and configuration
-	const extensionData = new ExtensionData();
+	const extensionData = new ExtensionData(null, true);
 	const configuration = new Configuration();
 	const extensionName = extensionData.get("namespace");
 	const extensionDisplayName = extensionData.get("displayName");
