@@ -4,6 +4,28 @@ All notable changes to this extension will be documented in this file.
 
 This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure.
 
+## [1.1.16](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.16) - 2026-06-03
+
+### Fixed
+- Fixed ENOENT error with the new VScode commit hash directory for Windows built in extensions in WSL ([#33](https://github.com/yCodeTech/auto-comment-blocks/pull/33)) by @yCodeTech
+
+    This pull request improves the way the extension discovers and handles the Windows built-in extensions path when running inside WSL (Windows Subsystem for Linux). It introduces robust detection logic to support both legacy and new VS Code installation paths, adds error handling and user notifications for failures, and ensures that discovery failures are only surfaced once per session/activation.
+
+    Fixes #32.
+
+    **Windows built-in extensions path resolution improvements:**
+
+    * Added logic in `ExtensionData` to detect both the legacy and new hashed commit-based install paths for built-in extensions under WSL, including directory scanning and caching of results to avoid repeated disk access.
+    * Added error handling and user notification for failures to resolve the built-in extensions path, including logging and a one-time warning message with an option to open the output channel.
+    * Introduced new constructor options and internal flags in `ExtensionData` to control whether discovery path failures should notify the user, preventing duplicate warnings from multiple instances.
+
+    **Integration and usage updates:**
+
+    * Updated the extension activation in `extension.ts` to pass the new constructor parameter, enabling user notification for the main extension instance only.
+    * Updated `Configuration` logic to handle cases where the Windows extensions paths are not resolved, preventing errors by falling back to empty arrays.
+    <!-- end -->
+
+
 ## [1.1.15](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.15) - 2026-04-19
 
 ### Fixed
