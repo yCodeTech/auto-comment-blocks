@@ -311,7 +311,7 @@ function buildEntry(
 ) {
 	const prefix = TYPE_TO_PREFIX[type] ?? section;
 	const dedupedTitle = removeLeadingDuplicateVerb(prefix, cleanedTitle);
-	const titlePart = dedupedTitle ? ` ${dedupedTitle}` : "";
+	const titlePart = dedupedTitle ? ` ${dedupedTitle}` : ` ${cleanedTitle.trim()}`;
 	return `- ${prefix}${titlePart} ([#${prNumber}](${prUrl})) by @${prAuthor}${formatPRDescription(prBody)}\n<!-- end -->`;
 }
 
