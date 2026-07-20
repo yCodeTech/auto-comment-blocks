@@ -38,7 +38,8 @@ export function readJsonFile<T extends JsonValue = JsonObject>(filepath: string,
 		.toString()
 		.replace(/^\uFEFF/, ""); // Remove BOM if present.
 
-	const jsonContents = jsonc.parse(fileContent, jsonErrors, {allowEmptyContent: true}) ?? {};
+	// Parse the JSON content using jsonc-parser, allowing empty content and trailing commas.
+	const jsonContents = jsonc.parse(fileContent, jsonErrors, {allowEmptyContent: true, allowTrailingComma: true}) ?? {};
 
 	if (jsonErrors.length > 0) {
 		const errorMessages = constructJsonParseErrorMsg(filepath, fileContent, jsonErrors);
@@ -78,19 +79,18 @@ function constructJsonParseErrorMsg(filepath: string, fileContent: string, jsonE
 	return jsonErrors
 		.map((err, i) => {
 			// Get the error name from the numeric error code.
-			// The name is PascalCased, so we need to format it by adding spaces
+			const errorName = jsonc.printParseErrorCode(err.error);
+
+			// The error name is PascalCased, so we need to format it by adding spaces
 			// before capital letters for readability.
-			const errorName = jsonc
-				.printParseErrorCode(err.error)
-				.replace(/([A-Z])/g, " $1")
-				.trim();
+			const errorNameFormatted = errorName.replace(/([A-Z])/g, " $1").trim();
 
 			// Calculate line and column numbers from the error offset.
 			const lineNumber = fileContent.substring(0, err.offset).split("\n").length;
 			const columnNumber = err.offset - fileContent.lastIndexOf("\n", err.offset - 1);
 
 			// Return the formatted error message.
-			return `\tError ${i + 1} - ${errorName} at "${filepath}:${lineNumber}:${columnNumber}"\n`;
+			return `\tError ${i + 1} [${errorName}] - ${errorNameFormatted} at "${filepath}:${lineNumber}:${columnNumber}"\n`;
 		})
 		.join("\n");
 }
