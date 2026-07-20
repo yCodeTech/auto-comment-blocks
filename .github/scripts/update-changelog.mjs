@@ -35,6 +35,20 @@ const TYPE_TO_PREFIX = {
 };
 
 /**
+ * Maps changelog prefixes to verb forms that should be removed from title starts
+ * to avoid duplicated wording like "Added added ...".
+ */
+const PREFIX_TO_LEADING_VERB_REGEX = {
+	added: /^(add|adds|added|adding)\b[\s:-]*/i,
+	changed: /^(change|changes|changed|changing)\b[\s:-]*/i,
+	deprecated: /^(deprecate|deprecates|deprecated|deprecating)\b[\s:-]*/i,
+	fixed: /^(fix|fixes|fixed|fixing)\b[\s:-]*/i,
+	refactored: /^(refactor|refactors|refactored|refactoring)\b[\s:-]*/i,
+	removed: /^(remove|removes|removed|removing)\b[\s:-]*/i,
+	reverted: /^(revert|reverts|reverted|reverting)\b[\s:-]*/i,
+};
+
+/**
  * Indentation used for PR description lines nested under a changelog list item 2 spaces.
  */
 const DESCRIPTION_INDENT = "  ";
@@ -296,7 +310,26 @@ function buildEntry(
 	prBody,
 ) {
 	const prefix = TYPE_TO_PREFIX[type] ?? section;
-	return `- ${prefix} ${cleanedTitle} ([#${prNumber}](${prUrl})) by @${prAuthor}${formatPRDescription(prBody)}\n<!-- end -->`;
+	const dedupedTitle = removeLeadingDuplicateVerb(prefix, cleanedTitle);
+	const titlePart = dedupedTitle ? ` ${dedupedTitle}` : ` ${cleanedTitle.trim()}`;
+	return `- ${prefix}${titlePart} ([#${prNumber}](${prUrl})) by @${prAuthor}${formatPRDescription(prBody)}\n<!-- end -->`;
+}
+
+/**
+ * Removes duplicated leading verbs based on the resolved changelog prefix.
+ * Example: prefix "Added" + title "added support for x" => "support for x"
+ * @param {string} prefix - Resolved changelog entry prefix
+ * @param {string} title - Cleaned PR title
+ * @returns {string} - Title without duplicated leading verb
+ */
+function removeLeadingDuplicateVerb(prefix, title) {
+	const trimmedTitle = title.trim();
+	if (!trimmedTitle) return "";
+
+	const pattern = PREFIX_TO_LEADING_VERB_REGEX[prefix.toLowerCase()];
+	if (!pattern) return trimmedTitle;
+
+	return trimmedTitle.replace(pattern, "").trimStart();
 }
 
 /**
