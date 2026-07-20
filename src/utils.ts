@@ -38,7 +38,8 @@ export function readJsonFile<T extends JsonValue = JsonObject>(filepath: string,
 		.toString()
 		.replace(/^\uFEFF/, ""); // Remove BOM if present.
 
-	const jsonContents = jsonc.parse(fileContent, jsonErrors, {allowEmptyContent: true}) ?? {};
+	// Parse the JSON content using jsonc-parser, allowing empty content and trailing commas.
+	const jsonContents = jsonc.parse(fileContent, jsonErrors, {allowEmptyContent: true, allowTrailingComma: true}) ?? {};
 
 	if (jsonErrors.length > 0) {
 		const errorMessages = constructJsonParseErrorMsg(filepath, fileContent, jsonErrors);
