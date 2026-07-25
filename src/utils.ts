@@ -1,24 +1,45 @@
 import * as fs from "node:fs";
+import * as path from "node:path";
 import * as jsonc from "jsonc-parser";
 import {logger} from "./logger";
 import {window} from "vscode";
+import {JsonObject, JsonValue} from "./interfaces/utils";
 
 /**
  * Read the file and parse the JSON.
  *
  * @param {string} filepath The path of the file.
+ * @param {boolean} [throwOnFileMissing=true] Whether to throw an error if the file doesn't exist.
+ * If `false`, returns `null`. Default is `true`.
  *
- * @returns {any} The JSON file content as an object.
- * @throws Will throw an error if the JSON file cannot be parsed.
+ * @returns {T | null} The JSON file content as the passed T type (defaulting to a JSON object)
+ * or `null` if file doesn't exist and `throwOnFileMissing` is `false`.
+ * @throws Will throw an error if the JSON file cannot be parsed or if file doesn't exist and `throwOnFileMissing` is `true`.
  */
-export function readJsonFile(filepath: string): any {
+export function readJsonFile<T extends JsonValue = JsonObject>(filepath: string, throwOnFileMissing: boolean = true): T | null {
+	// Check if file exists first.
+	// If file doesn't exist...
+	if (!fs.existsSync(filepath)) {
+		// If throwOnFileMissing param is true, throw an error.
+		if (throwOnFileMissing) {
+			const error = new Error(`JSON file not found: "${filepath}"`);
+			logger.error(error.stack);
+			throw error;
+		}
+		// Otherwise just return null.
+		return null;
+	}
+
 	const jsonErrors: jsonc.ParseError[] = [];
 
+	// Read the contents of the JSON file.
 	const fileContent = fs
 		.readFileSync(filepath, {encoding: "utf8"})
 		.toString()
 		.replace(/^\uFEFF/, ""); // Remove BOM if present.
-	const jsonContents = jsonc.parse(fileContent, jsonErrors, {allowEmptyContent: true}) ?? {};
+
+	// Parse the JSON content using jsonc-parser, allowing empty content and trailing commas.
+	const jsonContents = jsonc.parse(fileContent, jsonErrors, {allowEmptyContent: true, allowTrailingComma: true}) ?? {};
 
 	if (jsonErrors.length > 0) {
 		const errorMessages = constructJsonParseErrorMsg(filepath, fileContent, jsonErrors);
@@ -42,7 +63,7 @@ export function readJsonFile(filepath: string): any {
 		throw error;
 	}
 
-	return jsonContents;
+	return jsonContents as T;
 }
 
 /**
@@ -58,19 +79,18 @@ function constructJsonParseErrorMsg(filepath: string, fileContent: string, jsonE
 	return jsonErrors
 		.map((err, i) => {
 			// Get the error name from the numeric error code.
-			// The name is PascalCased, so we need to format it by adding spaces
+			const errorName = jsonc.printParseErrorCode(err.error);
+
+			// The error name is PascalCased, so we need to format it by adding spaces
 			// before capital letters for readability.
-			const errorName = jsonc
-				.printParseErrorCode(err.error)
-				.replace(/([A-Z])/g, " $1")
-				.trim();
+			const errorNameFormatted = errorName.replace(/([A-Z])/g, " $1").trim();
 
 			// Calculate line and column numbers from the error offset.
 			const lineNumber = fileContent.substring(0, err.offset).split("\n").length;
 			const columnNumber = err.offset - fileContent.lastIndexOf("\n", err.offset - 1);
 
 			// Return the formatted error message.
-			return `\tError ${i + 1} - ${errorName} at "${filepath}:${lineNumber}:${columnNumber}"\n`;
+			return `\tError ${i + 1} [${errorName}] - ${errorNameFormatted} at "${filepath}:${lineNumber}:${columnNumber}"\n`;
 		})
 		.join("\n");
 }
@@ -79,10 +99,9 @@ function constructJsonParseErrorMsg(filepath: string, fileContent: string, jsonE
  * Read the file and parse the JSON.
  *
  * @param {string} filepath The path of the file.
- * @param {any} data The data to write into the file.
- * @returns The file content.
+ * @param {JsonValue} data The data to write into the file.
  */
-export function writeJsonFile(filepath: string, data: any): any {
+export function writeJsonFile(filepath: string, data: JsonValue) {
 	// Write the updated JSON back into the file and add tab indentation
 	// to make it easier to read.
 	fs.writeFileSync(filepath, JSON.stringify(data, null, "\t"));
@@ -103,11 +122,11 @@ export function ensureDirExists(dir: string) {
  * Reconstruct the regex pattern because vscode doesn't like the regex pattern as a string,
  * or some patterns are not working as expected.
  *
- * @param obj The object
- * @param key The key to check in the object
+ * @param {unknown} obj The object
+ * @param {string} key The key to check in the object
  * @returns {RegExp} The reconstructed regex pattern.
  */
-export function reconstructRegex(obj: any, key: string) {
+export function reconstructRegex(obj: unknown, key: string): RegExp {
 	// If key has a "pattern" key, then it's an object...
 	if (Object.hasOwn(obj[key], "pattern")) {
 		return new RegExp(obj[key].pattern);
@@ -124,7 +143,7 @@ export function reconstructRegex(obj: any, key: string) {
  * Code based on this StackOverflow answer https://stackoverflow.com/a/45728850/2358222
  *
  * @param {Map<string, Map<string, string>>} m The Map to convert to an object.
- * @returns {object} The converted object.
+ * @returns {T} The converted object.
  *
  * @example
  * reverseMapping(
@@ -150,8 +169,8 @@ export function reconstructRegex(obj: any, key: string) {
  * 	}
  * }
  */
-export function convertMapToReversedObject(m: Map<string, Map<string, string>>): object {
-	const result: any = {};
+export function convertMapToReversedObject<T extends JsonValue = JsonObject>(m: Map<string, Map<string, string>>): T {
+	const result = {};
 
 	// Convert a nested key:value Map from inside another Map into an key:array object,
 	// while reversing/switching the keys and values. The Map's values are now the keys of
@@ -175,7 +194,7 @@ export function convertMapToReversedObject(m: Map<string, Map<string, string>>):
 		// as the key.
 		result[key] = Object.keys(o).reduce((r, k) => Object.assign(r, {[o[k]]: (r[o[k]] || []).concat(k)}), {});
 	}
-	return result;
+	return result as T;
 }
 
 /**
@@ -204,8 +223,7 @@ export function mergeArraysBy<T>(primaryArray: T[], secondaryArray: T[], key: ke
 	// Start with primary array (avoids side effects)
 	const merged = [...primary];
 
-	// Add items from secondary array that don't exist in primary,
-	// removing any duplicates.
+	// Add items from secondary array that don't exist in primary, removing any duplicates.
 	secondary.forEach((item) => {
 		// Test all items in the merged array to check if the value of the key
 		// already exists in the merged array.
@@ -219,4 +237,76 @@ export function mergeArraysBy<T>(primaryArray: T[], secondaryArray: T[], key: ke
 	});
 
 	return merged;
+}
+
+/**
+ * Add development environment variables from a local .env file located in the project root.
+ */
+export function addDevEnvVariables() {
+	// Try to load the local .env file from the project root.
+	try {
+		process.loadEnvFile(path.join(__dirname, "../../.env"));
+	} catch (error) {
+		// Ignore errors if the .env file doesn't exist
+	}
+
+	// Validate the loaded environment variables
+	validateDevEnvVariables();
+}
+
+/**
+ * Validate and sanitize the `DEV_USER_EXTENSIONS_PATH` environment variable.
+ * Removes invalid paths from the environment with logged errors.
+ */
+function validateDevEnvVariables() {
+	// Validate DEV_USER_EXTENSIONS_PATH if it was loaded
+	if (process.env.DEV_USER_EXTENSIONS_PATH) {
+		// Trim whitespace and resolve the path to an absolute path
+		let devPath = path.resolve(process.env.DEV_USER_EXTENSIONS_PATH.trim());
+
+		let stats: fs.Stats;
+		let errorMsg: string = "";
+		let errorData: Error;
+
+		// Get the file system stats for the path to check if it exists.
+		// statSync throws an exception if the no file system data exists for the path,
+		// so we catch it to handle errors gracefully.
+		try {
+			stats = fs.statSync(devPath);
+		} catch (error) {
+			const nodeError = error as NodeJS.ErrnoException;
+			const errorCode = nodeError.code || "UNKNOWN";
+
+			// Handle specific file system errors with user-friendly messages.
+			const errorMessages = {
+				ENOENT: "Path from env variable 'DEV_USER_EXTENSIONS_PATH' does not exist",
+				EACCES: "Permission denied accessing path from env variable 'DEV_USER_EXTENSIONS_PATH'",
+				UNKNOWN: "Unknown error accessing the path from env variable 'DEV_USER_EXTENSIONS_PATH'",
+			};
+
+			errorMsg = `${errorCode}: ${errorMessages[errorCode]}: "${devPath}". Removing from environment.`;
+
+			errorData = error as Error;
+
+			delete process.env.DEV_USER_EXTENSIONS_PATH;
+		}
+
+		// If stats has data AND the path is NOT a directory
+		if (stats && !stats.isDirectory()) {
+			errorMsg = `DEV_USER_EXTENSIONS_PATH is not a directory: "${devPath}". Removing from environment.`;
+		}
+
+		// If there was an error...
+		if (errorMsg.length > 0) {
+			// Delete the environment variable to prevent issues later on and log the error.
+			delete process.env.DEV_USER_EXTENSIONS_PATH;
+			logger.error(errorMsg, errorData);
+		}
+		// Otherwise, if there are no errors...
+		else {
+			// Update the environment variable with the sanitized path and log a success message.
+			process.env.DEV_USER_EXTENSIONS_PATH = devPath;
+			logger.info(`Loaded DEV_USER_EXTENSIONS_PATH: "${devPath}"`);
+		}
+	}
 }

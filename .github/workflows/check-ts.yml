@@ -3,7 +3,7 @@ on:
 
 name: Compile TypeScript to check for errors
 jobs:
-  deploy:
+  check-ts:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
