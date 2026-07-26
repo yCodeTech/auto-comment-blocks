@@ -10,3 +10,4 @@ tsconfig.json
 vsc-extension-quickstart.md
 auto-generated-language-definitions
 .github
+.env
