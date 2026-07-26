@@ -4,9 +4,42 @@ All notable changes to this extension will be documented in this file.
 
 This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure.
 
+## [1.1.17](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.17) - 2026-07-25
+
+### Fixed
+
+- Fixed JSON parsing with trailing commas enabled ([#37](https://github.com/yCodeTech/auto-comment-blocks/pull/37)) by @yCodeTech
+
+    Fixes #36.
+
+    **The issue**
+
+    This extension uses [jsonc-parser](https://github.com/microsoft/node-jsonc-parser) to make sure the syntax of the JSON is correct and not malformed. During parsing of JSON files, the parser will throw a `ValueExpected` error when it reaches a comma and unexpectedly encounters a closing bracket straight after. Trailing commas are disabled in the parser by default as it's not standard in JSON or JSONC. So it expects some kind of value after all commas.
+
+    **The fix**
+
+    Luckily, the parser has an option to enable trailing commas. So the fix is to just pass the `allowTrailingComma: true` option to the parser in the `readJsonFile` util function. This will then skip over and prevent the `ValueExpected` error for trailing commas.
+
+    ***
+
+    **Copilot Summary**
+
+    This pull request improves the robustness and clarity of JSON file parsing in the `src/utils.ts` utility functions. The key changes enhance error handling and allow for more flexible JSON syntax.
+
+    **JSON parsing improvements:**
+
+    - The `readJsonFile` function now allows trailing commas in JSON files by setting the `allowTrailingComma: true` option in the `jsonc.parse` call. This makes the parser more permissive and user-friendly.
+
+    **Error reporting enhancements:**
+
+    - The `constructJsonParseErrorMsg` function now includes both the raw error code (in brackets) and a more readable, space-separated error name in its output. This provides clearer and more informative error messages for debugging JSON parsing issues.
+
+<!-- end -->
+
 ## [1.1.16](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.16) - 2026-06-03
 
 ### Fixed
+
 - Fixed ENOENT error with the new VScode commit hash directory for Windows built in extensions in WSL ([#33](https://github.com/yCodeTech/auto-comment-blocks/pull/33)) by @yCodeTech
 
     This pull request improves the way the extension discovers and handles the Windows built-in extensions path when running inside WSL (Windows Subsystem for Linux). It introduces robust detection logic to support both legacy and new VS Code installation paths, adds error handling and user notifications for failures, and ensures that discovery failures are only surfaced once per session/activation.
@@ -15,16 +48,16 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
 
     **Windows built-in extensions path resolution improvements:**
 
-    * Added logic in `ExtensionData` to detect both the legacy and new hashed commit-based install paths for built-in extensions under WSL, including directory scanning and caching of results to avoid repeated disk access.
-    * Added error handling and user notification for failures to resolve the built-in extensions path, including logging and a one-time warning message with an option to open the output channel.
-    * Introduced new constructor options and internal flags in `ExtensionData` to control whether discovery path failures should notify the user, preventing duplicate warnings from multiple instances.
+    - Added logic in `ExtensionData` to detect both the legacy and new hashed commit-based install paths for built-in extensions under WSL, including directory scanning and caching of results to avoid repeated disk access.
+    - Added error handling and user notification for failures to resolve the built-in extensions path, including logging and a one-time warning message with an option to open the output channel.
+    - Introduced new constructor options and internal flags in `ExtensionData` to control whether discovery path failures should notify the user, preventing duplicate warnings from multiple instances.
 
     **Integration and usage updates:**
 
-    * Updated the extension activation in `extension.ts` to pass the new constructor parameter, enabling user notification for the main extension instance only.
-    * Updated `Configuration` logic to handle cases where the Windows extensions paths are not resolved, preventing errors by falling back to empty arrays.
-    <!-- end -->
+    - Updated the extension activation in `extension.ts` to pass the new constructor parameter, enabling user notification for the main extension instance only.
+    - Updated `Configuration` logic to handle cases where the Windows extensions paths are not resolved, preventing errors by falling back to empty arrays.
 
+      <!-- end -->
 
 ## [1.1.15](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.15) - 2026-04-19
 
@@ -35,7 +68,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     VScode updated their types to include the LineComment typings and released 1.110 of @types/vscode package. So our temporary custom `LineComment` type and `LineCommentConfig` interface is now redundant.
     - Updated @types/vscode package to 1.110.
     - Removed the temporary `LineComment` type and `LineCommentConfig` interface, and removed the references in configuration file.
-          <!-- end -->
+      <!-- end -->
 
 ### Changed
 
@@ -47,7 +80,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     - Consolidated multiple configuration change handlers into a single handler that checks for a list of settings requiring extension reload. If any are changed, a single reload prompt is shown using the new `showReloadMessage` helper function, reducing code duplication.
 
     - Improved performance and event handling to prevent memory leaks by properly disposing of old comment configurations.
-        <!-- end -->
+          <!-- end -->
 
 - Refactored configuration class ([#30](https://github.com/yCodeTech/auto-comment-blocks/pull/30)) by @yCodeTech
     - Extracted the logic for determining the appropriate Blade or HTML comment style into a new private method `getBladeOrHtmlComments`, simplifying the public API and improving clarity. The `setBladeComments` method now only sets the configuration and no longer returns values based on an `onStart` flag (the flag was removed in favour using the new private method directly).
@@ -55,7 +88,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     - Replaced repetitive code for adding custom single-line comment languages with a new private method `addCustomSingleLineLanguages`, reducing duplication and improving maintainability.
 
     - Replaced `var` with `let` for variable declarations in several places to align with modern best practices.
-      <!-- end -->
+        <!-- end -->
 
 ## [1.1.14](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.14) - 2026-02-23
 

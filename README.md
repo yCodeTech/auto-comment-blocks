@@ -88,7 +88,7 @@ View the [Changelog](/CHANGELOG.md) for more detailed changes/additions/removals
 
 These VScode settings are required to allow the extension to work correctly. So please make sure to change them accordingly.
 
--   `"editor.autoIndent": "advanced"`
+-   `"editor.autoIndent": "advanced"` (see https://github.com/yCodeTech/auto-comment-blocks/issues/6#issuecomment-3104256600 for details.)
 
 ## Usage
 
