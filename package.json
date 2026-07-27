@@ -1,7 +1,7 @@
 {
 	"name": "automatic-comment-blocks",
 	"displayName": "Automatic Comment Blocks",
-	"description": "Provides block comment completion for Javadoc-style multi-line comments and single-line comment blocks for most officially supported languages.",
+	"description": "Provides block comment completion for Javadoc-style multi-line comments and single-line comment blocks for all auto-supported languages.",
 	"version": "1.1.17",
 	"publisher": "ycodetech",
 	"homepage": "https://github.com/ycodetech/auto-comment-blocks",
@@ -12,7 +12,7 @@
 	"license": "SEE LICENSE IN LICENSE",
 	"icon": "img/icon.png",
 	"galleryBanner": {
-		"color": "#171A29",
+		"color": "#01092d",
 		"theme": "dark"
 	},
 	"engines": {
