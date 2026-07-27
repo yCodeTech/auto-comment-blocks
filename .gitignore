@@ -4,3 +4,4 @@ package-lock.json
 *.vsix
 .vscode/settings.json
 .env
+icon.psd
