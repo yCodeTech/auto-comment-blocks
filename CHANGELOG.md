@@ -4,6 +4,32 @@ All notable changes to this extension will be documented in this file.
 
 This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure.
 
+## [Unreleased]
+
+### Added
+
+- Added introduce new icon artwork and differentiate the extension from the original ([#40](https://github.com/yCodeTech/auto-comment-blocks/pull/40)) by @yCodeTech
+
+    This pull request introduces a new and improved icon artwork with an update to the marketplace banner colour, and updates the extension description. These changes tries to prevent further confusion between the original and forked extensions, as demonstrated in #36 and https://github.com/kevb34ns/auto-comment-blocks/issues/47, by establishing differentiating factors in the marketplace.
+
+    **Visual changes:**
+
+    - Replaced the old flat icon with an improved 3D icon artwork to differentiate the extension from the original (and it's other forked extensions), ensuring it's distinctive but also familiar.
+    - Changed the `galleryBanner.color` in `package.json` to use the dark blue `#01092d` from the new icon for improved appearance in the marketplace.
+
+    **Other changes:**
+
+    - Updated the `description` field in `package.json` to clarify that block comment completion is now available for all auto-supported languages, not just officially supported ones.
+    - Added `.env` to `.vscodeignore` to ensure environment files are excluded from VS Code extension packaging during testing.
+    - Added `icon.psd` to `.gitignore` to prevent committing the Photoshop file of the icon.
+
+    **Documentation changes:**
+
+    - Added the new icon into the `README.md` title so the new logo/icon is visible on the docs too which creates a better distinction in the repo.
+    - Updated the fork info to specify who publishes/maintains the extension, so that it's explicit that this extension is owned by me.
+
+<!-- end -->
+
 ## [1.1.17](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.17) - 2026-07-25
 
 ### Fixed
@@ -57,7 +83,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     - Updated the extension activation in `extension.ts` to pass the new constructor parameter, enabling user notification for the main extension instance only.
     - Updated `Configuration` logic to handle cases where the Windows extensions paths are not resolved, preventing errors by falling back to empty arrays.
 
-      <!-- end -->
+        <!-- end -->
 
 ## [1.1.15](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.15) - 2026-04-19
 
@@ -68,7 +94,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     VScode updated their types to include the LineComment typings and released 1.110 of @types/vscode package. So our temporary custom `LineComment` type and `LineCommentConfig` interface is now redundant.
     - Updated @types/vscode package to 1.110.
     - Removed the temporary `LineComment` type and `LineCommentConfig` interface, and removed the references in configuration file.
-      <!-- end -->
+        <!-- end -->
 
 ### Changed
 
@@ -80,7 +106,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     - Consolidated multiple configuration change handlers into a single handler that checks for a list of settings requiring extension reload. If any are changed, a single reload prompt is shown using the new `showReloadMessage` helper function, reducing code duplication.
 
     - Improved performance and event handling to prevent memory leaks by properly disposing of old comment configurations.
-          <!-- end -->
+      <!-- end -->
 
 - Refactored configuration class ([#30](https://github.com/yCodeTech/auto-comment-blocks/pull/30)) by @yCodeTech
     - Extracted the logic for determining the appropriate Blade or HTML comment style into a new private method `getBladeOrHtmlComments`, simplifying the public API and improving clarity. The `setBladeComments` method now only sets the configuration and no longer returns values based on an `onStart` flag (the flag was removed in favour using the new private method directly).
@@ -88,7 +114,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     - Replaced repetitive code for adding custom single-line comment languages with a new private method `addCustomSingleLineLanguages`, reducing duplication and improving maintainability.
 
     - Replaced `var` with `let` for variable declarations in several places to align with modern best practices.
-        <!-- end -->
+          <!-- end -->
 
 ## [1.1.14](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.14) - 2026-02-23
 
