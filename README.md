@@ -1,4 +1,4 @@
-# Automatic Comment Blocks
+# <img src="./img/icon.png" width="50" height="50" align="center"> Automatic Comment Blocks
 
 <a href="https://marketplace.visualstudio.com/items?itemName=yCodeTech.automatic-comment-blocks"><img alt="Visual Studio Marketplace Version" src="https://img.shields.io/open-vsx/v/yCodeTech/automatic-comment-blocks?label=version&style=for-the-badge"></a>&nbsp;&nbsp;
 <a href="https://marketplace.visualstudio.com/items?itemName=yCodeTech.automatic-comment-blocks"><img alt="Visual Studio Marketplace Installs" src="https://img.shields.io/badge/VS_Code_Installs-~1.5k-brightgreen?style=for-the-badge"></a>&nbsp;&nbsp;
