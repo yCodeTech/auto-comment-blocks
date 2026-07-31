@@ -103,8 +103,8 @@ export function activate(context: vscode.ExtensionContext) {
 	 *
 	 * Called when active editor language is changed, so re-configure the comment blocks.
 	 */
-	const documentOpenDisposable = vscode.workspace.onDidOpenTextDocument(() => {
-		logger.info("Active editor language changed, re-configuring comment blocks.");
+	const documentOpenDisposable = vscode.workspace.onDidOpenTextDocument((e) => {
+		logger.info(`Active editor language changed to "${e.languageId}", re-configuring comment blocks.`);
 
 		// Dispose of old comment block configurations to prevent memory leaks
 		commentBlocksDisposables.forEach((disposable) => disposable.dispose());
