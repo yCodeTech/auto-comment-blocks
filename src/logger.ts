@@ -1,4 +1,5 @@
 import {OutputChannel, window} from "vscode";
+import {LogLevel} from "./interfaces/utils";
 
 /**
  * Logger class for the Auto Comment Blocks extension.
@@ -19,12 +20,11 @@ class Logger {
 	private outputChannel: OutputChannel;
 
 	/**
-	 * Whether to log `debug` level messages or not.
-	 * Set to `true` by default.
+	 * Current log level.
 	 *
-	 * @type {boolean}
+	 * @type {LogLevel}
 	 */
-	private debugMode = true;
+	private logLevel: LogLevel = "debug";
 
 	/***********
 	 * Methods *
@@ -44,14 +44,12 @@ class Logger {
 	}
 
 	/**
-	 * Turn debug mode on or off. Off will disable debug messages.
+	 * Set the log level.
 	 *
-	 * TODO: Possibly add a toggle setting in the extension user settings.
-	 *
-	 * @param {boolean} debug Whether to enable or disable debug mode.
+	 * @param {LogLevel} level Desired log level.
 	 */
-	public setDebugMode(debug: boolean): void {
-		this.debugMode = debug;
+	public setLogLevel(level: LogLevel): void {
+		this.logLevel = level;
 	}
 
 	/**
@@ -76,7 +74,9 @@ class Logger {
 	 * @param {string} message The message to be logged.
 	 */
 	public info(message: string): void {
-		this.logMessage("INFO", message);
+		if (this.shouldLog("info")) {
+			this.logMessage("INFO", message);
+		}
 	}
 
 	/**
@@ -87,7 +87,7 @@ class Logger {
 	 * @param {unknown} data [Optional] Extra data that is useful for debugging, like an object or array.
 	 */
 	public debug(message: string, data?: unknown): void {
-		if (this.debugMode) {
+		if (this.shouldLog("debug")) {
 			this.logMessage("DEBUG", message, data);
 		}
 	}
@@ -99,7 +99,29 @@ class Logger {
 	 * @param {Error} error An Error object.
 	 */
 	public error(message: string, error?: Error): void {
-		this.logMessage("ERROR", message, error);
+		if (this.shouldLog("error")) {
+			this.logMessage("ERROR", message, error);
+		}
+	}
+
+	/**
+	 * Determine whether a log should be emitted for the current level.
+	 *
+	 * @param {LogLevel} requiredLevel The minimum level required to emit the log.
+	 *
+	 * @returns {boolean} Whether the log should be emitted.
+	 */
+	private shouldLog(requiredLevel: LogLevel): boolean {
+		// Numeric weights used for level comparison.
+		const levelWeight: Record<LogLevel, number> = {
+			debug: 3, // Emits debug, info, and error logs - the most verbose level.
+			info: 2, // Emits info and error logs.
+			error: 1, // Emits error logs only.
+			off: 0, // Disables all logs.
+		};
+
+		// Emit when the configured level is at least as verbose as the requested level.
+		return levelWeight[this.logLevel] >= levelWeight[requiredLevel];
 	}
 
 	/**

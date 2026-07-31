@@ -37,3 +37,8 @@ export interface MultiLineLanguageDefinitions extends JsonObject {
  * Language ID
  */
 export type LanguageId = string;
+
+/**
+ * Log level
+ */
+export type LogLevel = "debug" | "info" | "error" | "off";

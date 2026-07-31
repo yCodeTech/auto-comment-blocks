@@ -78,6 +78,24 @@
 					"type": "boolean",
 					"default": false,
 					"markdownDescription": "When enabled, Blade style block comments will be used in Blade contexts. Ie. `{{--  --}}` comments will be used instead of the HTML `<!-- -->` comments. Keybinding to enable/disable, default `ctrl + shift + m` (macOS: `cmd + shift + m`). If `blade` language ID is set in the disabledLanguages, then the HTML `<!-- -->` comments will be used."
+				},
+				"auto-comment-blocks.logLevel": {
+					"scope": "resource",
+					"type": "string",
+					"enum": [
+						"debug",
+						"info",
+						"error",
+						"off"
+					],
+					"markdownEnumDescriptions": [
+						"Log debug, info, and errors",
+						"Log info and errors",
+						"Log errors only",
+						"Disable logging"
+					],
+					"default": "debug",
+					"markdownDescription": "Set the logging level. `debug` is the most verbose, and `off` disables all logging."
 				}
 			}
 		},

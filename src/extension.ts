@@ -6,10 +6,14 @@ import {Configuration} from "./configuration";
 import {logger} from "./logger";
 import {ExtensionData} from "./extensionData";
 import {addDevEnvVariables} from "./utils";
+import {LogLevel} from "./interfaces/utils";
 
 export function activate(context: vscode.ExtensionContext) {
 	// Setup logger first
 	logger.setupOutputChannel();
+
+	const initialLogLevel = vscode.workspace.getConfiguration("auto-comment-blocks").get<LogLevel>("logLevel", "debug");
+	logger.setLogLevel(initialLogLevel);
 
 	// Only load dev environment variables when not in production
 	if (context.extensionMode !== vscode.ExtensionMode.Production) {
@@ -55,6 +59,14 @@ export function activate(context: vscode.ExtensionContext) {
 			if (!configuration.isLangIdDisabled("blade")) {
 				vscode.window.showInformationMessage(`${bladeOverrideComments === false ? "Disabled" : "Enabled"} Blade Override Comments setting.`);
 			}
+		}
+
+		/**
+		 * Logging Level
+		 */
+		if (event.affectsConfiguration(`${extensionName}.logLevel`)) {
+			const logLevel = configuration.getConfigurationValue("logLevel");
+			logger.setLogLevel(logLevel);
 		}
 
 		// Settings that require an extension host reload when changed.
