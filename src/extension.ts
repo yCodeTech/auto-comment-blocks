@@ -22,6 +22,12 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Initialize extension data and configuration
 	const extensionData = new ExtensionData(null, true);
+
+	// Always output extension information to channel on activate.
+	logger.important(`Activating ${extensionData.get("id")} v${extensionData.get("version")}`);
+	logger.debug(`Extension details:`, extensionData.getAll());
+	logger.debug(`Extension Discovery Paths:`, extensionData.getAllExtensionDiscoveryPaths());
+
 	const configuration = new Configuration();
 	const extensionName = extensionData.get("namespace");
 	const extensionDisplayName = extensionData.get("displayName");

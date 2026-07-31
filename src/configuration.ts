@@ -81,10 +81,6 @@ export class Configuration {
 	 ***********/
 
 	public constructor() {
-		// Always output extension information to channel on activate.
-		logger.debug(`Extension details:`, this.extensionData.getAll());
-		logger.debug(`Extension Discovery Paths:`, this.extensionData.getAllExtensionDiscoveryPaths());
-
 		this.findAllLanguageConfigFilePaths();
 		this.setLanguageConfigDefinitions();
 

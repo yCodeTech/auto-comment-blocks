@@ -105,6 +105,17 @@ class Logger {
 	}
 
 	/**
+	 * Send an important message to the output channel.
+	 * This is a special log level that is always emitted regardless of the log level,
+	 * and should be used sparingly.
+	 *
+	 * @param {string} message The message to be logged.
+	 */
+	public important(message: string): void {
+		this.logMessage("IMPORTANT", message);
+	}
+
+	/**
 	 * Determine whether a log should be emitted for the current level.
 	 *
 	 * @param {LogLevel} requiredLevel The minimum level required to emit the log.
