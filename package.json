@@ -95,7 +95,7 @@
 						"Disable logging"
 					],
 					"default": "debug",
-					"markdownDescription": "Set the logging level. `debug` is the most verbose, and `off` disables all logging."
+					"markdownDescription": "Set the logging level. `debug` is the most verbose, and `off` disables all logging, except for those special few labelled as 'important'."
 				}
 			}
 		},

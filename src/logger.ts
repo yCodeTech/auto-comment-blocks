@@ -128,7 +128,7 @@ class Logger {
 			debug: 3, // Emits debug, info, and error logs - the most verbose level.
 			info: 2, // Emits info and error logs.
 			error: 1, // Emits error logs only.
-			off: 0, // Disables all logs.
+			off: 0, // Disables all logs, except for the special "important" logs that are always emitted.
 		};
 
 		// Emit when the configured level is at least as verbose as the requested level.
