@@ -149,13 +149,16 @@ class Logger {
 		const time = new Date().toLocaleTimeString();
 
 		// Output the log message to the output channel.
-		this.outputChannel.appendLine(`["${level}" - ${time}] ${message}`);
+		this.outputChannel.append(`["${level}" - ${time}] ${message}`);
 
 		if (meta) {
 			const data: string = this.formatMeta(message, meta);
 
-			// Output the meta data to the output channel.
-			this.outputChannel.appendLine(data);
+			// Output the meta data to the output channel with a leading space.
+			this.outputChannel.appendLine(` ${data}`);
+		} else {
+			// Output a new line to the output channel.
+			this.outputChannel.appendLine("");
 		}
 	}
 
