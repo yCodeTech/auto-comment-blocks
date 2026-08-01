@@ -316,26 +316,25 @@ export class ExtensionData {
 			return null;
 		}
 
-		// Clone the Map to avoid mutating the original data.
-		const extensionDataClone = new Map(this.extensionData);
+		const data = prepareForLogging ? this.prepareForLogging() : this.extensionData;
 
-		// Prepare the data for logging.
-		if (prepareForLogging) {
-			this.prepareForLogging(extensionDataClone);
-		}
-
-		return Object.fromEntries(extensionDataClone) as unknown as ExtensionMetaData;
+		return Object.fromEntries(data) as unknown as ExtensionMetaData;
 	}
 
 	/**
-	 * Prepare the extension data for logging by removing sensitive or irrelevant information.
+	 * Prepare the extension data for logging by cloning it and removing irrelevant
+	 * information, without mutating the original data.
 	 *
-	 * @param {Map<keyof ExtensionMetaData, ExtensionMetaDataValue>} extensionDataClone
-	 * The extension data Map clone.
+	 * @returns {Map<keyof ExtensionMetaData, ExtensionMetaDataValue>}
+	 * The cloned, redacted extension data Map.
 	 */
-	private prepareForLogging(extensionDataClone: Map<keyof ExtensionMetaData, ExtensionMetaDataValue>) {
+	private prepareForLogging(): Map<keyof ExtensionMetaData, ExtensionMetaDataValue> {
+		const extensionDataClone = new Map(this.extensionData);
+
 		// Remove the packageJSON entry to avoid logging irrelevant information.
 		extensionDataClone.delete("packageJSON");
+
+		return extensionDataClone;
 	}
 
 	/**
