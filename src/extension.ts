@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Always output extension information to channel on activate.
 	logger.important(`Activating ${extensionData.get("id")} v${extensionData.get("version")}`);
-	logger.debug(`Extension details:`, extensionData.getAll());
+	logger.debug(`Extension details:`, extensionData.getAll(true));
 	logger.debug(`Extension Discovery Paths:`, extensionData.getAllExtensionDiscoveryPaths());
 
 	const configuration = new Configuration();

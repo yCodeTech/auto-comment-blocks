@@ -310,13 +310,32 @@ export class ExtensionData {
 	 *
 	 * @returns {ExtensionMetaData} A plain object containing all extension details.
 	 */
-	public getAll(): ExtensionMetaData | null {
+	public getAll(prepareForLogging: boolean = false): ExtensionMetaData | null {
 		// If no data, return null
 		if (this.extensionData.size === 0) {
 			return null;
 		}
 
-		return Object.fromEntries(this.extensionData) as unknown as ExtensionMetaData;
+		// Clone the Map to avoid mutating the original data.
+		const extensionDataClone = new Map(this.extensionData);
+
+		// Prepare the data for logging.
+		if (prepareForLogging) {
+			this.prepareForLogging(extensionDataClone);
+		}
+
+		return Object.fromEntries(extensionDataClone) as unknown as ExtensionMetaData;
+	}
+
+	/**
+	 * Prepare the extension data for logging by removing sensitive or irrelevant information.
+	 *
+	 * @param {Map<keyof ExtensionMetaData, ExtensionMetaDataValue>} extensionDataClone
+	 * The extension data Map clone.
+	 */
+	private prepareForLogging(extensionDataClone: Map<keyof ExtensionMetaData, ExtensionMetaDataValue>) {
+		// Remove the packageJSON entry to avoid logging irrelevant information.
+		extensionDataClone.delete("packageJSON");
 	}
 
 	/**
