@@ -1,5 +1,5 @@
 import {OutputChannel, window} from "vscode";
-import {LogLevel} from "./interfaces/utils";
+import {LogLevel, logLevels} from "./interfaces/utils";
 
 /**
  * Logger class for the Auto Comment Blocks extension.
@@ -48,8 +48,25 @@ class Logger {
 	 *
 	 * @param {LogLevel} level Desired log level.
 	 */
-	public setLogLevel(level: LogLevel): void {
+	public setLogLevel(level: LogLevel | string): void {
+		// If the provided log level is not valid, default to "debug" and log an error message.
+		if (!this.isValidLogLevel(level)) {
+			this.logLevel = "debug";
+			logger.error(`Invalid log level: "${level}". Defaulting to "debug".`);
+			return;
+		}
+
 		this.logLevel = level;
+	}
+
+	/**
+	 * Check if the provided log level is valid.
+	 * @param level The log level to check.
+	 *
+	 * @returns `true` if the log level is valid, `false` otherwise.
+	 */
+	private isValidLogLevel(level: string): level is LogLevel {
+		return (Object.values(logLevels) as string[]).includes(level);
 	}
 
 	/**
