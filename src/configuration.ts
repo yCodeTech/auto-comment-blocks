@@ -981,6 +981,11 @@ export class Configuration {
 	 * Logs the environment, configuration settings, and language configs for debugging purposes.
 	 */
 	private logDebugInfo() {
+		// If debug logging is not enabled, exit early.
+		if (!logger.isDebugEnabled()) {
+			return;
+		}
+
 		// The path to the built-in extensions. The env variable changes when on WSL.
 		// So we can use it for both Windows and WSL.
 		const builtInExtensionsPath = this.extensionData.getExtensionDiscoveryPath("builtInExtensionsPath");

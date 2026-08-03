@@ -133,6 +133,14 @@ class Logger {
 	}
 
 	/**
+	 * Determine whether debug logging is enabled.
+	 * @returns `true` if debug logging is enabled, `false` otherwise.
+	 */
+	public isDebugEnabled(): boolean {
+		return this.shouldLog("debug");
+	}
+
+	/**
 	 * Determine whether a log should be emitted for the current level.
 	 *
 	 * @param {LogLevel} requiredLevel The minimum level required to emit the log.
