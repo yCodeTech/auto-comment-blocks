@@ -1017,7 +1017,9 @@ export class Configuration {
 				"Version": vscode.version,
 				"Remote Name": vscode.env.remoteName || "local",
 				"Host": vscode.env.appHost,
+				"App Root": vscode.env.appRoot,
 				...extensionsPaths,
+				"Env Vars": Object.fromEntries(Object.entries(process.env).filter(([key]) => key.startsWith("VSCODE_"))),
 			},
 		};
 		logger.debug("Environment:", env);
