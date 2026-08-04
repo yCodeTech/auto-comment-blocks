@@ -1019,7 +1019,6 @@ export class Configuration {
 				"Host": vscode.env.appHost,
 				...extensionsPaths,
 			},
-			"Other System Env Variables": process.env,
 		};
 		logger.debug("Environment:", env);
 
