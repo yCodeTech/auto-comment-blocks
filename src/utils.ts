@@ -1,4 +1,5 @@
 import * as fs from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
 import * as jsonc from "jsonc-parser";
 import {logger} from "./logger";
@@ -252,6 +253,59 @@ export function mergeArraysBy<T>(primaryArray: T[], secondaryArray: T[], key: ke
 	});
 
 	return merged;
+}
+
+/**
+ * Recursively redact the OS username from strings within a value (including
+ * nested objects, arrays, and Maps), replacing it with "<redacted>".
+ *
+ * @param {T} value The value to sanitize.
+ * @returns {T} A sanitized copy of `value` with the username redacted.
+ */
+export function redactUsername<T>(value: T): T {
+	// Get the current OS username using Node's userInfo() method which is
+	// cross-platform compatible.
+	const username = os.userInfo().username;
+	// Escape special characters in the username.
+	const escapedUsername = username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	// Build a global case-insensitive regex if username isn't an empty string.
+	const usernameRegex = username ? new RegExp(escapedUsername, "gi") : null;
+
+	/**
+	 * Recursively redacts the OS username from strings within a value.
+	 * @param input The value to sanitize.
+	 * @returns The sanitized value with the username redacted.
+	 */
+	const redact = (input: unknown): unknown => {
+		// If the input is a string, replace any occurrences of the username with "<redacted>".
+		if (typeof input === "string") {
+			let result = input;
+
+			if (usernameRegex) {
+				result = result.replace(usernameRegex, "<redacted>");
+			}
+			return result;
+		}
+
+		// If the input is an array, recursively redact each element.
+		if (Array.isArray(input)) {
+			return input.map(redact);
+		}
+
+		// If the input is a Map, recursively redact each value and return a new Map.
+		if (input instanceof Map) {
+			return new Map([...input].map(([key, val]) => [key, redact(val)]));
+		}
+
+		// If the input is an object, recursively redact each value and return a new object.
+		if (input !== null && typeof input === "object") {
+			return Object.fromEntries(Object.entries(input).map(([key, val]) => [key, redact(val)]));
+		}
+
+		return input;
+	};
+
+	return redact(value) as T;
 }
 
 /**
