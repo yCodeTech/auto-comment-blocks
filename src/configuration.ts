@@ -994,7 +994,12 @@ export class Configuration {
 				"Remote Name": vscode.env.remoteName || "local",
 				"Host": vscode.env.appHost,
 				"App Root": vscode.env.appRoot,
-				"Env Vars": Object.fromEntries(Object.entries(process.env).filter(([key]) => key.startsWith("VSCODE_"))),
+				"Env Vars": Object.fromEntries(
+					Object.entries(process.env).filter((entry): entry is [string, string] => {
+						const [key, value] = entry;
+						return key.startsWith("VSCODE_") && typeof value === "string";
+					})
+				),
 			},
 		};
 		logger.debug("Environment:", env);
