@@ -342,7 +342,7 @@ For a full changelog, view the [release PR](https://github.com/yCodeTech/auto-co
 
 - Added support for `/* */`.
 
-- Added an event to reconfigure the comment blocks evertime a document is opened OR the document language has been changed.
+- Added an event to reconfigure the comment blocks everytime a document is opened OR the document language has been changed, so that other extensions (that are activated after this one) don't override the language configurations which could disable some of the custom comment blocks (e.g `/*! */`).
 
 - Added a config file to define the default multi-line config comments and autoClosingPairs; and a config file to define language IDs the need to be skipped when auto finding the languages to support (because these languages are known not to have any config properties we're interested in.)
 
