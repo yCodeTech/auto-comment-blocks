@@ -101,7 +101,9 @@ export function activate(context: vscode.ExtensionContext) {
 	 * language id of a text document has been changed. As described in
 	 * https://github.com/microsoft/vscode/blob/4e8fbaef741afebd24684b88cac47c2f44dfb8eb/src/vscode-dts/vscode.d.ts#L13716-L13728
 	 *
-	 * Called when active editor language is changed, so re-configure the comment blocks.
+	 * Re-configuring the comment blocks here protects against other extensions activating
+	 * after this extension and overriding our language configuration, which would cause our
+	 * comment blocks to not work properly (e.g `/*!`).
 	 */
 	const documentOpenDisposable = vscode.workspace.onDidOpenTextDocument((e) => {
 		// If the document is not a file or untitled scheme, then return early for
