@@ -106,17 +106,6 @@ class Logger {
 	}
 
 	/**
-	 * Sends a warning log to the output channel.
-	 *
-	 * @param {string} message The message to be logged.
-	 */
-	public warn(message: string): void {
-		if (this.shouldLog("warn")) {
-			this.logMessage("WARN", message);
-		}
-	}
-
-	/**
 	 * Sends a debug log message and data to the output channel if `debug` is enabled.
 	 * This is helpful for logging objects and arrays.
 	 *
@@ -138,6 +127,17 @@ class Logger {
 	public error(message: string, error?: Error): void {
 		if (this.shouldLog("error")) {
 			this.logMessage("ERROR", message, error);
+		}
+	}
+
+	/**
+	 * Sends a warning log to the output channel.
+	 *
+	 * @param {string} message The message to be logged.
+	 */
+	public warn(message: string): void {
+		if (this.shouldLog("warn")) {
+			this.logMessage("WARN", message);
 		}
 	}
 
