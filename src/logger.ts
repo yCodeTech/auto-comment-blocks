@@ -296,7 +296,7 @@ class Logger {
 			return;
 		}
 		this.hasWarnedAboutRedactionFailure = true;
-		this.warn("Could not determine OS username; debug logs may not be redacted before sharing.");
+		this.warn("Could not determine OS username; logs won't be redacted. Manually redact any sensitive information before sharing logs.");
 	}
 }
 
