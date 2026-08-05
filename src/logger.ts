@@ -1,3 +1,4 @@
+import * as os from "node:os";
 import {OutputChannel, window} from "vscode";
 import {LogLevel, logLevels} from "./interfaces/utils";
 
