@@ -27,6 +27,14 @@ class Logger {
 	 */
 	private logLevel: LogLevel = "debug";
 
+	/**
+	 * Whether the user has already been warned that username redaction is unavailable,
+	 * so the warning is only emitted once per session.
+	 *
+	 * @type {boolean}
+	 */
+	private hasWarnedAboutRedactionFailure: boolean = false;
+
 	/***********
 	 * Methods *
 	 ***********/
@@ -98,6 +106,17 @@ class Logger {
 	}
 
 	/**
+	 * Sends a warning log to the output channel.
+	 *
+	 * @param {string} message The message to be logged.
+	 */
+	public warn(message: string): void {
+		if (this.shouldLog("warn")) {
+			this.logMessage("WARN", message);
+		}
+	}
+
+	/**
 	 * Sends a debug log message and data to the output channel if `debug` is enabled.
 	 * This is helpful for logging objects and arrays.
 	 *
@@ -151,8 +170,9 @@ class Logger {
 	private shouldLog(requiredLevel: LogLevel): boolean {
 		// Numeric weights used for level comparison.
 		const levelWeight: Record<LogLevel, number> = {
-			debug: 3, // Emits debug, info, and error logs - the most verbose level.
-			info: 2, // Emits info and error logs.
+			debug: 4, // Emits debug, info, warn, and error logs - the most verbose level.
+			info: 3, // Emits info, warn, and error logs.
+			warn: 2, // Emits warn and error logs.
 			error: 1, // Emits error logs only.
 			off: 0, // Disables all logs, except for the special "important" logs that are always emitted.
 		};
@@ -251,11 +271,13 @@ class Logger {
 		try {
 			username = os.userInfo().username;
 		} catch {
+			this.warnOnRedactionFailure();
 			return text;
 		}
 
 		// If the username is empty, return the original text.
 		if (!username) {
+			this.warnOnRedactionFailure();
 			return text;
 		}
 
@@ -263,6 +285,18 @@ class Logger {
 		const escapedUsername = username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 		// Replace any occurrence of the username in the text with "<redacted>", case-insensitively, and return it.
 		return text.replace(new RegExp(escapedUsername, "gi"), "<redacted>");
+	}
+
+	/**
+	 * Warn once per session that debug logs may not have the username redacted,
+	 * so users don't unknowingly share it in a bug report.
+	 */
+	private warnOnRedactionFailure(): void {
+		if (this.hasWarnedAboutRedactionFailure) {
+			return;
+		}
+		this.hasWarnedAboutRedactionFailure = true;
+		this.warn("Could not determine OS username; debug logs may not be redacted before sharing.");
 	}
 }
 
