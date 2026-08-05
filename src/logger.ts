@@ -208,7 +208,7 @@ class Logger {
 			data = lines.join(",\n");
 		}
 
-		return data;
+		return this.redactUsername(data);
 	}
 
 	/**
@@ -231,6 +231,37 @@ class Logger {
 		}
 
 		return value;
+	}
+
+	/**
+	 * Redact the OS username from a string, replacing it with `<redacted>`, to avoid leaking
+	 * it into debug logs that could be shared.
+	 *
+	 * @param {string} text The text to redact.
+	 * @returns {string} The text with OS username replaced with `<redacted>`.
+	 */
+	private redactUsername(text: string): string {
+		let username: string;
+
+		// Get the current OS username using Node's userInfo() method which is
+		// cross-platform compatible. It can throw an error in sandboxed/remote environments where
+		// the username can't be determined. So catch any errors and return the original text
+		// if we can't get the username.
+		try {
+			username = os.userInfo().username;
+		} catch {
+			return text;
+		}
+
+		// If the username is empty, return the original text.
+		if (!username) {
+			return text;
+		}
+
+		// Escape special characters in the username.
+		const escapedUsername = username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		// Replace any occurrence of the username in the text with "<redacted>", case-insensitively, and return it.
+		return text.replace(new RegExp(escapedUsername, "gi"), "<redacted>");
 	}
 }
 

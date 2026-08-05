@@ -5,7 +5,7 @@ import isWsl from "is-wsl";
 import {IPackageJson} from "package-json-type";
 
 import {logger} from "./logger";
-import {readJsonFile, redactUsername} from "./utils";
+import {readJsonFile} from "./utils";
 import {ExtensionMetaData, ExtensionPaths, ExtensionMetaDataValue} from "./interfaces/extensionMetaData";
 
 export class ExtensionData {
@@ -334,10 +334,6 @@ export class ExtensionData {
 		// Remove the packageJSON entry to avoid logging irrelevant information.
 		extensionDataClone.delete("packageJSON");
 
-		// Redact the username in the extensionPath.
-		const redactedExtensionPath = redactUsername(extensionDataClone.get("extensionPath"));
-		extensionDataClone.set("extensionPath", redactedExtensionPath);
-
 		return extensionDataClone;
 	}
 
@@ -360,6 +356,6 @@ export class ExtensionData {
 	 */
 	public getAllExtensionDiscoveryPaths(): ReadonlyMap<keyof ExtensionPaths, string> {
 		// Return a new Map to prevent external mutation of the internal state.
-		return new Map(redactUsername(this.extensionDiscoveryPaths));
+		return new Map(this.extensionDiscoveryPaths);
 	}
 }

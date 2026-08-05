@@ -1003,7 +1003,7 @@ export class Configuration {
 			},
 		};
 
-		logger.debug("Environment:", utils.redactUsername(env));
+		logger.debug("Environment:", env);
 
 		// Log the extension's user configuration settings.
 		logger.debug("Configuration settings:", this.getConfiguration());
@@ -1011,7 +1011,7 @@ export class Configuration {
 		// Log the objects for debugging purposes.
 
 		// Lang Config Filepaths.
-		logger.debug("The language config filepaths found are:", utils.redactUsername(this.languageConfigFilePaths));
+		logger.debug("The language config filepaths found are:", this.languageConfigFilePaths);
 
 		// Lang Configs.
 		logger.debug("The language configs found are:", this.languageConfigs);
