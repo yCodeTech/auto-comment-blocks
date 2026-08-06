@@ -135,15 +135,31 @@ jobs:
       - name: Commit and push changes
         if: steps.check-exclusions.outputs.should-skip == 'false' && steps.update-changelog.outputs.changelog-updated == 'true'
         run: |
+          set -euo pipefail
           BRANCH_NAME="${{ steps.check-existing-changelog-pr.outputs.changelog-pr-branch-name }}"
 
           git add CHANGELOG.md
+
+          # Avoid failing when there's nothing new to commit
+          if git diff --cached --quiet; then
+            echo "No changelog changes to commit."
+            exit 0
+          fi
+
           git commit -m "docs: update changelog for PR #${{ steps.update-changelog.outputs.pr-number }}"
 
-          if [ "${{ steps.check-existing-changelog-pr.outputs.changelog-pr-exists }}" = "true" ]; then
-            git push origin $BRANCH_NAME
-          else
-            git push -u origin $BRANCH_NAME
+          # Always sync latest remote branch tip before push
+          git fetch origin "$BRANCH_NAME" || true
+          if git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME"; then
+            git rebase "origin/$BRANCH_NAME"
+          fi
+
+          # Push and recover from race by rebasing once and retrying
+          if ! git push origin "$BRANCH_NAME"; then
+            echo "Push rejected, retrying after rebase..."
+            git fetch origin "$BRANCH_NAME"
+            git rebase "origin/$BRANCH_NAME"
+            git push origin "$BRANCH_NAME"
           fi
 
       - name: Create or update changelog PR
