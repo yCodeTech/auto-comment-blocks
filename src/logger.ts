@@ -267,6 +267,11 @@ class Logger {
 	 * @returns {string} The text with OS username replaced with `<redacted>`.
 	 */
 	private redactUsername(text: string): string {
+		// If redaction previously failed, skip attempting it again and return the original text.
+		if (this.hasWarnedAboutRedactionFailure) {
+			return text;
+		}
+
 		let username: string;
 
 		// Get the current OS username using Node's userInfo() method which is
