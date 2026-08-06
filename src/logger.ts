@@ -28,12 +28,13 @@ class Logger {
 	private logLevel: LogLevel = "debug";
 
 	/**
-	 * Whether the user has already been warned that username redaction is unavailable,
-	 * so the warning is only emitted once per session.
+	 * Whether username redaction should be skipped, because it previously failed.
+	 * Once set, further attempts are not made since the username is unlikely to become
+	 * resolvable later in the same session.
 	 *
 	 * @type {boolean}
 	 */
-	private hasWarnedAboutRedactionFailure: boolean = false;
+	private skipRedaction: boolean = false;
 
 	/***********
 	 * Methods *
@@ -260,15 +261,16 @@ class Logger {
 	}
 
 	/**
-	 * Redact the OS username from a string, replacing it with `<redacted>`, to avoid leaking
-	 * it into debug logs that could be shared.
+	 * Redact the OS username from a string, replacing it with `<redacted>`,
+	 * to avoid leaking it into the logs that could be shared.
 	 *
 	 * @param {string} text The text to redact.
-	 * @returns {string} The text with OS username replaced with `<redacted>`.
+	 * @returns {string} If redaction was possible, returns the redacted text,
+	 * otherwise the original text.
 	 */
 	private redactUsername(text: string): string {
 		// If redaction previously failed, skip attempting it again and return the original text.
-		if (this.hasWarnedAboutRedactionFailure) {
+		if (this.skipRedaction) {
 			return text;
 		}
 
@@ -302,10 +304,8 @@ class Logger {
 	 * so users don't unknowingly share it in a bug report.
 	 */
 	private warnOnRedactionFailure(): void {
-		if (this.hasWarnedAboutRedactionFailure) {
-			return;
-		}
-		this.hasWarnedAboutRedactionFailure = true;
+		// Set the flag to skip further redaction attempts before warning to avoid recursion.
+		this.skipRedaction = true;
 		this.warn("Could not determine OS username; logs won't be redacted. Manually redact any sensitive information before sharing logs.");
 	}
 }
