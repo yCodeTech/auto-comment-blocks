@@ -986,30 +986,6 @@ export class Configuration {
 			return;
 		}
 
-		// The path to the built-in extensions. The env variable changes when on WSL.
-		// So we can use it for both Windows and WSL.
-		const builtInExtensionsPath = this.extensionData.getExtensionDiscoveryPath("builtInExtensionsPath");
-
-		let extensionsPaths: JsonObject = {};
-
-		if (isWsl) {
-			// Get the Windows user and built-in extensions paths.
-			const windowsUserExtensionsPath = this.extensionData.getExtensionDiscoveryPath("WindowsUserExtensionsPathFromWsl");
-			const windowsBuiltInExtensionsPath = this.extensionData.getExtensionDiscoveryPath("WindowsBuiltInExtensionsPathFromWsl");
-
-			extensionsPaths = {
-				"Windows-installed Built-in Extensions Path": windowsBuiltInExtensionsPath,
-				"Windows-installed User Extensions Path": windowsUserExtensionsPath,
-				"WSL-installed Built-in Extensions Path": builtInExtensionsPath,
-				"WSL-installed User Extensions Path": this.extensionData.getExtensionDiscoveryPath("userExtensionsPath"),
-			};
-		} else {
-			extensionsPaths = {
-				"Built-in Extensions Path": builtInExtensionsPath,
-				"User Extensions Path": this.extensionData.getExtensionDiscoveryPath("userExtensionsPath"),
-			};
-		}
-
 		const env: JsonObject = {
 			"OS": process.platform,
 			"Platform": process.platform,
@@ -1017,9 +993,14 @@ export class Configuration {
 				"Version": vscode.version,
 				"Remote Name": vscode.env.remoteName || "local",
 				"Host": vscode.env.appHost,
-				...extensionsPaths,
+				"App Root": vscode.env.appRoot,
+				"Env Vars": Object.fromEntries(
+					Object.entries(process.env).filter((entry): entry is [string, string] => {
+						const [key, value] = entry;
+						return key.startsWith("VSCODE_") && typeof value === "string";
+					})
+				),
 			},
-			"Other System Env Variables": process.env,
 		};
 		logger.debug("Environment:", env);
 
@@ -1027,12 +1008,20 @@ export class Configuration {
 		logger.debug("Configuration settings:", this.getConfiguration());
 
 		// Log the objects for debugging purposes.
+
+		// Lang Config Filepaths.
 		logger.debug("The language config filepaths found are:", this.languageConfigFilePaths);
+
+		// Lang Configs.
 		logger.debug("The language configs found are:", this.languageConfigs);
+
+		// Multi-line language definitions.
 		logger.debug(
 			"The supported languages for multi-line blocks:",
 			utils.readJsonFile<MultiLineLanguageDefinitions>(this.multiLineLangDefinitionFilePath)
 		);
+
+		// Single-line language definitions.
 		logger.debug(
 			"The supported languages for single-line blocks:",
 			utils.readJsonFile<SingleLineLanguageDefinitions>(this.singleLineLangDefinitionFilePath)
