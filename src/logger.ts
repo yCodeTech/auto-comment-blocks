@@ -1,4 +1,5 @@
 import {OutputChannel, window} from "vscode";
+import {LogLevel, logLevels} from "./interfaces/utils";
 
 /**
  * Logger class for the Auto Comment Blocks extension.
@@ -19,12 +20,11 @@ class Logger {
 	private outputChannel: OutputChannel;
 
 	/**
-	 * Whether to log `debug` level messages or not.
-	 * Set to `true` by default.
+	 * Current log level.
 	 *
-	 * @type {boolean}
+	 * @type {LogLevel}
 	 */
-	private debugMode = true;
+	private logLevel: LogLevel = "debug";
 
 	/***********
 	 * Methods *
@@ -44,14 +44,29 @@ class Logger {
 	}
 
 	/**
-	 * Turn debug mode on or off. Off will disable debug messages.
+	 * Set the log level.
 	 *
-	 * TODO: Possibly add a toggle setting in the extension user settings.
-	 *
-	 * @param {boolean} debug Whether to enable or disable debug mode.
+	 * @param {LogLevel} level Desired log level.
 	 */
-	public setDebugMode(debug: boolean): void {
-		this.debugMode = debug;
+	public setLogLevel(level: LogLevel | string): void {
+		// If the provided log level is not valid, default to "debug" and log an error message.
+		if (!this.isValidLogLevel(level)) {
+			this.logLevel = "debug";
+			logger.error(`Invalid log level: "${level}". Defaulting to "debug".`);
+			return;
+		}
+
+		this.logLevel = level;
+	}
+
+	/**
+	 * Check if the provided log level is valid.
+	 * @param level The log level to check.
+	 *
+	 * @returns `true` if the log level is valid, `false` otherwise.
+	 */
+	private isValidLogLevel(level: string): level is LogLevel {
+		return (Object.values(logLevels) as string[]).includes(level);
 	}
 
 	/**
@@ -76,7 +91,9 @@ class Logger {
 	 * @param {string} message The message to be logged.
 	 */
 	public info(message: string): void {
-		this.logMessage("INFO", message);
+		if (this.shouldLog("info")) {
+			this.logMessage("INFO", message);
+		}
 	}
 
 	/**
@@ -87,7 +104,7 @@ class Logger {
 	 * @param {unknown} data [Optional] Extra data that is useful for debugging, like an object or array.
 	 */
 	public debug(message: string, data?: unknown): void {
-		if (this.debugMode) {
+		if (this.shouldLog("debug")) {
 			this.logMessage("DEBUG", message, data);
 		}
 	}
@@ -99,7 +116,48 @@ class Logger {
 	 * @param {Error} error An Error object.
 	 */
 	public error(message: string, error?: Error): void {
-		this.logMessage("ERROR", message, error);
+		if (this.shouldLog("error")) {
+			this.logMessage("ERROR", message, error);
+		}
+	}
+
+	/**
+	 * Send an important message to the output channel.
+	 * This is a special log level that is always emitted regardless of the log level,
+	 * and should be used sparingly.
+	 *
+	 * @param {string} message The message to be logged.
+	 */
+	public important(message: string): void {
+		this.logMessage("IMPORTANT", message);
+	}
+
+	/**
+	 * Determine whether debug logging is enabled.
+	 * @returns `true` if debug logging is enabled, `false` otherwise.
+	 */
+	public isDebugEnabled(): boolean {
+		return this.shouldLog("debug");
+	}
+
+	/**
+	 * Determine whether a log should be emitted for the current level.
+	 *
+	 * @param {LogLevel} requiredLevel The minimum level required to emit the log.
+	 *
+	 * @returns {boolean} Whether the log should be emitted.
+	 */
+	private shouldLog(requiredLevel: LogLevel): boolean {
+		// Numeric weights used for level comparison.
+		const levelWeight: Record<LogLevel, number> = {
+			debug: 3, // Emits debug, info, and error logs - the most verbose level.
+			info: 2, // Emits info and error logs.
+			error: 1, // Emits error logs only.
+			off: 0, // Disables all logs, except for the special "important" logs that are always emitted.
+		};
+
+		// Emit when the configured level is at least as verbose as the requested level.
+		return levelWeight[this.logLevel] >= levelWeight[requiredLevel];
 	}
 
 	/**
@@ -116,13 +174,16 @@ class Logger {
 		const time = new Date().toLocaleTimeString();
 
 		// Output the log message to the output channel.
-		this.outputChannel.appendLine(`["${level}" - ${time}] ${message}`);
+		this.outputChannel.append(`["${level}" - ${time}] ${message}`);
 
 		if (meta) {
 			const data: string = this.formatMeta(message, meta);
 
-			// Output the meta data to the output channel.
-			this.outputChannel.appendLine(data);
+			// Output the meta data to the output channel with a leading space.
+			this.outputChannel.appendLine(` ${data}`);
+		} else {
+			// Output a new line to the output channel.
+			this.outputChannel.appendLine("");
 		}
 	}
 

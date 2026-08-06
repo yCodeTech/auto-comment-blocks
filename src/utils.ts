@@ -30,17 +30,31 @@ export function readJsonFile<T extends JsonValue = JsonObject>(filepath: string,
 		return null;
 	}
 
-	const jsonErrors: jsonc.ParseError[] = [];
-
 	// Read the contents of the JSON file.
 	const fileContent = fs
 		.readFileSync(filepath, {encoding: "utf8"})
 		.toString()
 		.replace(/^\uFEFF/, ""); // Remove BOM if present.
 
+	return parseJsonContent<T>(filepath, fileContent);
+}
+
+/**
+ * Parse the JSON content and handle any parse errors.
+ *
+ * @template T The expected type of the parsed JSON content.
+ * @param {string} filepath The path of the file.
+ * @param {string} fileContent The content of the file.
+ *
+ * @returns {T} The parsed JSON content as the passed T type.
+ */
+function parseJsonContent<T extends JsonValue = JsonObject>(filepath: string, fileContent: string): T {
+	const jsonErrors: jsonc.ParseError[] = [];
+
 	// Parse the JSON content using jsonc-parser, allowing empty content and trailing commas.
 	const jsonContents = jsonc.parse(fileContent, jsonErrors, {allowEmptyContent: true, allowTrailingComma: true}) ?? {};
 
+	// If there are any parse errors, construct a detailed error message and throw an error.
 	if (jsonErrors.length > 0) {
 		const errorMessages = constructJsonParseErrorMsg(filepath, fileContent, jsonErrors);
 		const errorMsg = "Failed to parse a required JSON file";
@@ -63,6 +77,7 @@ export function readJsonFile<T extends JsonValue = JsonObject>(filepath: string,
 		throw error;
 	}
 
+	// Otherwise, return the parsed JSON content.
 	return jsonContents as T;
 }
 

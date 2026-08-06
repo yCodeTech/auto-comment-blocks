@@ -1,3 +1,5 @@
+import {LogLevel} from "./utils";
+
 export interface Settings {
 	singleLineBlockOnEnter: boolean;
 	disabledLanguages: string[];
@@ -7,4 +9,5 @@ export interface Settings {
 	multiLineStyleBlocks: string[];
 	overrideDefaultLanguageMultiLineComments: Record<string, string>;
 	bladeOverrideComments: boolean;
+	logLevel: LogLevel;
 }

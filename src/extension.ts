@@ -6,10 +6,14 @@ import {Configuration} from "./configuration";
 import {logger} from "./logger";
 import {ExtensionData} from "./extensionData";
 import {addDevEnvVariables} from "./utils";
+import {LogLevel} from "./interfaces/utils";
 
 export function activate(context: vscode.ExtensionContext) {
 	// Setup logger first
 	logger.setupOutputChannel();
+
+	const initialLogLevel = vscode.workspace.getConfiguration("auto-comment-blocks").get<LogLevel>("logLevel", "debug");
+	logger.setLogLevel(initialLogLevel);
 
 	// Only load dev environment variables when not in production
 	if (context.extensionMode !== vscode.ExtensionMode.Production) {
@@ -18,6 +22,12 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Initialize extension data and configuration
 	const extensionData = new ExtensionData(null, true);
+
+	// Always output extension information to channel on activate.
+	logger.important(`Activating ${extensionData.get("id")} v${extensionData.get("version")}`);
+	logger.debug(`Extension details:`, extensionData.getAll(true));
+	logger.debug(`Extension Discovery Paths:`, extensionData.getAllExtensionDiscoveryPaths());
+
 	const configuration = new Configuration();
 	const extensionName = extensionData.get("namespace");
 	const extensionDisplayName = extensionData.get("displayName");
@@ -57,6 +67,14 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		}
 
+		/**
+		 * Logging Level
+		 */
+		if (event.affectsConfiguration(`${extensionName}.logLevel`)) {
+			const logLevel = configuration.getConfigurationValue("logLevel");
+			logger.setLogLevel(logLevel);
+		}
+
 		// Settings that require an extension host reload when changed.
 		const reloadRequiredSettings = [
 			"disabledLanguages",
@@ -83,10 +101,19 @@ export function activate(context: vscode.ExtensionContext) {
 	 * language id of a text document has been changed. As described in
 	 * https://github.com/microsoft/vscode/blob/4e8fbaef741afebd24684b88cac47c2f44dfb8eb/src/vscode-dts/vscode.d.ts#L13716-L13728
 	 *
-	 * Called when active editor language is changed, so re-configure the comment blocks.
+	 * Re-configuring the comment blocks here protects against other extensions activating
+	 * after this extension and overriding our language configuration, which would cause our
+	 * comment blocks to not work properly (e.g `/*!`).
 	 */
-	const documentOpenDisposable = vscode.workspace.onDidOpenTextDocument(() => {
-		logger.info("Active editor language changed, re-configuring comment blocks.");
+	const documentOpenDisposable = vscode.workspace.onDidOpenTextDocument((e) => {
+		// If the document is not a file or untitled scheme, then return early for
+		// virtual documents (e.g. git, output, etc. panels), as we only need to
+		// re-configure comment blocks for normal files.
+		if (e.uri.scheme !== "file" && e.uri.scheme !== "untitled") {
+			return;
+		}
+
+		logger.info(`Document opened or language changed to "${e.languageId}", re-configuring comment blocks.`);
 
 		// Dispose of old comment block configurations to prevent memory leaks
 		commentBlocksDisposables.forEach((disposable) => disposable.dispose());

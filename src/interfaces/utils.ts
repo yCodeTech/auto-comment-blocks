@@ -37,3 +37,18 @@ export interface MultiLineLanguageDefinitions extends JsonObject {
  * Language ID
  */
 export type LanguageId = string;
+
+/**
+ * Log levels
+ */
+export const logLevels = {
+	debug: "debug",
+	info: "info",
+	error: "error",
+	off: "off",
+} as const;
+
+/**
+ * Log level union type, derived from the keys of the logLevels object.
+ */
+export type LogLevel = (typeof logLevels)[keyof typeof logLevels];

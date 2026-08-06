@@ -81,10 +81,6 @@ export class Configuration {
 	 ***********/
 
 	public constructor() {
-		// Always output extension information to channel on activate.
-		logger.debug(`Extension details:`, this.extensionData.getAll());
-		logger.debug(`Extension Discovery Paths:`, this.extensionData.getAllExtensionDiscoveryPaths());
-
 		this.findAllLanguageConfigFilePaths();
 		this.setLanguageConfigDefinitions();
 
@@ -985,6 +981,11 @@ export class Configuration {
 	 * Logs the environment, configuration settings, and language configs for debugging purposes.
 	 */
 	private logDebugInfo() {
+		// If debug logging is not enabled, exit early.
+		if (!logger.isDebugEnabled()) {
+			return;
+		}
+
 		// The path to the built-in extensions. The env variable changes when on WSL.
 		// So we can use it for both Windows and WSL.
 		const builtInExtensionsPath = this.extensionData.getExtensionDiscoveryPath("builtInExtensionsPath");
