@@ -30,6 +30,34 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
 
 <!-- end -->
 
+- Added logging levels ([#42](https://github.com/yCodeTech/auto-comment-blocks/pull/42)) by @yCodeTech
+
+    This pull request introduces a configurable logging level to the extension, allowing users to control the verbosity of log output. It also improves logging practices by redacting sensitive or irrelevant information from logs, restructures some logging logic for clarity and safety, and enhances the handling of document events and JSON parsing. The most important changes are:
+
+    **Logging Level Configuration and Handling:**
+
+    - Added a new `auto-comment-blocks.logLevel` setting to `package.json`, allowing users to set the logging level (`debug`, `info`, `error`, `off`) for the extension.
+    - Refactored the `Logger` class in `src/logger.ts` to support log levels, including methods to set the log level, check if a message should be logged, and always emit "important" messages regardless of log level (ie. the extension name and version).
+    - Updated extension activation logic in `src/extension.ts` to initialize and update the logger's log level based on user configuration, and to log extension metadata on activation.
+
+    **Configuration and Settings Integration:**
+
+    - Extended the `Settings` interface and related types to include the new `logLevel` property, ensuring the log level is accessible throughout the extension.
+
+    **Logging Data Redaction:**
+
+    - Enhanced the `ExtensionData` class to redact irrelevant or sensitive information (like `packageJSON`) from logs, ensuring only necessary details are logged.
+
+    **Event Handling Improvements:**
+
+    - Improved the logic for handling document open events to avoid unnecessary reconfiguration for virtual documents and clarified logging messages.
+
+    **Utility and Error Handling Enhancements:**
+
+    - Refactored JSON file reading and parsing in `src/utils.ts` to separate parsing logic and improve error handling, making it easier to maintain and debug.
+
+<!-- end -->
+
 ## [1.1.17](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.17) - 2026-07-25
 
 ### Fixed
@@ -83,7 +111,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     - Updated the extension activation in `extension.ts` to pass the new constructor parameter, enabling user notification for the main extension instance only.
     - Updated `Configuration` logic to handle cases where the Windows extensions paths are not resolved, preventing errors by falling back to empty arrays.
 
-        <!-- end -->
+          <!-- end -->
 
 ## [1.1.15](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.15) - 2026-04-19
 
@@ -94,7 +122,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     VScode updated their types to include the LineComment typings and released 1.110 of @types/vscode package. So our temporary custom `LineComment` type and `LineCommentConfig` interface is now redundant.
     - Updated @types/vscode package to 1.110.
     - Removed the temporary `LineComment` type and `LineCommentConfig` interface, and removed the references in configuration file.
-        <!-- end -->
+          <!-- end -->
 
 ### Changed
 
@@ -106,7 +134,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     - Consolidated multiple configuration change handlers into a single handler that checks for a list of settings requiring extension reload. If any are changed, a single reload prompt is shown using the new `showReloadMessage` helper function, reducing code duplication.
 
     - Improved performance and event handling to prevent memory leaks by properly disposing of old comment configurations.
-      <!-- end -->
+        <!-- end -->
 
 - Refactored configuration class ([#30](https://github.com/yCodeTech/auto-comment-blocks/pull/30)) by @yCodeTech
     - Extracted the logic for determining the appropriate Blade or HTML comment style into a new private method `getBladeOrHtmlComments`, simplifying the public API and improving clarity. The `setBladeComments` method now only sets the configuration and no longer returns values based on an `onStart` flag (the flag was removed in favour using the new private method directly).
@@ -114,7 +142,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     - Replaced repetitive code for adding custom single-line comment languages with a new private method `addCustomSingleLineLanguages`, reducing duplication and improving maintainability.
 
     - Replaced `var` with `let` for variable declarations in several places to align with modern best practices.
-          <!-- end -->
+      <!-- end -->
 
 ## [1.1.14](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.14) - 2026-02-23
 
