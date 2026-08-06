@@ -104,7 +104,7 @@ jobs:
             echo "🔄 Checking out existing branch: $BRANCH_NAME"
             git fetch origin $BRANCH_NAME
             git checkout $BRANCH_NAME
-            git pull origin $BRANCH_NAME
+            git reset --hard origin/$BRANCH_NAME
           else
             echo "✨ Creating new branch: $BRANCH_NAME"
             git checkout -b $BRANCH_NAME
