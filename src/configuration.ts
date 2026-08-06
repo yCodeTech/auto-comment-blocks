@@ -1002,6 +1002,7 @@ export class Configuration {
 				),
 			},
 		};
+
 		logger.debug("Environment:", env);
 
 		// Log the extension's user configuration settings.

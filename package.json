@@ -85,12 +85,14 @@
 					"enum": [
 						"debug",
 						"info",
+						"warn",
 						"error",
 						"off"
 					],
 					"markdownEnumDescriptions": [
-						"Log debug, info, and errors",
-						"Log info and errors",
+						"Log debug, info, warnings, and errors",
+						"Log info, warnings, and errors",
+						"Log warnings and errors",
 						"Log errors only",
 						"Disable logging"
 					],

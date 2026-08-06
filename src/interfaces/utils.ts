@@ -44,6 +44,7 @@ export type LanguageId = string;
 export const logLevels = {
 	debug: "debug",
 	info: "info",
+	warn: "warn",
 	error: "error",
 	off: "off",
 } as const;

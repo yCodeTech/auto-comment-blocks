@@ -350,10 +350,12 @@ export class ExtensionData {
 
 	/**
 	 * Get all extension discovery paths.
+	 * Used for logging the paths to the output channel.
 	 *
 	 * @returns {ReadonlyMap<keyof ExtensionPaths, string>} A read-only Map containing all extension discovery paths.
 	 */
 	public getAllExtensionDiscoveryPaths(): ReadonlyMap<keyof ExtensionPaths, string> {
-		return this.extensionDiscoveryPaths;
+		// Return a new Map to prevent external mutation of the internal state.
+		return new Map(this.extensionDiscoveryPaths);
 	}
 }

@@ -1,3 +1,4 @@
+import * as os from "node:os";
 import {OutputChannel, window} from "vscode";
 import {LogLevel, logLevels} from "./interfaces/utils";
 
@@ -25,6 +26,15 @@ class Logger {
 	 * @type {LogLevel}
 	 */
 	private logLevel: LogLevel = "debug";
+
+	/**
+	 * Whether username redaction should be skipped, because it previously failed.
+	 * Once set, further attempts are not made since the username is unlikely to become
+	 * resolvable later in the same session.
+	 *
+	 * @type {boolean}
+	 */
+	private skipRedaction: boolean = false;
 
 	/***********
 	 * Methods *
@@ -122,6 +132,17 @@ class Logger {
 	}
 
 	/**
+	 * Sends a warning log to the output channel.
+	 *
+	 * @param {string} message The message to be logged.
+	 */
+	public warn(message: string): void {
+		if (this.shouldLog("warn")) {
+			this.logMessage("WARN", message);
+		}
+	}
+
+	/**
 	 * Send an important message to the output channel.
 	 * This is a special log level that is always emitted regardless of the log level,
 	 * and should be used sparingly.
@@ -150,8 +171,9 @@ class Logger {
 	private shouldLog(requiredLevel: LogLevel): boolean {
 		// Numeric weights used for level comparison.
 		const levelWeight: Record<LogLevel, number> = {
-			debug: 3, // Emits debug, info, and error logs - the most verbose level.
-			info: 2, // Emits info and error logs.
+			debug: 4, // Emits debug, info, warn, and error logs - the most verbose level.
+			info: 3, // Emits info, warn, and error logs.
+			warn: 2, // Emits warn and error logs.
 			error: 1, // Emits error logs only.
 			off: 0, // Disables all logs, except for the special "important" logs that are always emitted.
 		};
@@ -171,13 +193,18 @@ class Logger {
 		if (!this.outputChannel) {
 			this.setupOutputChannel();
 		}
+
+		message = this.redactUsername(message);
+
 		const time = new Date().toLocaleTimeString();
 
 		// Output the log message to the output channel.
 		this.outputChannel.append(`["${level}" - ${time}] ${message}`);
 
 		if (meta) {
-			const data: string = this.formatMeta(message, meta);
+			let data: string = this.formatMeta(message, meta);
+
+			data = this.redactUsername(data);
 
 			// Output the meta data to the output channel with a leading space.
 			this.outputChannel.appendLine(` ${data}`);
@@ -231,6 +258,55 @@ class Logger {
 		}
 
 		return value;
+	}
+
+	/**
+	 * Redact the OS username from a string, replacing it with `<redacted>`,
+	 * to avoid leaking it into the logs that could be shared.
+	 *
+	 * @param {string} text The text to redact.
+	 * @returns {string} If redaction was possible, returns the redacted text,
+	 * otherwise the original text.
+	 */
+	private redactUsername(text: string): string {
+		// If redaction previously failed, skip attempting it again and return the original text.
+		if (this.skipRedaction) {
+			return text;
+		}
+
+		let username: string;
+
+		// Get the current OS username using Node's userInfo() method which is
+		// cross-platform compatible. It can throw an error in sandboxed/remote environments where
+		// the username can't be determined. So catch any errors and return the original text
+		// if we can't get the username.
+		try {
+			username = os.userInfo().username;
+		} catch {
+			this.warnOnRedactionFailure();
+			return text;
+		}
+
+		// If the username is empty, return the original text.
+		if (!username) {
+			this.warnOnRedactionFailure();
+			return text;
+		}
+
+		// Escape special characters in the username.
+		const escapedUsername = username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		// Replace any occurrence of the username in the text with "<redacted>", case-insensitively, and return it.
+		return text.replace(new RegExp(escapedUsername, "gi"), "<redacted>");
+	}
+
+	/**
+	 * Warn once per session that debug logs may not have the username redacted,
+	 * so users don't unknowingly share it in a bug report.
+	 */
+	private warnOnRedactionFailure(): void {
+		// Set the flag to skip further redaction attempts before warning to avoid recursion.
+		this.skipRedaction = true;
+		this.warn("Could not determine OS username; logs won't be redacted. Manually redact any sensitive information before sharing logs.");
 	}
 }
 
