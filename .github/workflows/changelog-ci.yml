@@ -10,6 +10,9 @@ permissions:
   pull-requests: write
   actions: read
 
+env:
+  CHANGELOG_BASE_BRANCH: master
+
 jobs:
   update_changelog:
     name: Update Changelog
@@ -56,7 +59,7 @@ jobs:
         if: steps.check-exclusions.outputs.should-skip == 'false'
         id: check-existing-changelog-pr
         run: |
-          BASE_BRANCH="master"
+          BASE_BRANCH="${{ env.CHANGELOG_BASE_BRANCH }}"
 
           # Find existing changelog PR
           CHANGELOG_PR=$(gh pr list --base "$BASE_BRANCH" --state open --json number,title,headRefName,body --jq '.[] | select(.title | test("^docs: Update changelog"; "i"))')
@@ -165,7 +168,7 @@ jobs:
       - name: Create or update changelog PR
         if: steps.check-exclusions.outputs.should-skip == 'false' && steps.update-changelog.outputs.changelog-updated == 'true'
         run: |
-          BASE_BRANCH="master"
+          BASE_BRANCH="${{ env.CHANGELOG_BASE_BRANCH }}"
           BRANCH_NAME="${{ steps.check-existing-changelog-pr.outputs.changelog-pr-branch-name }}"
           PR_NUMBER="${{ steps.update-changelog.outputs.pr-number }}"
           CHANGELOG_PR_EXISTS="${{ steps.check-existing-changelog-pr.outputs.changelog-pr-exists }}"
