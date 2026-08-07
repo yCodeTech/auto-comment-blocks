@@ -213,8 +213,13 @@ jobs:
             if git ls-remote --exit-code --heads origin "$BRANCH_NAME" >/dev/null 2>&1; then
               git fetch origin "$BRANCH_NAME"
               git rebase "origin/$BRANCH_NAME"
+            else
+              echo "Remote branch $BRANCH_NAME not found during retry; retrying push without rebase."
             fi
-            git push origin "$BRANCH_NAME"
+            if ! git push origin "$BRANCH_NAME"; then
+              echo "Failed to push changelog changes after retry." >&2
+              exit 1
+            fi
           fi
 
           echo "pushed=true" >> "$GITHUB_OUTPUT"
