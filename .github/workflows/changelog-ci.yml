@@ -42,7 +42,13 @@ jobs:
             let pr;
 
             if (context.eventName === 'workflow_dispatch') {
-              const prNumber = parseInt(context.payload.inputs.pr_number, 10);
+              const rawPrNumber = (context.payload.inputs?.pr_number ?? '').trim();
+              if (!/^\d+$/.test(rawPrNumber) || Number(rawPrNumber) <= 0) {
+                core.setFailed(`Invalid workflow input "pr_number": "${rawPrNumber}". Please provide a positive integer PR number.`);
+                return;
+              }
+
+              const prNumber = Number(rawPrNumber);
               console.log(`🔍 Fetching PR #${prNumber} from API...`);
 
               const { data } = await github.rest.pulls.get({
@@ -141,12 +147,12 @@ jobs:
 
           if [ "${{ steps.check-existing-changelog-pr.outputs.changelog-pr-exists }}" = "true" ]; then
             echo "🔄 Checking out existing branch: $BRANCH_NAME"
-            git fetch origin $BRANCH_NAME
-            git checkout $BRANCH_NAME
-            git reset --hard origin/$BRANCH_NAME
+            git fetch origin "$BRANCH_NAME"
+            git checkout "$BRANCH_NAME"
+            git reset --hard "origin/$BRANCH_NAME"
           else
             echo "✨ Creating new branch: $BRANCH_NAME"
-            git checkout -b $BRANCH_NAME
+            git checkout -b "$BRANCH_NAME"
           fi
 
       - name: Update Changelog
@@ -178,10 +184,12 @@ jobs:
           git diff CHANGELOG.md
 
       - name: Commit and push changes
+        id: commit-push
         if: steps.check-exclusions.outputs.should-skip == 'false' && steps.update-changelog.outputs.changelog-updated == 'true'
         run: |
           set -euo pipefail
           BRANCH_NAME="${{ steps.check-existing-changelog-pr.outputs.changelog-pr-branch-name }}"
+          echo "pushed=false" >> "$GITHUB_OUTPUT"
 
           git add CHANGELOG.md
 
@@ -194,21 +202,25 @@ jobs:
           git commit -m "docs: update changelog for PR #${{ steps.update-changelog.outputs.pr-number }}"
 
           # Always sync latest remote branch tip before push
-          git fetch origin "$BRANCH_NAME" || true
-          if git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME"; then
+          if git ls-remote --exit-code --heads origin "$BRANCH_NAME" >/dev/null 2>&1; then
+            git fetch origin "$BRANCH_NAME"
             git rebase "origin/$BRANCH_NAME"
           fi
 
           # Push and recover from race by rebasing once and retrying
           if ! git push origin "$BRANCH_NAME"; then
             echo "Push rejected, retrying after rebase..."
-            git fetch origin "$BRANCH_NAME"
-            git rebase "origin/$BRANCH_NAME"
+            if git ls-remote --exit-code --heads origin "$BRANCH_NAME" >/dev/null 2>&1; then
+              git fetch origin "$BRANCH_NAME"
+              git rebase "origin/$BRANCH_NAME"
+            fi
             git push origin "$BRANCH_NAME"
           fi
 
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+
       - name: Create or update changelog PR
-        if: steps.check-exclusions.outputs.should-skip == 'false' && steps.update-changelog.outputs.changelog-updated == 'true'
+        if: steps.check-exclusions.outputs.should-skip == 'false' && steps.update-changelog.outputs.changelog-updated == 'true' && steps.commit-push.outputs.pushed == 'true'
         run: |
           BASE_BRANCH="${{ env.CHANGELOG_BASE_BRANCH }}"
           BRANCH_NAME="${{ steps.check-existing-changelog-pr.outputs.changelog-pr-branch-name }}"
@@ -242,4 +254,3 @@ jobs:
           fi
         env:
           GH_TOKEN: ${{ github.token }}
-
