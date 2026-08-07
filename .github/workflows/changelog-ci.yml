@@ -68,7 +68,9 @@ jobs:
               pr = context.payload.pull_request;
             }
 
-            core.setOutput('pr-json', JSON.stringify(pr));
+            const prJson = JSON.stringify(pr);
+            core.setOutput('pr-json', prJson);
+            core.setOutput('pr-json-base64', Buffer.from(prJson, 'utf8').toString('base64'));
 
       - name: Check if PR should be excluded
         id: check-exclusions
@@ -76,11 +78,13 @@ jobs:
         with:
           script: |
             const { default: checkExclusions } = await import('${{ github.workspace }}/.github/scripts/check-changelog-exclusions.mjs');
-            const pr = ${{ steps.resolve-pr.outputs.pr-json }};
+            const pr = JSON.parse(Buffer.from(process.env.RESOLVED_PR_BASE64, 'base64').toString('utf8'));
             return await checkExclusions({
               pr,
               core
             });
+        env:
+          RESOLVED_PR_BASE64: ${{ steps.resolve-pr.outputs.pr-json-base64 }}
 
       - name: Changelog update skipped
         if: steps.check-exclusions.outputs.should-skip == 'true'
@@ -160,11 +164,13 @@ jobs:
         with:
           script: |
             const { default: updateChangelog } = await import('/tmp/update-changelog.mjs');
-            const pr = ${{ steps.resolve-pr.outputs.pr-json }};
+            const pr = JSON.parse(Buffer.from(process.env.RESOLVED_PR_BASE64, 'base64').toString('utf8'));
             return await updateChangelog({
               pr,
               core
             });
+        env:
+          RESOLVED_PR_BASE64: ${{ steps.resolve-pr.outputs.pr-json-base64 }}
 
       - name: Prettify Changelog
         id: prettify-changelog
