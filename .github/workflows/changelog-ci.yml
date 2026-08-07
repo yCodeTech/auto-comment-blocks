@@ -4,6 +4,12 @@ on:
   pull_request:
     types:
       - closed
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to add to the changelog (must be a merged PR)"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -16,7 +22,7 @@ env:
 jobs:
   update_changelog:
     name: Update Changelog
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     steps:
@@ -28,16 +34,49 @@ jobs:
             .github/scripts/update-changelog.mjs
           sparse-checkout-cone-mode: false
 
+      - name: Resolve PR data
+        id: resolve-pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let pr;
+
+            if (context.eventName === 'workflow_dispatch') {
+              const prNumber = parseInt(context.payload.inputs.pr_number, 10);
+              console.log(`🔍 Fetching PR #${prNumber} from API...`);
+
+              const { data } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+              });
+
+              if (!data.merged) {
+                core.setFailed(`PR #${prNumber} has not been merged. Only merged PRs can be added to the changelog.`);
+                return;
+              }
+
+              pr = data;
+              console.log(`✅ Resolved PR #${prNumber}: ${pr.title}`);
+            } else {
+              pr = context.payload.pull_request;
+            }
+
+            core.setOutput('pr-json', JSON.stringify(pr));
+
       - name: Check if PR should be excluded
         id: check-exclusions
         uses: actions/github-script@v7
         with:
           script: |
             const { default: checkExclusions } = await import('${{ github.workspace }}/.github/scripts/check-changelog-exclusions.mjs');
+            const pr = JSON.parse(process.env.RESOLVED_PR);
             return await checkExclusions({
-              pr: context.payload.pull_request,
+              pr,
               core
             });
+        env:
+          RESOLVED_PR: ${{ steps.resolve-pr.outputs.pr-json }}
 
       - name: Changelog update skipped
         if: steps.check-exclusions.outputs.should-skip == 'true'
@@ -117,10 +156,13 @@ jobs:
         with:
           script: |
             const { default: updateChangelog } = await import('/tmp/update-changelog.mjs');
+            const pr = JSON.parse(process.env.RESOLVED_PR);
             return await updateChangelog({
-              pr: context.payload.pull_request,
+              pr,
               core
             });
+        env:
+          RESOLVED_PR: ${{ steps.resolve-pr.outputs.pr-json }}
 
       - name: Prettify Changelog
         id: prettify-changelog
@@ -200,3 +242,4 @@ jobs:
           fi
         env:
           GH_TOKEN: ${{ github.token }}
+
