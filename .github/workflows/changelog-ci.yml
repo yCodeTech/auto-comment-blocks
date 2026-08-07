@@ -76,13 +76,11 @@ jobs:
         with:
           script: |
             const { default: checkExclusions } = await import('${{ github.workspace }}/.github/scripts/check-changelog-exclusions.mjs');
-            const pr = JSON.parse(process.env.RESOLVED_PR);
+            const pr = ${{ steps.resolve-pr.outputs.pr-json }};
             return await checkExclusions({
               pr,
               core
             });
-        env:
-          RESOLVED_PR: ${{ steps.resolve-pr.outputs.pr-json }}
 
       - name: Changelog update skipped
         if: steps.check-exclusions.outputs.should-skip == 'true'
@@ -162,13 +160,11 @@ jobs:
         with:
           script: |
             const { default: updateChangelog } = await import('/tmp/update-changelog.mjs');
-            const pr = JSON.parse(process.env.RESOLVED_PR);
+            const pr = ${{ steps.resolve-pr.outputs.pr-json }};
             return await updateChangelog({
               pr,
               core
             });
-        env:
-          RESOLVED_PR: ${{ steps.resolve-pr.outputs.pr-json }}
 
       - name: Prettify Changelog
         id: prettify-changelog
@@ -201,18 +197,16 @@ jobs:
 
           git commit -m "docs: update changelog for PR #${{ steps.update-changelog.outputs.pr-number }}"
 
-          # Always sync latest remote branch tip before push
-          if git ls-remote --exit-code --heads origin "$BRANCH_NAME" >/dev/null 2>&1; then
-            git fetch origin "$BRANCH_NAME"
-            git rebase "origin/$BRANCH_NAME"
-          fi
-
           # Push and recover from race by rebasing once and retrying
           if ! git push origin "$BRANCH_NAME"; then
             echo "Push rejected, retrying after rebase..."
             if git ls-remote --exit-code --heads origin "$BRANCH_NAME" >/dev/null 2>&1; then
               git fetch origin "$BRANCH_NAME"
-              git rebase "origin/$BRANCH_NAME"
+              if ! git rebase "origin/$BRANCH_NAME"; then
+                echo "Rebase failed while retrying push to $BRANCH_NAME." >&2
+                git rebase --abort || true
+                exit 1
+              fi
             else
               echo "Remote branch $BRANCH_NAME not found during retry; retrying push without rebase."
             fi
