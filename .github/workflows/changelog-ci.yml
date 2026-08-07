@@ -4,16 +4,25 @@ on:
   pull_request:
     types:
       - closed
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to add to the changelog (must be a merged PR)"
+        required: true
+        type: string
 
 permissions:
   contents: write
   pull-requests: write
   actions: read
 
+env:
+  CHANGELOG_BASE_BRANCH: master
+
 jobs:
   update_changelog:
     name: Update Changelog
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     steps:
@@ -25,16 +34,56 @@ jobs:
             .github/scripts/update-changelog.mjs
           sparse-checkout-cone-mode: false
 
+      - name: Resolve PR data
+        id: resolve-pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let pr;
+
+            if (context.eventName === 'workflow_dispatch') {
+              const rawPrNumber = (context.payload.inputs?.pr_number ?? '').trim();
+              if (!/^\d+$/.test(rawPrNumber) || Number(rawPrNumber) <= 0) {
+                core.setFailed(`Invalid workflow input "pr_number": "${rawPrNumber}". Please provide a positive integer PR number.`);
+                return;
+              }
+
+              const prNumber = Number(rawPrNumber);
+              console.log(`🔍 Fetching PR #${prNumber} from API...`);
+
+              const { data } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+              });
+
+              if (!data.merged) {
+                core.setFailed(`PR #${prNumber} has not been merged. Only merged PRs can be added to the changelog.`);
+                return;
+              }
+
+              pr = data;
+              console.log(`✅ Resolved PR #${prNumber}: ${pr.title}`);
+            } else {
+              pr = context.payload.pull_request;
+            }
+
+            const prJson = JSON.stringify(pr);
+            core.setOutput('pr-json-base64', Buffer.from(prJson, 'utf8').toString('base64'));
+
       - name: Check if PR should be excluded
         id: check-exclusions
         uses: actions/github-script@v7
         with:
           script: |
             const { default: checkExclusions } = await import('${{ github.workspace }}/.github/scripts/check-changelog-exclusions.mjs');
+            const pr = JSON.parse(Buffer.from(process.env.RESOLVED_PR_BASE64, 'base64').toString('utf8'));
             return await checkExclusions({
-              pr: context.payload.pull_request,
+              pr,
               core
             });
+        env:
+          RESOLVED_PR_BASE64: "${{ steps.resolve-pr.outputs.pr-json-base64 }}"
 
       - name: Changelog update skipped
         if: steps.check-exclusions.outputs.should-skip == 'true'
@@ -56,7 +105,7 @@ jobs:
         if: steps.check-exclusions.outputs.should-skip == 'false'
         id: check-existing-changelog-pr
         run: |
-          BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+          BASE_BRANCH="${{ env.CHANGELOG_BASE_BRANCH }}"
 
           # Find existing changelog PR
           CHANGELOG_PR=$(gh pr list --base "$BASE_BRANCH" --state open --json number,title,headRefName,body --jq '.[] | select(.title | test("^docs: Update changelog"; "i"))')
@@ -99,12 +148,12 @@ jobs:
 
           if [ "${{ steps.check-existing-changelog-pr.outputs.changelog-pr-exists }}" = "true" ]; then
             echo "🔄 Checking out existing branch: $BRANCH_NAME"
-            git fetch origin $BRANCH_NAME
-            git checkout $BRANCH_NAME
-            git pull origin $BRANCH_NAME
+            git fetch origin "$BRANCH_NAME"
+            git checkout "$BRANCH_NAME"
+            git reset --hard "origin/$BRANCH_NAME"
           else
             echo "✨ Creating new branch: $BRANCH_NAME"
-            git checkout -b $BRANCH_NAME
+            git checkout -b "$BRANCH_NAME"
           fi
 
       - name: Update Changelog
@@ -114,10 +163,13 @@ jobs:
         with:
           script: |
             const { default: updateChangelog } = await import('/tmp/update-changelog.mjs');
+            const pr = JSON.parse(Buffer.from(process.env.RESOLVED_PR_BASE64, 'base64').toString('utf8'));
             return await updateChangelog({
-              pr: context.payload.pull_request,
+              pr,
               core
             });
+        env:
+          RESOLVED_PR_BASE64: "${{ steps.resolve-pr.outputs.pr-json-base64 }}"
 
       - name: Prettify Changelog
         id: prettify-changelog
@@ -133,23 +185,48 @@ jobs:
           git diff CHANGELOG.md
 
       - name: Commit and push changes
+        id: commit-push
         if: steps.check-exclusions.outputs.should-skip == 'false' && steps.update-changelog.outputs.changelog-updated == 'true'
         run: |
+          set -euo pipefail
           BRANCH_NAME="${{ steps.check-existing-changelog-pr.outputs.changelog-pr-branch-name }}"
+          echo "pushed=false" >> "$GITHUB_OUTPUT"
 
           git add CHANGELOG.md
-          git commit -m "docs: update changelog for PR #${{ steps.update-changelog.outputs.pr-number }}"
 
-          if [ "${{ steps.check-existing-changelog-pr.outputs.changelog-pr-exists }}" = "true" ]; then
-            git push origin $BRANCH_NAME
-          else
-            git push -u origin $BRANCH_NAME
+          # Avoid failing when there's nothing new to commit
+          if git diff --cached --quiet; then
+            echo "No changelog changes to commit."
+            exit 0
           fi
 
+          git commit -m "docs: update changelog for PR #${{ steps.update-changelog.outputs.pr-number }}"
+
+          # Push and recover from race by rebasing once and retrying
+          if ! git push -u origin "$BRANCH_NAME"; then
+            echo "Push rejected, retrying after rebase..."
+            if git ls-remote --exit-code --heads origin "$BRANCH_NAME" >/dev/null 2>&1; then
+              git fetch origin "$BRANCH_NAME"
+              if ! git rebase "origin/$BRANCH_NAME"; then
+                echo "Rebase failed while retrying push to $BRANCH_NAME." >&2
+                git rebase --abort || true
+                exit 1
+              fi
+            else
+              echo "Remote branch $BRANCH_NAME not found during retry; retrying push without rebase."
+            fi
+            if ! git push -u origin "$BRANCH_NAME"; then
+              echo "Failed to push changelog changes after retry." >&2
+              exit 1
+            fi
+          fi
+
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+
       - name: Create or update changelog PR
-        if: steps.check-exclusions.outputs.should-skip == 'false' && steps.update-changelog.outputs.changelog-updated == 'true'
+        if: steps.check-exclusions.outputs.should-skip == 'false' && steps.update-changelog.outputs.changelog-updated == 'true' && steps.commit-push.outputs.pushed == 'true'
         run: |
-          BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+          BASE_BRANCH="${{ env.CHANGELOG_BASE_BRANCH }}"
           BRANCH_NAME="${{ steps.check-existing-changelog-pr.outputs.changelog-pr-branch-name }}"
           PR_NUMBER="${{ steps.update-changelog.outputs.pr-number }}"
           CHANGELOG_PR_EXISTS="${{ steps.check-existing-changelog-pr.outputs.changelog-pr-exists }}"
