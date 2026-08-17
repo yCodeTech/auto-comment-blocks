@@ -138,8 +138,9 @@ export default async function updateChangelog({pr, core, context, github}) {
 
 /**
  * Extracts the conventional commit type from a PR title
- * @param {string} title - PR title
- * @returns {string|null} - The type or null if not found
+ *
+ * @param {string} title PR title
+ * @returns {string|null} The type or null if not found
  */
 function extractType(title) {
 	const match = title.match(COMMIT_TYPE_REGEX);
@@ -148,8 +149,9 @@ function extractType(title) {
 
 /**
  * Gets or creates the Unreleased section in the changelog
- * @param {string} changelog - Current changelog content
- * @returns {object} - { hasUnreleased, lines, unreleasedIndex }
+ *
+ * @param {string} changelog Current changelog content
+ * @returns {{ hasUnreleased: boolean, lines: string[], unreleasedIndex: number }}
  */
 function findOrCreateUnreleased(changelog) {
 	const lines = changelog.split("\n");
@@ -189,10 +191,11 @@ function findOrCreateUnreleased(changelog) {
 
 /**
  * Checks if a PR entry already exists in the Unreleased section
- * @param {array} lines - Changelog lines
- * @param {number} unreleasedIndex - Index of Unreleased header
- * @param {number} prNumber - PR number to check
- * @returns {boolean} - True if PR already exists
+ *
+ * @param {array} lines Changelog lines
+ * @param {number} unreleasedIndex Index of Unreleased header
+ * @param {number} prNumber PR number to check
+ * @returns {boolean} True if PR already exists
  */
 function isDuplicateEntry(lines, unreleasedIndex, prNumber) {
 	// Find the next version header (##) or end of file
@@ -217,8 +220,9 @@ function isDuplicateEntry(lines, unreleasedIndex, prNumber) {
 
 /**
  * Strips the conventional commit type prefix from a PR title
- * @param {string} title - PR title
- * @returns {string} - Cleaned title
+ *
+ * @param {string} title PR title
+ * @returns {string} Cleaned title
  */
 function cleanTitle(title) {
 	// Remove the type prefix (e.g., "feat: ", "fix(scope): ")
@@ -230,13 +234,14 @@ function cleanTitle(title) {
 
 /**
  * Builds the full changelog entry line for a PR
- * @param {string} type - Conventional commit type (e.g., "feat", "fix", "revert")
- * @param {string} section - Section name resolved from TYPE_TO_SECTION
- * @param {string} cleanedTitle - PR title with the type prefix stripped
- * @param {number} prNumber - PR number
- * @param {string} prUrl - PR HTML URL
- * @param {string} prAuthor - PR author login
- * @param {string|null} prBody - PR body/description
+ *
+ * @param {string} type Conventional commit type (e.g., "feat", "fix", "revert")
+ * @param {string} section Section name resolved from TYPE_TO_SECTION
+ * @param {string} cleanedTitle PR title with the type prefix stripped
+ * @param {number} prNumber PR number
+ * @param {string} prUrl PR HTML URL
+ * @param {string} prAuthor PR author login
+ * @param {string|null} prBody PR body/description
  * @param {import('@actions/github-script').AsyncFunctionArguments["context"]} context GitHub Actions context
  * @param {import('@actions/github-script').AsyncFunctionArguments["github"]} github Octokit instance
  * @returns {Promise<string>} Formatted entry line
@@ -255,9 +260,10 @@ async function buildEntry(type, section, cleanedTitle, prNumber, prUrl, prAuthor
 /**
  * Removes duplicated leading verbs based on the resolved changelog prefix.
  * Example: prefix "Added" + title "added support for x" => "support for x"
- * @param {string} prefix - Resolved changelog entry prefix
- * @param {string} title - Cleaned PR title
- * @returns {string} - Title without duplicated leading verb
+ *
+ * @param {string} prefix Resolved changelog entry prefix
+ * @param {string} title Cleaned PR title
+ * @returns {string} Title without duplicated leading verb
  */
 function removeLeadingDuplicateVerb(prefix, title) {
 	const trimmedTitle = title.trim();
@@ -271,6 +277,8 @@ function removeLeadingDuplicateVerb(prefix, title) {
 
 /**
  * Formats the PR description with indentation for nesting under a list item
+ *
+ * @param {string|null} prBody PR description/body text
  * @param {import('@actions/github-script').AsyncFunctionArguments["context"]} context GitHub Actions context
  * @param {import('@actions/github-script').AsyncFunctionArguments["github"]} github Octokit instance
  * @returns {Promise<string>} Formatted description string (empty if no body)
@@ -298,11 +306,12 @@ async function formatPRDescription(prBody, context, github) {
 
 /**
  * Adds a PR entry to the appropriate section within Unreleased
- * @param {array} lines - Changelog lines
- * @param {number} unreleasedIndex - Index of Unreleased header
- * @param {string} section - Section name (Added, Fixed, etc.)
- * @param {string} entry - PR entry to add
- * @returns {array} - Updated lines
+ *
+ * @param {array} lines Changelog lines
+ * @param {number} unreleasedIndex Index of Unreleased header
+ * @param {string} section Section name (Added, Fixed, etc.)
+ * @param {string} entry PR entry to add
+ * @returns {array} Updated lines
  */
 function addEntryToSection(lines, unreleasedIndex, section, entry) {
 	// Find the next version header (##) or end of file
