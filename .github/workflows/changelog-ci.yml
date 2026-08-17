@@ -166,7 +166,9 @@ jobs:
             const pr = JSON.parse(Buffer.from(process.env.RESOLVED_PR_BASE64, 'base64').toString('utf8'));
             return await updateChangelog({
               pr,
-              core
+              core,
+              context,
+              github
             });
         env:
           RESOLVED_PR_BASE64: "${{ steps.resolve-pr.outputs.pr-json-base64 }}"

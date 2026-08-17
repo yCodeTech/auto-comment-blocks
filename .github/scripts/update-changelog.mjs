@@ -70,8 +70,10 @@ const COMMIT_TYPE_REGEX = new RegExp(`^(${INCLUDED_TYPES.join("|")})(\\(.+?\\))?
  * @param {object} params An object containing the parameters for the function
  * @param {object} params.pr Pull request object from GitHub context
  * @param {import('@actions/core')} params.core GitHub Actions core module
+ * @param {import('@actions/github-script').AsyncFunctionArguments["context"]} params.context GitHub Actions context
+ * @param {import('@actions/github-script').AsyncFunctionArguments["github"]} params.github Octokit instance
  */
-export default async function updateChangelog({pr, core}) {
+export default async function updateChangelog({pr, core, context, github}) {
 	try {
 		const prNumber = pr.number;
 		const prTitle = pr.title;
@@ -112,7 +114,7 @@ export default async function updateChangelog({pr, core}) {
 
 		// Format PR entry with cleaned title
 		const cleanedTitle = cleanTitle(prTitle);
-		const entry = buildEntry(type, section, cleanedTitle, prNumber, prUrl, prAuthor, prBody);
+		const entry = await buildEntry(type, section, cleanedTitle, prNumber, prUrl, prAuthor, prBody, context, github);
 
 		// Add entry to the appropriate section
 		const updatedLines = addEntryToSection(lines, unreleasedIndex, section, entry);
@@ -235,13 +237,19 @@ function cleanTitle(title) {
  * @param {string} prUrl - PR HTML URL
  * @param {string} prAuthor - PR author login
  * @param {string|null} prBody - PR body/description
- * @returns {string} - Formatted entry line
+ * @param {import('@actions/github-script').AsyncFunctionArguments["context"]} context GitHub Actions context
+ * @param {import('@actions/github-script').AsyncFunctionArguments["github"]} github Octokit instance
+ * @returns {Promise<string>} Formatted entry line
  */
-function buildEntry(type, section, cleanedTitle, prNumber, prUrl, prAuthor, prBody) {
+async function buildEntry(type, section, cleanedTitle, prNumber, prUrl, prAuthor, prBody, context, github) {
 	const prefix = TYPE_TO_PREFIX[type] ?? section;
 	const dedupedTitle = removeLeadingDuplicateVerb(prefix, cleanedTitle);
 	const titlePart = dedupedTitle ? ` ${dedupedTitle}` : ` ${cleanedTitle.trim()}`;
-	return `- ${prefix}${titlePart} ([#${prNumber}](${prUrl})) by @${prAuthor}${formatPRDescription(prBody)}\n<!-- end -->`;
+	const description = await formatPRDescription(prBody, context, github);
+	const prLink = `([#${prNumber}](${prUrl}))`;
+	const entryEnd = `\n<!-- end -->`;
+
+	return `- ${prefix}${titlePart} ${prLink} by @${prAuthor}${description}${entryEnd}`;
 }
 
 /**
@@ -263,10 +271,11 @@ function removeLeadingDuplicateVerb(prefix, title) {
 
 /**
  * Formats the PR description with indentation for nesting under a list item
- * @param {string|null} prBody - PR description/body text
- * @returns {string} - Formatted description string (empty if no body)
+ * @param {import('@actions/github-script').AsyncFunctionArguments["context"]} context GitHub Actions context
+ * @param {import('@actions/github-script').AsyncFunctionArguments["github"]} github Octokit instance
+ * @returns {Promise<string>} Formatted description string (empty if no body)
  */
-function formatPRDescription(prBody) {
+async function formatPRDescription(prBody, context, github) {
 	if (!prBody || prBody.trim() === "") {
 		return "";
 	}
