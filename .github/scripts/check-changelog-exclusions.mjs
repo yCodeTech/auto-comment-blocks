@@ -43,30 +43,6 @@ const ALL_COMMIT_TYPES = [...INCLUDED_TYPES, ...EXCLUDED_TYPES];
 const typeRegex = new RegExp(`^(${ALL_COMMIT_TYPES.join("|")})(\\(.+?\\))?!?:`, "i");
 
 /**
- * Checks if the PR has any labels that are in the EXCLUDED_LABELS list.
- * The PR should be excluded from the changelog update process if any excluded label is found.
- *
- * @param {string[]} labels - Array of PR labels
- * @returns {boolean} - True if any label is excluded
- */
-function hasExcludedLabel(labels) {
-	return labels.some((label) =>
-		EXCLUDED_LABELS.includes(label.name.toLowerCase()),
-	);
-}
-
-/**
- * Gets the name of the excluded label, if any.
- * @param {string[]} labels - Array of PR labels
- * @returns {string|undefined} - The name of the excluded label, if any
- */
-function getExcludedLabel(labels) {
-	return labels.find((label) =>
-		EXCLUDED_LABELS.includes(label.name.toLowerCase()),
-	)?.name;
-}
-
-/**
  * Checks if a PR should be excluded from the changelog
  */
 export default async function checkExclusions({pr, core}) {
@@ -127,4 +103,24 @@ export default async function checkExclusions({pr, core}) {
 		console.error("❌ Error checking exclusions:", error);
 		core.setFailed(`Failed to check exclusions: ${error.message}`);
 	}
+}
+
+/**
+ * Checks if the PR has any labels that are in the EXCLUDED_LABELS list.
+ * The PR should be excluded from the changelog update process if any excluded label is found.
+ *
+ * @param {string[]} labels - Array of PR labels
+ * @returns {boolean} - True if any label is excluded
+ */
+function hasExcludedLabel(labels) {
+	return labels.some((label) => EXCLUDED_LABELS.includes(label.name.toLowerCase()));
+}
+
+/**
+ * Gets the name of the excluded label, if any.
+ * @param {string[]} labels - Array of PR labels
+ * @returns {string|undefined} - The name of the excluded label, if any
+ */
+function getExcludedLabel(labels) {
+	return labels.find((label) => EXCLUDED_LABELS.includes(label.name.toLowerCase()))?.name;
 }
