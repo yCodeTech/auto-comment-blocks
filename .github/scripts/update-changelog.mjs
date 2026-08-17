@@ -64,6 +64,75 @@ export const INCLUDED_TYPES = Object.keys(TYPE_TO_SECTION);
  */
 const COMMIT_TYPE_REGEX = new RegExp(`^(${INCLUDED_TYPES.join("|")})(\\(.+?\\))?!?:\\s*`, "i");
 
+/**
+ * Main function to update the changelog
+ *
+ * @param {object} params An object containing the parameters for the function
+ * @param {object} params.pr Pull request object from GitHub context
+ * @param {import('@actions/core')} params.core GitHub Actions core module
+ */
+export default async function updateChangelog({pr, core}) {
+	try {
+		const prNumber = pr.number;
+		const prTitle = pr.title;
+		const prUrl = pr.html_url;
+		const prAuthor = pr.user.login;
+		const prBody = pr.body;
+
+		console.log(`📝 Processing PR #${prNumber}: ${prTitle}`);
+
+		// Extract type from PR title
+		const type = extractType(prTitle);
+		if (!type) {
+			console.log(`⚠️  No valid conventional commit type found in PR title. Skipping changelog update.`);
+			return;
+		}
+
+		const section = TYPE_TO_SECTION[type];
+		console.log(`📂 Type: ${type} → Section: ${section}`);
+
+		// Read current changelog
+		const changelogPath = "CHANGELOG.md";
+		let changelog = "";
+		try {
+			changelog = readFileSync(changelogPath, "utf8");
+		} catch (error) {
+			console.log("CHANGELOG.md not found, creating new one");
+			changelog = "# Changelog\n\n";
+		}
+
+		// Get or create Unreleased section
+		const {lines, unreleasedIndex} = findOrCreateUnreleased(changelog);
+
+		// Check if this PR is already in the changelog
+		if (isDuplicateEntry(lines, unreleasedIndex, prNumber)) {
+			console.log(`ℹ️  PR #${prNumber} already exists in the changelog. Skipping.`);
+			return;
+		}
+
+		// Format PR entry with cleaned title
+		const cleanedTitle = cleanTitle(prTitle);
+		const entry = buildEntry(type, section, cleanedTitle, prNumber, prUrl, prAuthor, prBody);
+
+		// Add entry to the appropriate section
+		const updatedLines = addEntryToSection(lines, unreleasedIndex, section, entry);
+
+		// Write updated changelog
+		const updatedChangelog = updatedLines.join("\n");
+		writeFileSync(changelogPath, updatedChangelog);
+
+		console.log(`✅ Updated CHANGELOG.md with PR #${prNumber}`);
+
+		// Set outputs for the workflow to use
+		core.setOutput("changelog-updated", "true");
+		core.setOutput("pr-number", prNumber);
+		core.setOutput("pr-title", cleanedTitle);
+		core.setOutput("pr-author", prAuthor);
+	} catch (error) {
+		console.error("❌ Error updating changelog:", error);
+		core.setFailed(`Failed to update changelog: ${error.message}`);
+	}
+}
 
 /**
  * Extracts the conventional commit type from a PR title
@@ -73,19 +142,6 @@ const COMMIT_TYPE_REGEX = new RegExp(`^(${INCLUDED_TYPES.join("|")})(\\(.+?\\))?
 function extractType(title) {
 	const match = title.match(COMMIT_TYPE_REGEX);
 	return match ? match[1].toLowerCase() : null;
-}
-
-/**
- * Strips the conventional commit type prefix from a PR title
- * @param {string} title - PR title
- * @returns {string} - Cleaned title
- */
-function cleanTitle(title) {
-	// Remove the type prefix (e.g., "feat: ", "fix(scope): ")
-	const cleaned = title.replace(COMMIT_TYPE_REGEX, "");
-
-	if (cleaned.length === 0) return title; // Fallback to original if something went wrong
-	return cleaned;
 }
 
 /**
@@ -155,6 +211,80 @@ function isDuplicateEntry(lines, unreleasedIndex, prNumber) {
 	}
 
 	return false;
+}
+
+/**
+ * Strips the conventional commit type prefix from a PR title
+ * @param {string} title - PR title
+ * @returns {string} - Cleaned title
+ */
+function cleanTitle(title) {
+	// Remove the type prefix (e.g., "feat: ", "fix(scope): ")
+	const cleaned = title.replace(COMMIT_TYPE_REGEX, "");
+
+	if (cleaned.length === 0) return title; // Fallback to original if something went wrong
+	return cleaned;
+}
+
+/**
+ * Builds the full changelog entry line for a PR
+ * @param {string} type - Conventional commit type (e.g., "feat", "fix", "revert")
+ * @param {string} section - Section name resolved from TYPE_TO_SECTION
+ * @param {string} cleanedTitle - PR title with the type prefix stripped
+ * @param {number} prNumber - PR number
+ * @param {string} prUrl - PR HTML URL
+ * @param {string} prAuthor - PR author login
+ * @param {string|null} prBody - PR body/description
+ * @returns {string} - Formatted entry line
+ */
+function buildEntry(type, section, cleanedTitle, prNumber, prUrl, prAuthor, prBody) {
+	const prefix = TYPE_TO_PREFIX[type] ?? section;
+	const dedupedTitle = removeLeadingDuplicateVerb(prefix, cleanedTitle);
+	const titlePart = dedupedTitle ? ` ${dedupedTitle}` : ` ${cleanedTitle.trim()}`;
+	return `- ${prefix}${titlePart} ([#${prNumber}](${prUrl})) by @${prAuthor}${formatPRDescription(prBody)}\n<!-- end -->`;
+}
+
+/**
+ * Removes duplicated leading verbs based on the resolved changelog prefix.
+ * Example: prefix "Added" + title "added support for x" => "support for x"
+ * @param {string} prefix - Resolved changelog entry prefix
+ * @param {string} title - Cleaned PR title
+ * @returns {string} - Title without duplicated leading verb
+ */
+function removeLeadingDuplicateVerb(prefix, title) {
+	const trimmedTitle = title.trim();
+	if (!trimmedTitle) return "";
+
+	const pattern = PREFIX_TO_LEADING_VERB_REGEX[prefix.toLowerCase()];
+	if (!pattern) return trimmedTitle;
+
+	return trimmedTitle.replace(pattern, "").trimStart();
+}
+
+/**
+ * Formats the PR description with indentation for nesting under a list item
+ * @param {string|null} prBody - PR description/body text
+ * @returns {string} - Formatted description string (empty if no body)
+ */
+function formatPRDescription(prBody) {
+	if (!prBody || prBody.trim() === "") {
+		return "";
+	}
+
+	// Convert markdown headings to bold text
+	const withoutHeadings = prBody.replace(/^#{1,6}\s+(.+)$/gm, "**$1**");
+
+	// Indent each line with 1 tab (4 spaces) to nest under the list item
+	// Skip indentation on empty lines to avoid trailing whitespace
+	const indented = withoutHeadings
+		.split("\n")
+		.map((line) => (line ? `${DESCRIPTION_INDENT}${line}` : ""))
+		.join("\n");
+	// Always separate the description from the entry title with a blank line so
+	// that markdown renders the description on its own line. Strip any leading
+	// newlines from `indented` first to avoid double blank lines when prBody
+	// itself starts with a blank line.
+	return `\n\n${indented.replace(/^\n+/, "")}`;
 }
 
 /**
@@ -245,156 +375,4 @@ function addEntryToSection(lines, unreleasedIndex, section, entry) {
 	}
 
 	return lines;
-}
-
-/**
- * Formats the PR description with indentation for nesting under a list item
- * @param {string|null} prBody - PR description/body text
- * @returns {string} - Formatted description string (empty if no body)
- */
-function formatPRDescription(prBody) {
-	if (!prBody || prBody.trim() === "") {
-		return "";
-	}
-
-	// Convert markdown headings to bold text
-	const withoutHeadings = prBody.replace(/^#{1,6}\s+(.+)$/gm, "**$1**");
-
-	// Indent each line with 1 tab (4 spaces) to nest under the list item
-	// Skip indentation on empty lines to avoid trailing whitespace
-	const indented = withoutHeadings
-		.split("\n")
-		.map((line) => (line ? `${DESCRIPTION_INDENT}${line}` : ""))
-		.join("\n");
-	// Always separate the description from the entry title with a blank line so
-	// that markdown renders the description on its own line. Strip any leading
-	// newlines from `indented` first to avoid double blank lines when prBody
-	// itself starts with a blank line.
-	return `\n\n${indented.replace(/^\n+/, "")}`;
-}
-
-/**
- * Builds the full changelog entry line for a PR
- * @param {string} type - Conventional commit type (e.g., "feat", "fix", "revert")
- * @param {string} section - Section name resolved from TYPE_TO_SECTION
- * @param {string} cleanedTitle - PR title with the type prefix stripped
- * @param {number} prNumber - PR number
- * @param {string} prUrl - PR HTML URL
- * @param {string} prAuthor - PR author login
- * @param {string|null} prBody - PR body/description
- * @returns {string} - Formatted entry line
- */
-function buildEntry(
-	type,
-	section,
-	cleanedTitle,
-	prNumber,
-	prUrl,
-	prAuthor,
-	prBody,
-) {
-	const prefix = TYPE_TO_PREFIX[type] ?? section;
-	const dedupedTitle = removeLeadingDuplicateVerb(prefix, cleanedTitle);
-	const titlePart = dedupedTitle ? ` ${dedupedTitle}` : ` ${cleanedTitle.trim()}`;
-	return `- ${prefix}${titlePart} ([#${prNumber}](${prUrl})) by @${prAuthor}${formatPRDescription(prBody)}\n<!-- end -->`;
-}
-
-/**
- * Removes duplicated leading verbs based on the resolved changelog prefix.
- * Example: prefix "Added" + title "added support for x" => "support for x"
- * @param {string} prefix - Resolved changelog entry prefix
- * @param {string} title - Cleaned PR title
- * @returns {string} - Title without duplicated leading verb
- */
-function removeLeadingDuplicateVerb(prefix, title) {
-	const trimmedTitle = title.trim();
-	if (!trimmedTitle) return "";
-
-	const pattern = PREFIX_TO_LEADING_VERB_REGEX[prefix.toLowerCase()];
-	if (!pattern) return trimmedTitle;
-
-	return trimmedTitle.replace(pattern, "").trimStart();
-}
-
-/**
- * Main function to update the changelog
- */
-export default async function updateChangelog({ pr, core }) {
-	try {
-		const prNumber = pr.number;
-		const prTitle = pr.title;
-		const prUrl = pr.html_url;
-		const prAuthor = pr.user.login;
-		const prBody = pr.body;
-
-		console.log(`📝 Processing PR #${prNumber}: ${prTitle}`);
-
-		// Extract type from PR title
-		const type = extractType(prTitle);
-		if (!type) {
-			console.log(
-				`⚠️  No valid conventional commit type found in PR title. Skipping changelog update.`,
-			);
-			return;
-		}
-
-		const section = TYPE_TO_SECTION[type];
-		console.log(`📂 Type: ${type} → Section: ${section}`);
-
-		// Read current changelog
-		const changelogPath = "CHANGELOG.md";
-		let changelog = "";
-		try {
-			changelog = readFileSync(changelogPath, "utf8");
-		} catch (error) {
-			console.log("CHANGELOG.md not found, creating new one");
-			changelog = "# Changelog\n\n";
-		}
-
-		// Get or create Unreleased section
-		const { lines, unreleasedIndex } = findOrCreateUnreleased(changelog);
-
-		// Check if this PR is already in the changelog
-		if (isDuplicateEntry(lines, unreleasedIndex, prNumber)) {
-			console.log(
-				`ℹ️  PR #${prNumber} already exists in the changelog. Skipping.`,
-			);
-			return;
-		}
-
-		// Format PR entry with cleaned title
-		const cleanedTitle = cleanTitle(prTitle);
-		const entry = buildEntry(
-			type,
-			section,
-			cleanedTitle,
-			prNumber,
-			prUrl,
-			prAuthor,
-			prBody,
-		);
-
-		// Add entry to the appropriate section
-		const updatedLines = addEntryToSection(
-			lines,
-			unreleasedIndex,
-			section,
-			entry,
-		);
-
-		// Write updated changelog
-		const updatedChangelog = updatedLines.join("\n");
-		writeFileSync(changelogPath, updatedChangelog);
-
-		console.log(`✅ Updated CHANGELOG.md with PR #${prNumber}`);
-
-		// Set outputs for the workflow to use
-		core.setOutput("changelog-updated", "true");
-		core.setOutput("pr-number", prNumber);
-		core.setOutput("pr-title", cleanedTitle);
-		core.setOutput("pr-author", prAuthor);
-	} catch (error) {
-		console.error("❌ Error updating changelog:", error);
-		core.setFailed(`Failed to update changelog: ${error.message}`);
-	}
 }
