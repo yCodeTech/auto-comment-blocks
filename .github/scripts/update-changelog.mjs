@@ -7,7 +7,7 @@
  * before this script is called, so we can assume the PR should be included.
  */
 
-import { readFileSync, writeFileSync } from "fs";
+import {readFileSync, writeFileSync} from "fs";
 
 /**
  * Maps conventional commit types to changelog sections
@@ -62,10 +62,8 @@ export const INCLUDED_TYPES = Object.keys(TYPE_TO_SECTION);
  * Build regex pattern to match conventional commit type prefix
  * Matches: type(scope)?: or type!: with optional whitespace after colon
  */
-const COMMIT_TYPE_REGEX = new RegExp(
-	`^(${INCLUDED_TYPES.join("|")})(\\(.+?\\))?!?:\\s*`,
-	"i",
-);
+const COMMIT_TYPE_REGEX = new RegExp(`^(${INCLUDED_TYPES.join("|")})(\\(.+?\\))?!?:\\s*`, "i");
+
 
 /**
  * Extracts the conventional commit type from a PR title
@@ -100,12 +98,10 @@ function findOrCreateUnreleased(changelog) {
 	const headerIndex = lines.findIndex((line) => line.startsWith("# Changelog"));
 
 	// Find if Unreleased section exists
-	const unreleasedIndex = lines.findIndex((line) =>
-		line.match(/^## \[?Unreleased\]?/i),
-	);
+	const unreleasedIndex = lines.findIndex((line) => line.match(/^## \[?Unreleased\]?/i));
 
 	if (unreleasedIndex !== -1) {
-		return { hasUnreleased: true, lines, unreleasedIndex };
+		return {hasUnreleased: true, lines, unreleasedIndex};
 	}
 
 	// Create Unreleased section - find first release section to insert before it
@@ -130,7 +126,7 @@ function findOrCreateUnreleased(changelog) {
 
 	lines.splice(insertIndex, 0, ...unreleasedSection);
 
-	return { hasUnreleased: false, lines, unreleasedIndex: insertIndex + 1 };
+	return {hasUnreleased: false, lines, unreleasedIndex: insertIndex + 1};
 }
 
 /**
@@ -199,18 +195,12 @@ function addEntryToSection(lines, unreleasedIndex, section, entry) {
 		}
 
 		// Skip all existing sections to add new section at the end
-		while (
-			insertIndex < nextSectionIndex &&
-			lines[insertIndex].startsWith("### ")
-		) {
+		while (insertIndex < nextSectionIndex && lines[insertIndex].startsWith("### ")) {
 			// Skip section header
 			insertIndex++;
 
 			// Skip all content until the next section header or end of Unreleased
-			while (
-				insertIndex < nextSectionIndex &&
-				!lines[insertIndex].startsWith("### ")
-			) {
+			while (insertIndex < nextSectionIndex && !lines[insertIndex].startsWith("### ")) {
 				insertIndex++;
 			}
 		}
@@ -229,10 +219,7 @@ function addEntryToSection(lines, unreleasedIndex, section, entry) {
 		// Skip existing entries using <!-- end --> markers as definitive boundaries.
 		// For entries without a marker (backward compatibility), stop at the next
 		// entry title ("- ") or section header ("### ").
-		while (
-			insertIndex < nextSectionIndex &&
-			lines[insertIndex].startsWith("- ")
-		) {
+		while (insertIndex < nextSectionIndex && lines[insertIndex].startsWith("- ")) {
 			insertIndex++; // skip the entry title line
 			// Advance past description lines/blank lines up to the <!-- end --> marker
 			while (
@@ -244,10 +231,7 @@ function addEntryToSection(lines, unreleasedIndex, section, entry) {
 				insertIndex++;
 			}
 			// Skip the <!-- end --> marker if present
-			if (
-				insertIndex < nextSectionIndex &&
-				lines[insertIndex] === "<!-- end -->"
-			) {
+			if (insertIndex < nextSectionIndex && lines[insertIndex] === "<!-- end -->") {
 				insertIndex++;
 			}
 			// Skip any blank lines between entries
