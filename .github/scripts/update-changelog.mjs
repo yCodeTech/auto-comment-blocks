@@ -8,6 +8,7 @@
  */
 
 import {readFileSync, writeFileSync} from "fs";
+import * as utils from "./utils.mjs";
 
 /**
  * Maps conventional commit types to changelog sections
@@ -288,12 +289,12 @@ async function formatPRDescription(prBody, context, github) {
 		return "";
 	}
 
-	// Convert markdown headings to bold text
-	const withoutHeadings = prBody.replace(/^#{1,6}\s+(.+)$/gm, "**$1**");
+	// Convert markdown headings to bold text, and linkify bare issue/PR references
+	const formatted = await linkifyReferences(prBody.replace(/^#{1,6}\s+(.+)$/gm, "**$1**"), context, github);
 
 	// Indent each line with 1 tab (4 spaces) to nest under the list item
 	// Skip indentation on empty lines to avoid trailing whitespace
-	const indented = withoutHeadings
+	const indented = formatted
 		.split("\n")
 		.map((line) => (line ? `${DESCRIPTION_INDENT}${line}` : ""))
 		.join("\n");
@@ -302,6 +303,148 @@ async function formatPRDescription(prBody, context, github) {
 	// newlines from `indented` first to avoid double blank lines when prBody
 	// itself starts with a blank line.
 	return `\n\n${indented.replace(/^\n+/, "")}`;
+}
+
+/**
+ * Converts bare issue/PR #NNN references in text into markdown links, since GitHub only
+ * auto-links these in rendered comments/PR descriptions and never in the repo files.
+ *
+ * @link https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/autolinked-references-and-urls#issues-and-pull-requests
+ *
+ * @param {string} text Text to linkify
+ * @param {import('@actions/github-script').AsyncFunctionArguments["context"]} context GitHub Actions context
+ * @param {import('@actions/github-script').AsyncFunctionArguments["github"]} github Octokit instance
+ * @returns {Promise<string>} Text with #NNN references converted to markdown links
+ */
+async function linkifyReferences(text, context, github) {
+	// Find all bare #NNN references first to ensure there are some references to resolve.
+	const refNumbers = findBareReferences(text);
+
+	// If there are no references to linkify, return the original text early
+	// to avoid unnecessary API calls.
+	if (refNumbers.size === 0) return text;
+
+	// Find all closing keyword references to issues.
+	const closingNumbers = utils.findClosingKeywordReferences(text);
+
+	// Remove any closing keyword references from the bare reference set.
+	for (const number of refNumbers) {
+		if (closingNumbers.has(number)) {
+			refNumbers.delete(number);
+		}
+	}
+
+	// Store the updated text with links in a variable to avoid
+	// mutating the original text during iteration.
+	let textWithLinks = text;
+
+	// For each closing keyword reference number...
+	for (const number of closingNumbers) {
+		// Resolve the reference to its real issue URL.
+		const link = resolveClosingKeywordReferenceUrl(number, context);
+
+		// Replace all occurrences of the bare reference with the markdown link.
+		// (All references of the number are replaced, not just the closing keyword references.)
+		textWithLinks = textWithLinks.replace(new RegExp(`(?<!\\w)#(${number})\\b(?!\\])`, "g"), `[#${number}](${link})`);
+	}
+
+	// For each bare reference number...
+	for (const number of refNumbers) {
+		// Resolve the reference to its real issue/PR URL.
+		const link = await resolveBareReferenceUrl(number, context, github);
+
+		// If the link couldn't be resolved, skip replacing it.
+		if (!link) {
+			continue;
+		}
+
+		// Replace all occurrences of the bare reference with the markdown link.
+		textWithLinks = textWithLinks.replace(new RegExp(`(?<!\\w)#(${number})\\b(?!\\])`, "g"), `[#${number}](${link})`);
+	}
+
+	// Return the updated text.
+	return textWithLinks;
+}
+
+/**
+ * Finds all bare #NNN references to issues or PRs in the given text.
+ * Already linked references are ignored, as they don't need to be linkified.
+ * E.g., "#12" will be matched, but "[#13](...)" will not be matched.
+ *
+ * @param {string} text Text to search for bare references
+ * @returns {Set<string>} Set of bare reference numbers
+ */
+function findBareReferences(text) {
+	// Collect the bare reference numbers in a Set to ensure it only captures unique numbers.
+	const refNumbers = new Set();
+	let match;
+
+	// The regex matches bare #NNN references. The (?!\]) negative lookahead ensures
+	// it doesn't match references that are already linked (e.g., [#123](...)).
+	const regex = /(?<!\w)#(\d+)\b(?!\])/g;
+	while ((match = regex.exec(text)) !== null) {
+		refNumbers.add(match[1]);
+	}
+
+	return refNumbers;
+}
+
+/**
+ * Resolves a closing keyword reference to its real URL.
+ * Closing keywords always refer to issues.
+ *
+ * @param {string} number Referenced number
+ * @param {import('@actions/github-script').AsyncFunctionArguments["context"]} context GitHub Actions context
+ * @returns {string} The GitHub URL for the issue
+ */
+function resolveClosingKeywordReferenceUrl(number, context) {
+	const owner = context.repo.owner;
+	const repo = context.repo.repo;
+
+	return `https://github.com/${owner}/${repo}/issues/${number}`;
+}
+
+/**
+ * Resolves a bare reference number to its real URL.
+ * Bare references can point to either issues or pull requests,
+ * so it requires an API call to determine the correct type.
+ * If the reference cannot be resolved, an empty string is returned.
+ *
+ * @param {string} number Referenced number
+ * @param {import('@actions/github-script').AsyncFunctionArguments["context"]} context GitHub Actions context
+ * @param {import('@actions/github-script').AsyncFunctionArguments["github"]} github Octokit instance
+ * @returns {Promise<string>} The resolved GitHub URL or an empty string if it couldn't be resolved.
+ */
+async function resolveBareReferenceUrl(number, context, github) {
+	const owner = context.repo.owner;
+	const repo = context.repo.repo;
+
+	// Attempt to fetch the issue/PR data from GitHub API, using the reference number.
+	try {
+		const {data} = await github.rest.issues.get({
+			owner,
+			repo,
+			issue_number: Number(number),
+		});
+
+		// If the data contains a pull_request field, it's a PR.
+		if (data.pull_request) {
+			// Return the PR URL
+			return data.pull_request.html_url;
+		}
+		// Otherwise, it's an issue.
+		else {
+			// Return the issue URL.
+			return data.html_url;
+		}
+	} catch (error) {
+		// Catches any API errors and non-2xx status codes (404, 301, 410, etc.)
+		// as well as network failures.
+
+		console.log(`Could not resolve #${number}, leaving as-is. Error: ${error.message}`);
+		// Couldn't resolve the reference so just return an empty string.
+		return "";
+	}
 }
 
 /**
