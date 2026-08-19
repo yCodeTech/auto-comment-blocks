@@ -3,7 +3,7 @@
  * Used by the changelog-ci workflow to determine early if processing should continue
  */
 
-import {INCLUDED_TYPES} from "./update-changelog.mjs";
+import {INCLUDED_TYPES} from "./utils.mjs";
 
 /**
  * Labels that should exclude PRs from the changelog

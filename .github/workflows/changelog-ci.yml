@@ -27,12 +27,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Sparse checkout exclusion script
+      - name: Sparse checkout scripts for PR exclusion checks
         uses: actions/checkout@v4
         with:
           sparse-checkout: |
             .github/scripts/check-changelog-exclusions.mjs
-            .github/scripts/update-changelog.mjs
             .github/scripts/utils.mjs
           sparse-checkout-cone-mode: false
 

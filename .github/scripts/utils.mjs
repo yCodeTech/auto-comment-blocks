@@ -1,4 +1,25 @@
 /**
+ * Maps conventional commit types to changelog sections
+ */
+export const TYPE_TO_SECTION = {
+	feat: "Added",
+	fix: "Fixed",
+	refactor: "Changed",
+	perf: "Changed",
+	revert: "Changed",
+	remove: "Removed",
+	security: "Security",
+	change: "Changed",
+	deprecate: "Deprecated",
+};
+
+/**
+ * Array of included commit types derived from the keys of TYPE_TO_SECTION object
+ * @see {@link TYPE_TO_SECTION}
+ */
+export const INCLUDED_TYPES = Object.keys(TYPE_TO_SECTION);
+
+/**
  * Finds all closing keyword references from a given text. These are always issues.
  * Already linked references are ignored, as they don't need to be linkified.
  * E.g., "Closes #12", "Fixes #45", "Resolves #77" will all be matched,

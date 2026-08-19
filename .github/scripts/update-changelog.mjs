@@ -11,21 +11,6 @@ import {readFileSync, writeFileSync} from "fs";
 import * as utils from "./utils.mjs";
 
 /**
- * Maps conventional commit types to changelog sections
- */
-const TYPE_TO_SECTION = {
-	feat: "Added",
-	fix: "Fixed",
-	refactor: "Changed",
-	perf: "Changed",
-	revert: "Changed",
-	remove: "Removed",
-	security: "Security",
-	change: "Changed",
-	deprecate: "Deprecated",
-};
-
-/**
  * Maps commit types to custom display prefixes in changelog entries.
  * When a type is listed here, its capitalised name is used as the prefix
  * instead of the section name. Add new types here to override the default.
@@ -55,15 +40,10 @@ const PREFIX_TO_LEADING_VERB_REGEX = {
 const DESCRIPTION_INDENT = "  ";
 
 /**
- * Array of included commit types derived from the keys of TYPE_TO_SECTION object
- */
-export const INCLUDED_TYPES = Object.keys(TYPE_TO_SECTION);
-
-/**
  * Build regex pattern to match conventional commit type prefix
  * Matches: type(scope)?: or type!: with optional whitespace after colon
  */
-const COMMIT_TYPE_REGEX = new RegExp(`^(${INCLUDED_TYPES.join("|")})(\\(.+?\\))?!?:\\s*`, "i");
+const COMMIT_TYPE_REGEX = new RegExp(`^(${utils.INCLUDED_TYPES.join("|")})(\\(.+?\\))?!?:\\s*`, "i");
 
 /**
  * Main function to update the changelog
@@ -91,7 +71,7 @@ export default async function updateChangelog({pr, core, context, github}) {
 			return;
 		}
 
-		const section = TYPE_TO_SECTION[type];
+		const section = utils.TYPE_TO_SECTION[type];
 		console.log(`📂 Type: ${type} → Section: ${section}`);
 
 		// Read current changelog
