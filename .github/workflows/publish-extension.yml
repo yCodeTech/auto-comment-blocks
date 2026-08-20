@@ -12,6 +12,7 @@ permissions:
   contents: write
   pull-requests: write
   actions: read
+  issues: write
 
 name: Publish Extension to VS Code Marketplace and Open VSX Registry
 jobs:
@@ -333,3 +334,16 @@ jobs:
       - name: Report Success
         run: |
           echo "✅ Successfully published to both marketplaces"
+
+      - name: Comment on linked issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { default: commentOnLinkedIssues } = await import('${{ github.workspace }}/.github/scripts/comment-on-linked-issues.mjs');
+            await commentOnLinkedIssues({
+              github,
+              context,
+              version: '${{ needs.validate-release-version.outputs.version }}',
+            });
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
