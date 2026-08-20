@@ -78,6 +78,32 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
 
 <!-- end -->
 
+- Added support auto commenting on closed linked issues after release ([#50](https://github.com/yCodeTech/auto-comment-blocks/pull/50)) by @yCodeTech
+
+    This PR adds automation to comment on closed issues that are referenced in a release's changelog entry, notifying users that their issues have been resolved and released. The main changes include introducing a new script to identify and comment on relevant issues, and integrating this script into the publish workflow.
+
+    **Automation for commenting on referenced closed issues:**
+
+    - Added `comment-on-linked-issues.mjs` script which introduces several functions:
+
+        - `commentOnLinkedIssues` is the main function that calls all other functions to extract the closing issues from the changelog version entry, and uses the Octokit GitHub API to create a comment on the issue to let the author know that the resolution of the issue has been published in a new release.
+
+        - `extractChangelogEntry` extracts the changelog section for a specified version.
+
+        - `commentExists` checks if a comment already exists for the specific version on the issue, using the Octokit GitHub API to paginate through the issue's comments and filters the comments that matches the criteria.
+
+    **Publish CI enhancements:**
+
+    - Updated `publish-extension` CI to run the new script in a new step after publishing, ensuring users are notified on closed issues that are included in the release.
+
+    - Updated the permissions to include `issues: write`.
+
+    **Other improvements:**
+
+    - Added a new `matchMarkdownLinks` param in the `findClosingKeywordReferences` utils function to optionally match already linked references via Markdown links. This is specifically for usage in the `commentOnLinkedIssues` function of the `comment-on-linked-issues.mjs` script.
+
+<!-- end -->
+
 ### Changed
 
 - Refactored logging environment variables ([#43](https://github.com/yCodeTech/auto-comment-blocks/pull/43)) by @yCodeTech
