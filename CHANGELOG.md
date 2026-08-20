@@ -104,6 +104,36 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
 
 <!-- end -->
 
+- Added linkify issue/pr reference numbers with proper markdown links ([#48](https://github.com/yCodeTech/auto-comment-blocks/pull/48)) by @yCodeTech
+
+    This PR adds linkify functionality in the update changelog CI script to find all issue/PR references like `#NN` in the changelog section it's adding, resolve the GitHub URLs, and **linkify** them as markdown links like `[#NN](<url>)`.
+
+    **Linkify functions:**
+
+    - The `linkifyReferences` function is the main linkify function that calls all other intermediate functions and replaces the bare references with the markdown link.
+
+    - `findBareReferences` finds all bare issue or pr references (`#NN`) that aren't already linked within specified text, and collect the unique numbers.
+
+    - `findClosingKeywordReferences` is a utils function in the new `utils.mjs` script that finds all bare issue-closing keyword references like `close(s/d) #NN`, `fix(es/ed) #NN`, `resolve(s/d) #NN`, and collect the unique numbers.
+
+    - `resolveClosingKeywordReferenceUrl` resolves the URL for issue-closing keyword references. It only needs to construct the URL from the context and reference number without an API call since closing keywords always references issues.
+
+    - `resolveBareReferenceUrl` resolves the URL for all other bare references, using the GitHub REST API to lookup the reference number to determine whether it's an issue or a pull request, and retrieves the URL from the API.
+
+    **Changelog CI enchancements:**
+
+    - Updated the changelog CI permissions to include `issues: read`.
+
+    - Updated various CI steps to checkout and copy the new `utils.mjs` script.
+
+    **Other improvements:**
+
+    - Moved various variables from the `update-changelog.mjs` script into the new `utils.mjs` script for better organisation of cross-file variables.
+
+    - Moved various global variables in the `check-changelog-exclusions.mjs` script to be local variables in the `checkExclusions` function as they don't need to be global variables since they're not used anywhere else.
+
+<!-- end -->
+
 ### Changed
 
 - Refactored logging environment variables ([#43](https://github.com/yCodeTech/auto-comment-blocks/pull/43)) by @yCodeTech
@@ -201,7 +231,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     VScode updated their types to include the LineComment typings and released 1.110 of @types/vscode package. So our temporary custom `LineComment` type and `LineCommentConfig` interface is now redundant.
     - Updated @types/vscode package to 1.110.
     - Removed the temporary `LineComment` type and `LineCommentConfig` interface, and removed the references in configuration file.
-          <!-- end -->
+      <!-- end -->
 
 ### Changed
 
@@ -213,7 +243,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     - Consolidated multiple configuration change handlers into a single handler that checks for a list of settings requiring extension reload. If any are changed, a single reload prompt is shown using the new `showReloadMessage` helper function, reducing code duplication.
 
     - Improved performance and event handling to prevent memory leaks by properly disposing of old comment configurations.
-        <!-- end -->
+          <!-- end -->
 
 - Refactored configuration class ([#30](https://github.com/yCodeTech/auto-comment-blocks/pull/30)) by @yCodeTech
     - Extracted the logic for determining the appropriate Blade or HTML comment style into a new private method `getBladeOrHtmlComments`, simplifying the public API and improving clarity. The `setBladeComments` method now only sets the configuration and no longer returns values based on an `onStart` flag (the flag was removed in favour using the new private method directly).
@@ -221,7 +251,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     - Replaced repetitive code for adding custom single-line comment languages with a new private method `addCustomSingleLineLanguages`, reducing duplication and improving maintainability.
 
     - Replaced `var` with `let` for variable declarations in several places to align with modern best practices.
-      <!-- end -->
+        <!-- end -->
 
 ## [1.1.14](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.14) - 2026-02-23
 
