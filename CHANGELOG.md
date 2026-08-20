@@ -95,6 +95,22 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
 
 <!-- end -->
 
+- Refactored changelog ci scripts ([#47](https://github.com/yCodeTech/auto-comment-blocks/pull/47)) by @yCodeTech
+
+    This PR refactors various things in the changelog CI scripts: updates docblocks, changes various functions to `async`, adds new params derived from the workflow itself, and reorders the functions for readability.
+
+    **Styling enhancements:**
+    - Updated docblocks.
+    - Re-ordered functions to be in a logical and readable order (order of usage from top-bottom).
+    - Added `prettier` and `prettier-plugin-multiline-arrays` dependencies, and added new option to the prettier config file to allow the vscode prettier extension to force wrapping of arrays onto multiple lines, for readability. This prevents prettier from defaulting to formatting all array elements on to 1 long single line.
+
+    **Function improvements:**
+    - Changed `formatPRDescription` and `buildEntry` functions to be `async`, and their function calls now `await` them.
+    - Added new params (`context` and `github`) to `updateChangelog`, `buildEntry`, and `formatPRDescription` functions, so we can access the **context** of the workflow, and use the **GitHub** API via Octokit. The params are passed from the function call in the "Update Changelog" CI step.
+    - Split the return statement in the `buildEntry` function into multiple variables for ease and readability.
+
+<!-- end -->
+
 ## [1.1.17](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.17) - 2026-07-25
 
 ### Fixed
@@ -159,7 +175,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     VScode updated their types to include the LineComment typings and released 1.110 of @types/vscode package. So our temporary custom `LineComment` type and `LineCommentConfig` interface is now redundant.
     - Updated @types/vscode package to 1.110.
     - Removed the temporary `LineComment` type and `LineCommentConfig` interface, and removed the references in configuration file.
-        <!-- end -->
+          <!-- end -->
 
 ### Changed
 
@@ -171,7 +187,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     - Consolidated multiple configuration change handlers into a single handler that checks for a list of settings requiring extension reload. If any are changed, a single reload prompt is shown using the new `showReloadMessage` helper function, reducing code duplication.
 
     - Improved performance and event handling to prevent memory leaks by properly disposing of old comment configurations.
-      <!-- end -->
+        <!-- end -->
 
 - Refactored configuration class ([#30](https://github.com/yCodeTech/auto-comment-blocks/pull/30)) by @yCodeTech
     - Extracted the logic for determining the appropriate Blade or HTML comment style into a new private method `getBladeOrHtmlComments`, simplifying the public API and improving clarity. The `setBladeComments` method now only sets the configuration and no longer returns values based on an `onStart` flag (the flag was removed in favour using the new private method directly).
@@ -179,7 +195,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     - Replaced repetitive code for adding custom single-line comment languages with a new private method `addCustomSingleLineLanguages`, reducing duplication and improving maintainability.
 
     - Replaced `var` with `let` for variable declarations in several places to align with modern best practices.
-          <!-- end -->
+      <!-- end -->
 
 ## [1.1.14](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.14) - 2026-02-23
 
