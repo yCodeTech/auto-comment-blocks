@@ -3,7 +3,7 @@
  * Used by the changelog-ci workflow to determine early if processing should continue
  */
 
-import {INCLUDED_TYPES} from "./update-changelog.mjs";
+import {INCLUDED_TYPES} from "./utils.mjs";
 
 /**
  * Labels that should exclude PRs from the changelog
@@ -31,18 +31,6 @@ const EXCLUDED_TYPES = [
 ];
 
 /**
- * All valid commit types (included + excluded)
- * Included types are derived from TYPE_TO_SECTION
- */
-const ALL_COMMIT_TYPES = [...INCLUDED_TYPES, ...EXCLUDED_TYPES];
-
-/**
- * Regex to match conventional commit type prefix in PR titles,
- * including both included and excluded types.
- */
-const typeRegex = new RegExp(`^(${ALL_COMMIT_TYPES.join("|")})(\\(.+?\\))?!?:`, "i");
-
-/**
  * Checks if a PR should be excluded from the changelog
  */
 export default async function checkExclusions({pr, core}) {
@@ -64,6 +52,17 @@ export default async function checkExclusions({pr, core}) {
 		}
 		// Check for conventional commit type
 		else {
+			/**
+			 * All valid commit types (included + excluded)
+			 * Included types are derived from TYPE_TO_SECTION
+			 */
+			const all_commit_types = [...INCLUDED_TYPES, ...EXCLUDED_TYPES];
+			/**
+			 * Regex to match conventional commit type prefix in PR titles,
+			 * including both included and excluded types.
+			 */
+			const typeRegex = new RegExp(`^(${all_commit_types.join("|")})(\\(.+?\\))?!?:`, "i");
+
 			// Match the PR title against the regex to extract the commit type.
 			const match = prTitle.match(typeRegex);
 

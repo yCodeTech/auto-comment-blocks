@@ -15,6 +15,7 @@ permissions:
   contents: write
   pull-requests: write
   actions: read
+  issues: read
 
 env:
   CHANGELOG_BASE_BRANCH: master
@@ -26,12 +27,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Sparse checkout exclusion script
+      - name: Sparse checkout scripts for PR exclusion checks
         uses: actions/checkout@v4
         with:
           sparse-checkout: |
             .github/scripts/check-changelog-exclusions.mjs
-            .github/scripts/update-changelog.mjs
+            .github/scripts/utils.mjs
           sparse-checkout-cone-mode: false
 
       - name: Resolve PR data
@@ -139,7 +140,9 @@ jobs:
 
       - name: Copy changelog script
         if: steps.check-exclusions.outputs.should-skip == 'false'
-        run: cp "${{ github.workspace }}/.github/scripts/update-changelog.mjs" /tmp/update-changelog.mjs
+        run: |
+          cp "${{ github.workspace }}/.github/scripts/update-changelog.mjs" /tmp/update-changelog.mjs
+          cp "${{ github.workspace }}/.github/scripts/utils.mjs" /tmp/utils.mjs
 
       - name: Checkout changelog branch
         if: steps.check-exclusions.outputs.should-skip == 'false'
