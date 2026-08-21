@@ -75,21 +75,34 @@ export function activate(context: vscode.ExtensionContext) {
 			logger.setLogLevel(logLevel);
 		}
 
-		// Settings that require an extension host reload when changed.
-		const reloadRequiredSettings = [
-			"disabledLanguages",
-			"overrideDefaultLanguageMultiLineComments",
+		/**
+		 * Automatically update (without extension host reload) language definitions and
+		 * reconfigure the comment blocks when any of the following settings are changed.
+		 */
+		const languageSettings = [
 			"multiLineStyleBlocks",
 			"slashStyleBlocks",
 			"hashStyleBlocks",
 			"semicolonStyleBlocks",
+			"disabledLanguages",
+			"overrideDefaultLanguageMultiLineComments",
 		];
 
-		// Settings that require extension host reload
-		for (const setting of reloadRequiredSettings) {
+		for (const setting of languageSettings) {
 			if (event.affectsConfiguration(`${extensionName}.${setting}`)) {
-				showReloadMessage(extensionName, setting);
-				break; // Only show one reload message at a time
+				logger.info(`Configuration setting ${extensionName}.${setting} has changed.`);
+				// Dispose of old comment block configurations to prevent memory leaks
+				commentBlocksDisposables.forEach((disposable) => disposable.dispose());
+				commentBlocksDisposables = [];
+
+				configuration.updateLanguageDefinitions();
+
+				commentBlocksDisposables = configuration.configureCommentBlocks();
+				disposables.push(...commentBlocksDisposables);
+
+				logger.info("Comment block configurations have been updated.");
+
+				break; // Only update once per change
 			}
 		}
 	});
@@ -131,22 +144,4 @@ export function activate(context: vscode.ExtensionContext) {
 
 export function deactivate() {
 	logger.disposeLogger();
-}
-
-/**
- * Shows a message prompting the user to reload the extension host.
- * @param extensionName The namespace of the extension
- * @param settingName The name of the setting that was changed
- */
-function showReloadMessage(extensionName: string, settingName: string): void {
-	vscode.window
-		.showInformationMessage(
-			`The ${extensionName}.${settingName} setting has been changed. Please reload the Extension Host to take effect.`,
-			"Reload"
-		)
-		.then((selection) => {
-			if (selection === "Reload") {
-				vscode.commands.executeCommand("workbench.action.restartExtensionHost");
-			}
-		});
 }

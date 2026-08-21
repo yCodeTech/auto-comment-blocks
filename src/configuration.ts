@@ -683,6 +683,20 @@ export class Configuration {
 	}
 
 	/**
+	 * Update language definitions.
+	 */
+	public updateLanguageDefinitions() {
+		// Remove all elements from the current Map, so we can update
+		// the definitions with an empty Map.
+		this.singleLineBlocksMap.clear();
+		this.multiLineBlocksMap.clear();
+		// Update the definitions.
+		this.setSingleLineCommentLanguageDefinitions();
+		this.setMultiLineCommentLanguageDefinitions();
+		this.writeCommentLanguageDefinitionsToJsonFile();
+	}
+
+	/**
 	 * Sets the language configuration for a given language ID.
 	 *
 	 * @param {LanguageId} langId - The language ID for which the configuration is being set.
