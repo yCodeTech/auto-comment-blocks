@@ -238,10 +238,28 @@ jobs:
 
           if [ "$CHANGELOG_PR_EXISTS" = "true" ]; then
             # Update existing PR
+
             EXISTING_PR_NUMBER="${{ steps.check-existing-changelog-pr.outputs.changelog-pr-number }}"
             EXISTING_BODY="${{ steps.check-existing-changelog-pr.outputs.changelog-pr-body }}"
-            UPDATED_BODY="$EXISTING_BODY
-          - #$PR_NUMBER"
+
+            # Extract the existing PR list
+            PR_LIST=$(printf '%s\n' "$EXISTING_BODY" |
+              sed -n '/^### Included PRs:/,$p' |
+              sed '1d')
+
+            # Add the new PR and sort numerically
+            SORTED_PR_LIST=$(
+              {
+                printf '%s\n' "$PR_LIST" |
+                  sed 's/^- #//'
+                printf '%s\n' "$PR_NUMBER"
+              } |
+              sort -n |
+              sed 's/^/- #/'
+            )
+
+            # Replace only the existing PR list
+            UPDATED_BODY="${EXISTING_BODY/"$PR_LIST"/"$SORTED_PR_LIST"}"
 
             gh pr edit "$EXISTING_PR_NUMBER" --body "$UPDATED_BODY"
             echo "✅ Updated changelog PR #$EXISTING_PR_NUMBER"
