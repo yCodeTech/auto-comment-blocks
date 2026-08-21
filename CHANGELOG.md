@@ -183,6 +183,14 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
 
 <!-- end -->
 
+### Fixed
+
+- Fixed ensure PR list is in numerical order in the update changelog CI ([#52](https://github.com/yCodeTech/auto-comment-blocks/pull/52)) by @yCodeTech
+
+    This PR fixes the changelog CI to sort the PR list in numerical order in the existing update changelog PR body, ensuring that PR numbers will always be in numerical order no matter the order they were added. This is so that if a CI run fails and a concurrent run succeeds, the PR number won't be in the wrong order when re-running the failed run.
+
+<!-- end -->
+
 ## [1.1.17](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.17) - 2026-07-25
 
 ### Fixed
@@ -247,7 +255,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     VScode updated their types to include the LineComment typings and released 1.110 of @types/vscode package. So our temporary custom `LineComment` type and `LineCommentConfig` interface is now redundant.
     - Updated @types/vscode package to 1.110.
     - Removed the temporary `LineComment` type and `LineCommentConfig` interface, and removed the references in configuration file.
-        <!-- end -->
+          <!-- end -->
 
 ### Changed
 
@@ -259,7 +267,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     - Consolidated multiple configuration change handlers into a single handler that checks for a list of settings requiring extension reload. If any are changed, a single reload prompt is shown using the new `showReloadMessage` helper function, reducing code duplication.
 
     - Improved performance and event handling to prevent memory leaks by properly disposing of old comment configurations.
-      <!-- end -->
+        <!-- end -->
 
 - Refactored configuration class ([#30](https://github.com/yCodeTech/auto-comment-blocks/pull/30)) by @yCodeTech
     - Extracted the logic for determining the appropriate Blade or HTML comment style into a new private method `getBladeOrHtmlComments`, simplifying the public API and improving clarity. The `setBladeComments` method now only sets the configuration and no longer returns values based on an `onStart` flag (the flag was removed in favour using the new private method directly).
@@ -267,7 +275,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     - Replaced repetitive code for adding custom single-line comment languages with a new private method `addCustomSingleLineLanguages`, reducing duplication and improving maintainability.
 
     - Replaced `var` with `let` for variable declarations in several places to align with modern best practices.
-          <!-- end -->
+      <!-- end -->
 
 ## [1.1.14](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.14) - 2026-02-23
 
