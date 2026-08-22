@@ -32,6 +32,11 @@ export function activate(context: vscode.ExtensionContext) {
 	const extensionName = extensionData.get("namespace");
 	const extensionDisplayName = extensionData.get("displayName");
 
+	// In development mode, write language definitions to JSON files for debugging/reference.
+	if (context.extensionMode !== vscode.ExtensionMode.Production) {
+		configuration.writeCommentLanguageDefinitionsToJsonFile();
+	}
+
 	// Store disposables for cleanup
 	const disposables: vscode.Disposable[] = [];
 	let commentBlocksDisposables: vscode.Disposable[] = [];
@@ -96,6 +101,11 @@ export function activate(context: vscode.ExtensionContext) {
 				commentBlocksDisposables = [];
 
 				configuration.updateLanguageDefinitions();
+
+				// In development mode, write updated language definitions to JSON files.
+				if (context.extensionMode !== vscode.ExtensionMode.Production) {
+					configuration.writeCommentLanguageDefinitionsToJsonFile();
+				}
 
 				commentBlocksDisposables = configuration.configureCommentBlocks();
 				disposables.push(...commentBlocksDisposables);
