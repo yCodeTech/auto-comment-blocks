@@ -736,7 +736,7 @@ export class Configuration {
 	 *
 	 * This method performs the following tasks:
 	 * - Retrieves the internal language configuration for the specified language ID.
-	 * - Reads the default multi-line configuration from a JSON file.
+	 * - Uses the cached default multi-line configuration.
 	 * - Merges the default multi-line configuration with the internal language configuration if
 	 *   multiLine is `true`.
 	 * - Sets the appropriate comment styles and onEnter rules.
@@ -748,9 +748,13 @@ export class Configuration {
 	 * with rogue characters being inserted on new lines.
 	 */
 	private setLanguageConfiguration(langId: LanguageId, multiLine?: boolean, singleLineStyle?: SingleLineCommentStyle): vscode.Disposable {
-		const internalLangConfig: vscode.LanguageConfiguration = this.getLanguageConfig(langId);
+		const internalLangConfig: vscode.LanguageConfiguration | undefined = this.getLanguageConfig(langId);
 
-		let langConfig = {...internalLangConfig};
+		// Deep-clone the internalLangConfig so modifications never write back
+		// into the cached `languageConfigs` Map by accident.
+		let langConfig: vscode.LanguageConfiguration = internalLangConfig
+			? structuredClone(internalLangConfig)
+			: {};
 
 		if (multiLine) {
 			langConfig.autoClosingPairs = utils.mergeArraysBy<vscode.AutoClosingPair>(
@@ -767,13 +771,17 @@ export class Configuration {
 			);
 
 			// Only assign the default config comments if it doesn't already exist.
-			// (nullish assignment operator ??=)
-			langConfig.comments ??= this.defaultMultiLineConfig.comments;
+			// Clone the comments to avoid modifying the original object down the line.
+			langConfig.comments ??= structuredClone(this.defaultMultiLineConfig.comments);
 
 			// If the default multi-line comments has been overridden for the langId,
-			// add the overridden multi-line comments to the langConfig.
-			if (this.isLangIdMultiLineCommentOverridden(langId)) {
-				langConfig.comments.blockComment[0] = this.getOverriddenMultiLineComment(langId);
+			// AND the langConfig has a comments key with a blockComment key, then
+			// update the opening comment style while preserving the ending.
+			if (this.isLangIdMultiLineCommentOverridden(langId) && langConfig.comments?.blockComment) {
+				langConfig.comments.blockComment = [
+					this.getOverriddenMultiLineComment(langId),
+					langConfig.comments.blockComment[1]
+				];
 			}
 
 			/**
