@@ -10,6 +10,10 @@
 		"rootDir": ".",
 		"typeRoots": [
 			"./node_modules/@types"
+		],
+		"types": [
+			"node",
+			"vscode"
 		]
 	},
 	"typeAcquisition": {
