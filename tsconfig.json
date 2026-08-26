@@ -8,5 +8,8 @@
 		"rootDir": ".",
 		"typeRoots": ["./node_modules/@types"]
 	},
+	"typeAcquisition": {
+		"enable": true,
+	},
 	"exclude": ["node_modules", ".vscode-test"]
 }
