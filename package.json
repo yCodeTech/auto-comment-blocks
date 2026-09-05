@@ -16,7 +16,7 @@
 		"theme": "dark"
 	},
 	"engines": {
-		"vscode": "^1.110.0"
+		"vscode": "^1.130.0"
 	},
 	"keywords": [
 		"auto",
@@ -133,8 +133,8 @@
 		"watch": "tsc -watch -p ./"
 	},
 	"devDependencies": {
-		"@types/node": "^22.9.0",
-		"@types/vscode": "^1.110",
+		"@types/node": "^26.0.0",
+		"@types/vscode": "^1.130",
 		"prettier": "^3.9.6",
 		"prettier-plugin-multiline-arrays": "^4.1.11",
 		"typescript": "^5.7"
