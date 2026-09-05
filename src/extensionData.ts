@@ -61,9 +61,9 @@ export class ExtensionData {
 	/**
 	 * The package.json data for this extension.
 	 *
-	 * @type {IPackageJson}
+	 * @type {IPackageJson | null}
 	 */
-	private packageJsonData: IPackageJson;
+	private packageJsonData: IPackageJson | null;
 
 	/**
 	 * Create an instance of the ExtensionData class, which retrieves and stores metadata
@@ -90,10 +90,7 @@ export class ExtensionData {
 
 		this.packageJsonData = this.getExtensionPackageJsonData();
 
-		// Only proceed with extension data setup if packageJsonData is NOT null.
-		if (this.packageJsonData !== null) {
-			this.setExtensionData();
-		}
+		this.setExtensionData();
 
 		this.setExtensionDiscoveryPaths();
 	}
@@ -101,7 +98,7 @@ export class ExtensionData {
 	/**
 	 * Get the names, id, and version of this extension from package.json.
 	 *
-	 * @returns {IPackageJson | null} The package.json data for this extension, with extra custom keys.
+	 * @returns {IPackageJson | null} The package.json data for this extension.
 	 */
 	private getExtensionPackageJsonData(): IPackageJson | null {
 		// Get the package.json file path.
@@ -113,26 +110,32 @@ export class ExtensionData {
 	 * Set the extension data into the extensionData Map.
 	 */
 	private setExtensionData() {
+		// Only proceed if packageJsonData is NOT falsy, otherwise return early.
+		const packageJsonData = this.packageJsonData;
+		if (!packageJsonData) {
+			return;
+		}
+
 		// Create the extension ID (publisher.name).
-		const id = `${this.packageJsonData.publisher}.${this.packageJsonData.name}`;
+		const id = `${packageJsonData.publisher}.${packageJsonData.name}`;
 
 		// Set each key-value pair directly into the Map
 		this.extensionData.set("id", id);
-		this.extensionData.set("name", this.packageJsonData.name);
+		this.extensionData.set("name", packageJsonData.name);
 
 		// Only set the namespace if it dealing with this extension.
-		if (this.packageJsonData.name === "automatic-comment-blocks") {
+		if (packageJsonData.name === "automatic-comment-blocks") {
 			// The configuration settings namespace is a shortened version of the extension name.
 			// We just need to replace "automatic" with "auto" in the name.
-			const settingsNamespace: string = this.packageJsonData.name.replace("automatic", "auto");
+			const settingsNamespace: string = packageJsonData.name.replace("automatic", "auto");
 
 			this.extensionData.set("namespace", settingsNamespace);
 		}
 
-		this.extensionData.set("displayName", this.packageJsonData.displayName);
-		this.extensionData.set("version", this.packageJsonData.version);
+		this.extensionData.set("displayName", packageJsonData.displayName);
+		this.extensionData.set("version", packageJsonData.version);
 		this.extensionData.set("extensionPath", this.extensionPath);
-		this.extensionData.set("packageJSON", this.packageJsonData);
+		this.extensionData.set("packageJSON", packageJsonData);
 	}
 
 	/**
