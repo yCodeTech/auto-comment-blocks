@@ -301,7 +301,7 @@ function validateDevEnvVariables() {
 				UNKNOWN: "Unknown error accessing the path from env variable 'DEV_USER_EXTENSIONS_PATH'",
 			};
 
-			errorMsg = `${errorCode}: ${errorMessages[errorCode]}: "${devPath}". Removing from environment.`;
+			errorMsg = `${errorCode}: ${errorMessages[errorCode] ?? errorMessages.UNKNOWN}: "${devPath}". Removing from environment.`;
 
 			errorData = error as Error;
 
