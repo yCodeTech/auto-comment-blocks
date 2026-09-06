@@ -23,7 +23,7 @@ export function readJsonFile<T extends JsonValue = JsonObject>(filepath: string,
 		// If throwOnFileMissing param is true, throw an error.
 		if (throwOnFileMissing) {
 			const error = new Error(`JSON file not found: "${filepath}"`);
-			logger.error(error.stack);
+			logger.error(error.stack ?? error.message);
 			throw error;
 		}
 		// Otherwise just return null.
@@ -60,7 +60,7 @@ function parseJsonContent<T extends JsonValue = JsonObject>(filepath: string, fi
 		const errorMsg = "Failed to parse a required JSON file";
 		const error = new Error(`${errorMsg}: "${filepath}"\n\n\tParse Errors:\n\n${errorMessages}\n\tStack Trace:`);
 
-		logger.error(error.stack);
+		logger.error(error.stack ?? error.message);
 
 		window
 			.showErrorMessage(
@@ -137,18 +137,20 @@ export function ensureDirExists(dir: string) {
  * Reconstruct the regex pattern because vscode doesn't like the regex pattern as a string,
  * or some patterns are not working as expected.
  *
- * @param {unknown} obj The object
+ * @param {T} obj The object
  * @param {string} key The key to check in the object
  * @returns {RegExp} The reconstructed regex pattern.
  */
-export function reconstructRegex(obj: unknown, key: string): RegExp {
+export function reconstructRegex<T extends object, K extends keyof T>(obj: T, key: K): RegExp {
+	const value = obj[key];
+
 	// If key has a "pattern" key, then it's an object...
-	if (Object.hasOwn(obj[key], "pattern")) {
-		return new RegExp(obj[key].pattern);
+	if (typeof value === "object" && value !== null && Object.hasOwn(value, "pattern")) {
+		return new RegExp((value as unknown as {pattern: string}).pattern);
 	}
 	// Otherwise it's a string.
 	else {
-		return new RegExp(obj[key]);
+		return new RegExp(value as string);
 	}
 }
 
@@ -185,7 +187,7 @@ export function reconstructRegex(obj: unknown, key: string): RegExp {
  * }
  */
 export function convertMapToReversedObject<T extends JsonValue = JsonObject>(m: Map<string, Map<string, string>>): T {
-	const result = {};
+	const result: Record<string, Record<string, string[]>> = {};
 
 	// Convert a nested key:value Map from inside another Map into an key:array object,
 	// while reversing/switching the keys and values. The Map's values are now the keys of
@@ -199,15 +201,15 @@ export function convertMapToReversedObject<T extends JsonValue = JsonObject>(m: 
 
 		// Reverse the inner object mapping.
 		//
-		// Loop through the object (o) keys, assigns a new object (r) with the value of the
-		// object key (k) as the new key (eg. "//") and the new value is an array of all
-		// the original object keys (o[k]) (eg. "php").
-		// If the key (o[k]) already exists in the new object (r), then just add the
-		// original key to the array, otherwise start a new array ([]) with the original
-		// key as value ( (r[o[k]] || []).concat(k) ).
-		// Add this new reversed object to the result object with the outer map key
-		// as the key.
-		result[key] = Object.keys(o).reduce((r, k) => Object.assign(r, {[o[k]]: (r[o[k]] || []).concat(k)}), {});
+		// Loop through the object (o) keys, and for each one, push the key (itemKey, eg. "php")
+		// onto the array keyed by its value (o[itemKey], eg. "//") in the reversed object,
+		// creating that array on first use. Add this reversed object to the result object
+		// with the outer map key as the key.
+		result[key] = Object.keys(o).reduce<Record<string, string[]>>((reversed, itemKey) => {
+			const value = o[itemKey];
+			(reversed[value] ??= []).push(itemKey);
+			return reversed;
+		}, {});
 	}
 	return result as T;
 }
@@ -279,9 +281,9 @@ function validateDevEnvVariables() {
 		// Trim whitespace and resolve the path to an absolute path
 		let devPath = path.resolve(process.env.DEV_USER_EXTENSIONS_PATH.trim());
 
-		let stats: fs.Stats;
+		let stats: fs.Stats | undefined;
 		let errorMsg: string = "";
-		let errorData: Error;
+		let errorData: Error | undefined;
 
 		// Get the file system stats for the path to check if it exists.
 		// statSync throws an exception if the no file system data exists for the path,
@@ -293,13 +295,13 @@ function validateDevEnvVariables() {
 			const errorCode = nodeError.code || "UNKNOWN";
 
 			// Handle specific file system errors with user-friendly messages.
-			const errorMessages = {
+			const errorMessages: Record<string, string> = {
 				ENOENT: "Path from env variable 'DEV_USER_EXTENSIONS_PATH' does not exist",
 				EACCES: "Permission denied accessing path from env variable 'DEV_USER_EXTENSIONS_PATH'",
 				UNKNOWN: "Unknown error accessing the path from env variable 'DEV_USER_EXTENSIONS_PATH'",
 			};
 
-			errorMsg = `${errorCode}: ${errorMessages[errorCode]}: "${devPath}". Removing from environment.`;
+			errorMsg = `${errorCode}: ${errorMessages[errorCode] ?? errorMessages.UNKNOWN}: "${devPath}". Removing from environment.`;
 
 			errorData = error as Error;
 

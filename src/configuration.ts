@@ -95,7 +95,7 @@ export class Configuration {
 		// Read the default multi-line config from the JSON file and cache it for later use.
 		this.defaultMultiLineConfig = utils.readJsonFile(`${configPath}/default-multi-line-config.json`) as vscode.LanguageConfiguration;
 		// Read the languages to skip from the JSON file and cache it for later use.
-		this.languagesToSkip = utils.readJsonFile(`${configPath}/skip-languages.jsonc`);
+		this.languagesToSkip = utils.readJsonFile<JsonObject>(`${configPath}/skip-languages.jsonc`) ?? {};
 
 		this.findAllLanguageConfigFilePaths();
 		this.setLanguageConfigDefinitions();
@@ -255,7 +255,7 @@ export class Configuration {
 	 * ```
 	 */
 	public getConfigurationValue<K extends keyof Settings>(key: K): Settings[K] {
-		return this.getConfiguration().get<Settings[K]>(key);
+		return this.getConfiguration().get<Settings[K]>(key) as Settings[K];
 	}
 
 	/**
@@ -343,8 +343,8 @@ export class Configuration {
 		const builtInExtensionsPath = this.extensionData.getExtensionDiscoveryPath("builtInExtensionsPath");
 
 		// Read the paths and create arrays of the extensions.
-		const userExtensions = this.readExtensionsFromDirectory(userExtensionsPath);
-		const builtInExtensions = this.readExtensionsFromDirectory(builtInExtensionsPath);
+		const userExtensions = userExtensionsPath ? this.readExtensionsFromDirectory(userExtensionsPath) : [];
+		const builtInExtensions = builtInExtensionsPath ? this.readExtensionsFromDirectory(builtInExtensionsPath) : [];
 
 		// Add all installed extensions (including built-in ones) into the extensions array.
 		// If running WSL, these will be the WSL-installed extensions.
@@ -372,7 +372,7 @@ export class Configuration {
 						// If the langId already exists...
 						if (this.languageConfigFilePaths.has(langId)) {
 							// Push the new config path into the array of the existing langId.
-							this.languageConfigFilePaths.get(langId).push(configPath);
+							this.languageConfigFilePaths.get(langId)?.push(configPath);
 						}
 						// Otherwise, if the langId doesn't exist...
 						else {
@@ -412,7 +412,7 @@ export class Configuration {
 						// Define a new array as the new AutoClosingPair.
 						const autoClosingPairsArray: vscode.AutoClosingPair[] = [];
 						// Loop through the config's autoClosingPairs...
-						config.autoClosingPairs.forEach((item) => {
+						(config.autoClosingPairs ?? []).forEach((item) => {
 							// If the item is an array...
 							if (Array.isArray(item)) {
 								// Create a new object with the 1st array element [0] as the
@@ -439,7 +439,7 @@ export class Configuration {
 						const existingConfig = this.languageConfigs.get(langId);
 
 						// Only merge if both configs have comments
-						if (existingConfig.comments && config.comments) {
+						if (existingConfig?.comments && config.comments) {
 							// Start with existing comments as base
 							const mergedComments = {...existingConfig.comments};
 
@@ -449,7 +449,9 @@ export class Configuration {
 								if (Array.isArray(value) && value.length === 0) {
 									return;
 								}
-								mergedComments[key] = value;
+								if (key === "lineComment" || key === "blockComment") {
+									mergedComments[key] = value;
+								}
 							});
 
 							// Update the config with merged comments
@@ -555,7 +557,7 @@ export class Configuration {
 		this.languageConfigs.forEach((config: vscode.LanguageConfiguration, langId: LanguageId) => {
 			// If the config object has own property of comments AND the comments key has
 			// own property of blockComment...
-			if (Object.hasOwn(config, "comments") && Object.hasOwn(config.comments, "blockComment")) {
+			if (config.comments && Object.hasOwn(config.comments, "blockComment") && config.comments.blockComment) {
 				// If the blockComment array includes the multi-line start of "/*"...
 				if (config.comments.blockComment.includes("/*")) {
 					// console.log(langId, config.comments);
@@ -627,7 +629,7 @@ export class Configuration {
 
 			// If the config object has own property of comments AND the comments key has
 			// own property of lineComment...
-			if (Object.hasOwn(config, "comments") && Object.hasOwn(config.comments, "lineComment")) {
+			if (config.comments && Object.hasOwn(config.comments, "lineComment")) {
 				let lineComment = config.comments.lineComment;
 
 				// Line comments can be a string or an object with a "comment" key.
@@ -752,21 +754,19 @@ export class Configuration {
 
 		// Deep-clone the internalLangConfig so modifications never write back
 		// into the cached `languageConfigs` Map by accident.
-		let langConfig: vscode.LanguageConfiguration = internalLangConfig
-			? structuredClone(internalLangConfig)
-			: {};
+		let langConfig: vscode.LanguageConfiguration = internalLangConfig ? structuredClone(internalLangConfig) : {};
 
 		if (multiLine) {
 			langConfig.autoClosingPairs = utils.mergeArraysBy<vscode.AutoClosingPair>(
-				this.defaultMultiLineConfig.autoClosingPairs,
-				internalLangConfig?.autoClosingPairs,
+				this.defaultMultiLineConfig.autoClosingPairs ?? [],
+				internalLangConfig?.autoClosingPairs ?? [],
 				"open"
 			);
 
 			// Add the multi-line onEnter rules to the langConfig.
 			langConfig.onEnterRules = utils.mergeArraysBy<vscode.OnEnterRule>(
 				Rules.multilineEnterRules,
-				internalLangConfig?.onEnterRules,
+				internalLangConfig?.onEnterRules ?? [],
 				"beforeText"
 			);
 
@@ -780,7 +780,7 @@ export class Configuration {
 			if (this.isLangIdMultiLineCommentOverridden(langId) && langConfig.comments?.blockComment) {
 				langConfig.comments.blockComment = [
 					this.getOverriddenMultiLineComment(langId),
-					langConfig.comments.blockComment[1]
+					langConfig.comments.blockComment[1],
 				];
 			}
 
@@ -792,6 +792,7 @@ export class Configuration {
 
 				// If bladeComments has a value...
 				if (bladeComments) {
+					langConfig.comments ??= {};
 					langConfig.comments.blockComment = bladeComments;
 				}
 			}
@@ -805,22 +806,26 @@ export class Configuration {
 		if (isOnEnter && singleLineStyle) {
 			// //-style comments
 			if (singleLineStyle === "//") {
-				langConfig.onEnterRules = utils.mergeArraysBy<vscode.OnEnterRule>(Rules.slashEnterRules, langConfig?.onEnterRules, "beforeText");
+				langConfig.onEnterRules = utils.mergeArraysBy<vscode.OnEnterRule>(Rules.slashEnterRules, langConfig.onEnterRules ?? [], "beforeText");
 			}
 			// #-style comments
 			else if (singleLineStyle === "#") {
-				langConfig.onEnterRules = utils.mergeArraysBy<vscode.OnEnterRule>(Rules.hashEnterRules, langConfig?.onEnterRules, "beforeText");
+				langConfig.onEnterRules = utils.mergeArraysBy<vscode.OnEnterRule>(Rules.hashEnterRules, langConfig.onEnterRules ?? [], "beforeText");
 			}
 			// ;-style comments
 			else if (singleLineStyle === ";") {
-				langConfig.onEnterRules = utils.mergeArraysBy<vscode.OnEnterRule>(Rules.semicolonEnterRules, langConfig?.onEnterRules, "beforeText");
+				langConfig.onEnterRules = utils.mergeArraysBy<vscode.OnEnterRule>(
+					Rules.semicolonEnterRules,
+					langConfig.onEnterRules ?? [],
+					"beforeText"
+				);
 			}
 		}
 		// If isOnEnter is false AND singleLineStyle isn't false, i.e. a string.
 		else if (!isOnEnter && singleLineStyle) {
 			// If langConfig does NOT have a comments key OR
 			// the comments key exists but does NOT have the lineComment key...
-			if (!Object.hasOwn(langConfig, "comments") || !Object.hasOwn(langConfig.comments, "lineComment")) {
+			if (!langConfig.comments || !Object.hasOwn(langConfig.comments, "lineComment")) {
 				// Add the singleLineStyle to the lineComments key and make sure any
 				// blockComments aren't overwritten.
 				langConfig.comments = {...langConfig.comments, lineComment: singleLineStyle};
@@ -838,7 +843,7 @@ export class Configuration {
 
 		// Check if isOnEnter OR multiline is true.
 		if (isOnEnter || multiLine) {
-			langConfig.onEnterRules.forEach((item) => {
+			(langConfig.onEnterRules ?? []).forEach((item) => {
 				// Check if the item has a "beforeText" property and reconstruct its regex pattern.
 				if (Object.hasOwn(item, "beforeText")) {
 					item.beforeText = utils.reconstructRegex(item, "beforeText");
@@ -941,12 +946,13 @@ export class Configuration {
 
 		// Get the langId from the auto-supported langs. If it doesn't exist, try getting it from
 		// the custom-supported langs instead.
-		let style: SingleLineCommentStyle | ExtraSingleLineCommentStyles = singleLineLangs.get(langId) ?? customSingleLineLangs.get(langId);
+		let style: SingleLineCommentStyle | ExtraSingleLineCommentStyles | undefined =
+			singleLineLangs.get(langId) ?? customSingleLineLangs.get(langId);
 
 		if (style && textEditor.selection.isEmpty) {
 			let line = textEditor.document.lineAt(textEditor.selection.active);
 			let isCommentLine = true;
-			let indentRegex: RegExp;
+			let indentRegex: RegExp | undefined;
 
 			if (style === "//" && line.text.search(/^\s*\/\/\s*/) !== -1) {
 				indentRegex = /\//;
@@ -972,7 +978,7 @@ export class Configuration {
 				isCommentLine = false;
 			}
 
-			if (!isCommentLine) {
+			if (!isCommentLine || !indentRegex) {
 				return;
 			}
 

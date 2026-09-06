@@ -9,9 +9,6 @@ import {addDevEnvVariables} from "./utils";
 import {LogLevel} from "./interfaces/utils";
 
 export function activate(context: vscode.ExtensionContext) {
-	// Setup logger first
-	logger.setupOutputChannel();
-
 	const initialLogLevel = vscode.workspace.getConfiguration("auto-comment-blocks").get<LogLevel>("logLevel", "debug");
 	logger.setLogLevel(initialLogLevel);
 

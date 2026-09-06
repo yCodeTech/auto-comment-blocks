@@ -137,7 +137,7 @@
 		"@types/vscode": "^1.130",
 		"prettier": "^3.9.6",
 		"prettier-plugin-multiline-arrays": "^4.1.11",
-		"typescript": "^5.7"
+		"typescript": "^7.0.0"
 	},
 	"dependencies": {
 		"is-wsl": "^3.1.0",
