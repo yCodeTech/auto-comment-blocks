@@ -4,6 +4,221 @@ All notable changes to this extension will be documented in this file.
 
 This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure.
 
+## [Unreleased]
+
+### Added
+
+- Added introduce new icon artwork and differentiate the extension from the original ([#40](https://github.com/yCodeTech/auto-comment-blocks/pull/40)) by @yCodeTech
+
+    This pull request introduces a new and improved icon artwork with an update to the marketplace banner colour, and updates the extension description. These changes tries to prevent further confusion between the original and forked extensions, as demonstrated in #36 and https://github.com/kevb34ns/auto-comment-blocks/issues/47, by establishing differentiating factors in the marketplace.
+
+    **Visual changes:**
+
+    - Replaced the old flat icon with an improved 3D icon artwork to differentiate the extension from the original (and it's other forked extensions), ensuring it's distinctive but also familiar.
+    - Changed the `galleryBanner.color` in `package.json` to use the dark blue `#01092d` from the new icon for improved appearance in the marketplace.
+
+    **Other changes:**
+
+    - Updated the `description` field in `package.json` to clarify that block comment completion is now available for all auto-supported languages, not just officially supported ones.
+    - Added `.env` to `.vscodeignore` to ensure environment files are excluded from VS Code extension packaging during testing.
+    - Added `icon.psd` to `.gitignore` to prevent committing the Photoshop file of the icon.
+
+    **Documentation changes:**
+
+    - Added the new icon into the `README.md` title so the new logo/icon is visible on the docs too which creates a better distinction in the repo.
+    - Updated the fork info to specify who publishes/maintains the extension, so that it's explicit that this extension is owned by me.
+
+<!-- end -->
+
+- Added logging levels ([#42](https://github.com/yCodeTech/auto-comment-blocks/pull/42)) by @yCodeTech
+
+    This pull request introduces a configurable logging level to the extension, allowing users to control the verbosity of log output. It also improves logging practices by redacting sensitive or irrelevant information from logs, restructures some logging logic for clarity and safety, and enhances the handling of document events and JSON parsing. The most important changes are:
+
+    **Logging Level Configuration and Handling:**
+
+    - Added a new `auto-comment-blocks.logLevel` setting to `package.json`, allowing users to set the logging level (`debug`, `info`, `error`, `off`) for the extension.
+    - Refactored the `Logger` class in `src/logger.ts` to support log levels, including methods to set the log level, check if a message should be logged, and always emit "important" messages regardless of log level (ie. the extension name and version).
+    - Updated extension activation logic in `src/extension.ts` to initialize and update the logger's log level based on user configuration, and to log extension metadata on activation.
+
+    **Configuration and Settings Integration:**
+
+    - Extended the `Settings` interface and related types to include the new `logLevel` property, ensuring the log level is accessible throughout the extension.
+
+    **Logging Data Redaction:**
+
+    - Enhanced the `ExtensionData` class to redact irrelevant or sensitive information (like `packageJSON`) from logs, ensuring only necessary details are logged.
+
+    **Event Handling Improvements:**
+
+    - Improved the logic for handling document open events to avoid unnecessary reconfiguration for virtual documents and clarified logging messages.
+
+    **Utility and Error Handling Enhancements:**
+
+    - Refactored JSON file reading and parsing in `src/utils.ts` to separate parsing logic and improve error handling, making it easier to maintain and debug.
+
+<!-- end -->
+
+- Added redact username in logging paths ([#45](https://github.com/yCodeTech/auto-comment-blocks/pull/45)) by @yCodeTech
+
+    This pull request introduces a new warning log level and improves logging safety by redacting OS usernames in paths from log output. It also refines the handling of extension discovery paths and updates log level descriptions for clarity.
+
+    **Logging improvements:**
+
+    - Added a new `warn` log level, including support in the logger, log level comparisons, and the `logLevels` utils constant.
+    - Implemented automatic redaction of the current OS username from all log messages and data to prevent accidental leaking of sensitive information. If the username cannot be determined, a warning is logged once per session while avoiding infinite recursion, and further redaction attempts are skipped.
+
+    **Configuration and API updates:**
+
+    - Updated log level descriptions in `package.json` to reflect the new `warn` level and clarify which messages are included at each level.
+    - The `getAllExtensionDiscoveryPaths` method now returns a new `Map` to prevent external mutation of internal state.
+
+    **Other changes:**
+
+    - Minor code formatting and comments for clarity in configuration and extension data classes.
+
+<!-- end -->
+
+- Added support auto commenting on closed linked issues after release ([#50](https://github.com/yCodeTech/auto-comment-blocks/pull/50)) by @yCodeTech
+
+    This PR adds automation to comment on closed issues that are referenced in a release's changelog entry, notifying users that their issues have been resolved and released. The main changes include introducing a new script to identify and comment on relevant issues, and integrating this script into the publish workflow.
+
+    **Automation for commenting on referenced closed issues:**
+
+    - Added `comment-on-linked-issues.mjs` script which introduces several functions:
+
+        - `commentOnLinkedIssues` is the main function that calls all other functions to extract the closing issues from the changelog version entry, and uses the Octokit GitHub API to create a comment on the issue to let the author know that the resolution of the issue has been published in a new release.
+
+        - `extractChangelogEntry` extracts the changelog section for a specified version.
+
+        - `commentExists` checks if a comment already exists for the specific version on the issue, using the Octokit GitHub API to paginate through the issue's comments and filters the comments that matches the criteria.
+
+    **Publish CI enhancements:**
+
+    - Updated `publish-extension` CI to run the new script in a new step after publishing, ensuring users are notified on closed issues that are included in the release.
+
+    - Updated the permissions to include `issues: write`.
+
+    **Other improvements:**
+
+    - Added a new `matchMarkdownLinks` param in the `findClosingKeywordReferences` utils function to optionally match already linked references via Markdown links. This is specifically for usage in the `commentOnLinkedIssues` function of the `comment-on-linked-issues.mjs` script.
+
+<!-- end -->
+
+- Added linkify issue/pr reference numbers with proper markdown links ([#48](https://github.com/yCodeTech/auto-comment-blocks/pull/48)) by @yCodeTech
+
+    This PR adds linkify functionality in the update changelog CI script to find all issue/PR references like `#NN` in the changelog section it's adding, resolve the GitHub URLs, and **linkify** them as markdown links like `[#NN](<url>)`.
+
+    **Linkify functions:**
+
+    - The `linkifyReferences` function is the main linkify function that calls all other intermediate functions and replaces the bare references with the markdown link.
+
+    - `findBareReferences` finds all bare issue or pr references (`#NN`) that aren't already linked within specified text, and collect the unique numbers.
+
+    - `findClosingKeywordReferences` is a utils function in the new `utils.mjs` script that finds all bare issue-closing keyword references like `close(s/d) #NN`, `fix(es/ed) #NN`, `resolve(s/d) #NN`, and collect the unique numbers.
+
+    - `resolveClosingKeywordReferenceUrl` resolves the URL for issue-closing keyword references. It only needs to construct the URL from the context and reference number without an API call since closing keywords always references issues.
+
+    - `resolveBareReferenceUrl` resolves the URL for all other bare references, using the GitHub REST API to lookup the reference number to determine whether it's an issue or a pull request, and retrieves the URL from the API.
+
+    **Changelog CI enchancements:**
+
+    - Updated the changelog CI permissions to include `issues: read`.
+
+    - Updated various CI steps to checkout and copy the new `utils.mjs` script.
+
+    **Other improvements:**
+
+    - Moved various variables from the `update-changelog.mjs` script into the new `utils.mjs` script for better organisation of cross-file variables.
+
+    - Moved various global variables in the `check-changelog-exclusions.mjs` script to be local variables in the `checkExclusions` function as they don't need to be global variables since they're not used anywhere else.
+
+<!-- end -->
+
+- Added ability to auto-update the language definitions on settings change ([#53](https://github.com/yCodeTech/auto-comment-blocks/pull/53)) by @yCodeTech
+
+    This pull request introduces several improvements to how language comment block definitions are managed and updated in the extension. The most significant changes are the ability to auto update language definitions on settings change without requiring an extension host reload, the caching of configuration files for efficiency, and performance improvements. Below are the most important changes:
+
+    **Auto-Update Language Definitions:**
+
+    - Added a new `updateLanguageDefinitions` method to `Configuration`, allowing language comment block definitions to be updated at runtime without requiring an extension host reload.
+
+    - The extension now listens for changes to relevant configuration settings in the `activate` function and automatically updates language definitions and reconfigures the comment blocks as needed, removing the pop-up message and the requirement for an extension reload.
+
+    **Performance Improvements:**
+
+    - **Accidental cached data mutation prevention and unnecessary disk read improvements:**
+
+        - The `setLanguageConfiguration` method now deep-clones language configurations before modification to prevent accidental mutation of cached data.
+
+        - The default multi-line language configuration (`default-multi-line-config.json`) and the languages to skip (`skip-languages.jsonc`) files are now read once during initialisation and cached for later use, improving efficiency and reducing redundant disk reads on every loop iteration.
+
+    - **Writing of Language Definition Files and Logging Enhancements:**
+
+        - The extension no longer writes the current language definitions to JSON files in `production`, they are only written in `development` and `testing` modes for easier debugging and quick reference during development, and preventing unnecessary file writes in production.
+
+        - Refactored the debug logging in the `logDebugInfo` method to use the existing cached language definitions instead of reading from files, improving efficiency.
+
+    These changes collectively improve the maintainability, performance, and experience of the extension.
+
+<!-- end -->
+
+### Changed
+
+- Refactored logging environment variables ([#43](https://github.com/yCodeTech/auto-comment-blocks/pull/43)) by @yCodeTech
+
+    This pull request updates the way environment and extension path information is logged in the `Configuration` class, streamlining the debug output and focusing on relevant environment variables. The most important changes are:
+
+    **Environment and Extension Path Logging:**
+
+    - Removed the logging of the extension discovery paths from the `logDebugInfo` method as these are also logged in `extension.ts`, so they're technically redundant in the method.
+    - Added logging of the `App Root` and filtered environment variables (only those starting with `VSCODE_`) under `Env Vars` in the environment details, making the debug output more focused and relevant in `logDebugInfo` method.
+
+    **Removal of dumping system environment variables into the logs**
+
+    - Removed logging of the dumped system environment variables as they could potentially have some sensitive information like environment passwords, auth keys, etc. Majority of it wasn't relevant to debugging anyway.
+
+<!-- end -->
+
+- Refactored changelog ci scripts ([#47](https://github.com/yCodeTech/auto-comment-blocks/pull/47)) by @yCodeTech
+
+    This PR refactors various things in the changelog CI scripts: updates docblocks, changes various functions to `async`, adds new params derived from the workflow itself, and reorders the functions for readability.
+
+    **Styling enhancements:**
+    - Updated docblocks.
+    - Re-ordered functions to be in a logical and readable order (order of usage from top-bottom).
+    - Added `prettier` and `prettier-plugin-multiline-arrays` dependencies, and added new option to the prettier config file to allow the vscode prettier extension to force wrapping of arrays onto multiple lines, for readability. This prevents prettier from defaulting to formatting all array elements on to 1 long single line.
+
+    **Function improvements:**
+    - Changed `formatPRDescription` and `buildEntry` functions to be `async`, and their function calls now `await` them.
+    - Added new params (`context` and `github`) to `updateChangelog`, `buildEntry`, and `formatPRDescription` functions, so we can access the **context** of the workflow, and use the **GitHub** API via Octokit. The params are passed from the function call in the "Update Changelog" CI step.
+    - Split the return statement in the `buildEntry` function into multiple variables for ease and readability.
+
+<!-- end -->
+
+### Removed
+
+- Removed test suite and dependencies. ([#51](https://github.com/yCodeTech/auto-comment-blocks/pull/51)) by @yCodeTech
+
+    This PR removes the entire test suite and dependencies because it is not used, and the tests are only example files.
+
+    - Removed `@types/mocha` and `mocha` dependencies.
+
+    - Removed the `test` script from package.json.
+
+    - Removed the `Run Extension Tests` configuration from the launch.json.
+
+    - Removed the test files: `extension.test.ts` and `index.ts`.
+
+<!-- end -->
+
+### Fixed
+
+- Fixed ensure PR list is in numerical order in the update changelog CI ([#52](https://github.com/yCodeTech/auto-comment-blocks/pull/52)) by @yCodeTech
+
+    This PR fixes the changelog CI to sort the PR list in numerical order in the existing update changelog PR body, ensuring that PR numbers will always be in numerical order no matter the order they were added. This is so that if a CI run fails and a concurrent run succeeds, the PR number won't be in the wrong order when re-running the failed run.
+
+<!-- end -->
+
 ## [1.1.17](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.17) - 2026-07-25
 
 ### Fixed
@@ -57,7 +272,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
     - Updated the extension activation in `extension.ts` to pass the new constructor parameter, enabling user notification for the main extension instance only.
     - Updated `Configuration` logic to handle cases where the Windows extensions paths are not resolved, preventing errors by falling back to empty arrays.
 
-      <!-- end -->
+          <!-- end -->
 
 ## [1.1.15](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.15) - 2026-04-19
 
@@ -316,7 +531,7 @@ For a full changelog, view the [release PR](https://github.com/yCodeTech/auto-co
 
 - Added support for `/* */`.
 
-- Added an event to reconfigure the comment blocks evertime a document is opened OR the document language has been changed.
+- Added an event to reconfigure the comment blocks everytime a document is opened OR the document language has been changed, so that other extensions (that are activated after this one) don't override the language configurations which could disable some of the custom comment blocks (e.g `/*! */`).
 
 - Added a config file to define the default multi-line config comments and autoClosingPairs; and a config file to define language IDs the need to be skipped when auto finding the languages to support (because these languages are known not to have any config properties we're interested in.)
 
