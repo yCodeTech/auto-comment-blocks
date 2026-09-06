@@ -41,6 +41,14 @@ class Logger {
 	 ***********/
 
 	/**
+	 * Constructor for the Logger class, which
+	 * initialises the output channel for logging.
+	 */
+	constructor() {
+		this.outputChannel = window.createOutputChannel("Auto Comment Blocks", "log");
+	}
+
+	/**
 	 * Override the output channel
 	 *
 	 * @param {OutputChannel} channelOverride A vscode output channel.
