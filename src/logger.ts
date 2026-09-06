@@ -5,6 +5,7 @@ import {LogLevel, logLevels} from "./interfaces/utils";
 /**
  * Logger class for the Auto Comment Blocks extension.
  * This class handles logging messages of differing log levels to the output channel.
+ * Logger is a singleton class, and should only be instantiated once (in this file).
  *
  * @class Logger
  */
@@ -49,19 +50,6 @@ class Logger {
 	}
 
 	/**
-	 * Override the output channel
-	 *
-	 * @param {OutputChannel} channelOverride A vscode output channel.
-	 */
-	public setupOutputChannel(channelOverride?: OutputChannel): void {
-		if (channelOverride) {
-			this.outputChannel = channelOverride;
-			return;
-		}
-		this.outputChannel = window.createOutputChannel("Auto Comment Blocks", "log");
-	}
-
-	/**
 	 * Set the log level.
 	 *
 	 * @param {LogLevel} level Desired log level.
@@ -98,9 +86,7 @@ class Logger {
 	 * Show the output channel to the user.
 	 */
 	public showChannel(): void {
-		if (this.outputChannel) {
-			this.outputChannel.show();
-		}
+		this.outputChannel.show();
 	}
 
 	/**
@@ -198,10 +184,6 @@ class Logger {
 	 * @param {unknown} meta Extra data as needed.
 	 */
 	private logMessage(level: string, message: string, meta?: unknown): void {
-		if (!this.outputChannel) {
-			this.setupOutputChannel();
-		}
-
 		message = this.redactUsername(message);
 
 		const time = new Date().toLocaleTimeString();
@@ -318,4 +300,5 @@ class Logger {
 	}
 }
 
+// Create and export the singleton instance of the Logger class.
 export const logger = new Logger();
