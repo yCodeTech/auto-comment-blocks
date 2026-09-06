@@ -18,10 +18,10 @@ export interface CommandRegistration {
 	 * command is executed.
 	 *
 	 * @param textEditor The text editor
-	 * @param edit The text editor edits. Optional because some commands may not need it.
+	 * @param edit The text editor edits.
 	 * @returns void
 	 */
-	handler: (textEditor: vscode.TextEditor, edit?: vscode.TextEditorEdit) => void;
+	handler: (textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit) => void;
 }
 
 /**

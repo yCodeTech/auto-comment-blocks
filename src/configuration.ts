@@ -939,7 +939,7 @@ export class Configuration {
 	 * @param {vscode.TextEditor} textEditor The text editor.
 	 * @param {vscode.TextEditorEdit} edit The text editor edits.
 	 */
-	private handleSingleLineBlock(textEditor: vscode.TextEditor, edit?: vscode.TextEditorEdit) {
+	private handleSingleLineBlock(textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit) {
 		let langId: LanguageId = textEditor.document.languageId;
 		const singleLineLangs = this.getSingleLineLanguages("supportedLanguages");
 		const customSingleLineLangs = this.getSingleLineLanguages("customSupportedLanguages");
@@ -988,7 +988,7 @@ export class Configuration {
 				indentedNewLine += style + " ";
 			}
 
-			edit?.insert(textEditor.selection.active, indentedNewLine);
+			edit.insert(textEditor.selection.active, indentedNewLine);
 		}
 	}
 
