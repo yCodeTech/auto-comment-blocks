@@ -75,6 +75,14 @@ For a full list of auto-supported VScode default languages, please view the auto
 
 ---
 
+## Major changes in [v1.2.0](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.2.0)
+
+- Introduced logging levels via the `auto-comment-blocks.logLevel` setting to specify the verbosity of the extension's output.
+- Introduced the ability to auto-update the language definitions and reconfigure the comment blocks on settings change, and will no longer require an extension host restart.
+- The extension will no longer log potentially sensitive information like the full system environment variables.
+- Removed unnecessary disk read/write operations and other performance improvements.
+- Added automatic redaction of the current OS username in the log messages.
+
 ## Major changes in [v1.1.0](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.1.0)
 
 -   Removed hardcoded language config files and support.
@@ -154,7 +162,7 @@ Some languages that appear in the files will have been added from 3rd party lang
 
 ## Settings
 
-Reload the extension after changing any settings.
+The language-specific settings automatically update and apply without needing to reload the extension.
 
 -   `auto-comment-blocks.singleLineBlockOnEnter`: If enabled, pressing `enter` inserts a new commented line at the same indentation, and pressing `shift + enter` breaks the comment block.
 
@@ -175,6 +183,8 @@ Reload the extension after changing any settings.
 -   `auto-comment-blocks.overrideDefaultLanguageMultiLineComments`: A key : value pairing of language IDs and the beginning portion of a multi-line comment style, to override the default comment style for the vscode "Toggle Block Comment" `editor.action.blockComment` command (native Keybinding <kbd>shift + alt + a</kbd> (macOS: <kbd>shift + option + a</kbd>)). eg. `{'php': '/*!'}`
 
 -   `auto-comment-blocks.bladeOverrideComments`: When enabled, Blade-style block comments will be used in Blade contexts. Ie. `{{--  --}}` comments will be used instead of the HTML `<!-- -->` comments. Keybinding to enable/disable, default <kbd>ctrl + shift + m</kbd> (macOS: <kbd>cmd + shift + m</kbd>). If `blade` language ID is set in the disabledLanguages, then the HTML `<!-- -->` comments will be used.
+
+- `auto-comment-blocks.logLevel`: Set the logging level for the extension's output channel. Possible values in decreasing order of verbosity are `debug`, `info`, `warn`, `error`, and `off`. While `off` disables all logging, a few special messages labelled as **'important'** will still be logged. The default is `debug`.
 
 ## Known Issues
 
