@@ -34,6 +34,11 @@ const PREFIX_TO_LEADING_VERB_REGEX = {
 	reverted: /^(revert|reverts|reverted|reverting)\b[\s:-]*/i,
 };
 
+const GRAMMATICALLY_INCORRECT_LEADING_VERBS = {
+	added: "introduce|ensure",
+	fixed: "ensure",
+};
+
 /**
  * Indentation used for PR description lines nested under a changelog list item 2 spaces.
  */
@@ -230,7 +235,8 @@ function cleanTitle(title) {
 async function buildEntry(type, section, cleanedTitle, prNumber, prUrl, prAuthor, prBody, context, github) {
 	const prefix = TYPE_TO_PREFIX[type] ?? section;
 	const dedupedTitle = removeLeadingDuplicateVerb(prefix, cleanedTitle);
-	const titlePart = dedupedTitle ? ` ${dedupedTitle}` : ` ${cleanedTitle.trim()}`;
+	const grammaticallyCorrectedTitle = removeGrammaticallyIncorrectLeadingVerb(prefix, dedupedTitle);
+	const titlePart = grammaticallyCorrectedTitle ? ` ${grammaticallyCorrectedTitle}` : ` ${cleanedTitle.trim()}`;
 	const description = await formatPRDescription(prBody, context, github);
 	const prLink = `([#${prNumber}](${prUrl}))`;
 	const entryEnd = `\n<!-- end -->`;
@@ -252,6 +258,29 @@ function removeLeadingDuplicateVerb(prefix, title) {
 
 	const pattern = PREFIX_TO_LEADING_VERB_REGEX[prefix.toLowerCase()];
 	if (!pattern) return trimmedTitle;
+
+	return trimmedTitle.replace(pattern, "").trimStart();
+}
+
+/**
+ * Removes grammatically incorrect leading verbs from the PR title.
+ * Where the PR title starts with verbs following the prefix like "Added introduce ...",
+ * it will remove "introduce" to make it grammatically correct.
+ *
+ * @param {string} prefix Resolved changelog entry prefix
+ * @param {string} title Cleaned PR title
+ * @returns {string} Title with grammatically incorrect leading verb removed.
+ */
+function removeGrammaticallyIncorrectLeadingVerb(prefix, title) {
+	const trimmedTitle = title.trim();
+	if (!trimmedTitle) return "";
+
+	// Pattern to match grammatically incorrect verbs that immediately follow the prefix
+	// at the beginning of the title, e.g., "Added introduce this..." => "Added this..."
+	const verbs = GRAMMATICALLY_INCORRECT_LEADING_VERBS[prefix.toLowerCase()] || "";
+
+	const pattern = new RegExp(`(?<=^${prefix})\\s+(${verbs})`, "i");
+	if (!pattern || !verbs) return trimmedTitle;
 
 	return trimmedTitle.replace(pattern, "").trimStart();
 }
