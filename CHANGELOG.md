@@ -4,7 +4,7 @@ All notable changes to this extension will be documented in this file.
 
 This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure.
 
-## [Unreleased]
+## [1.2.1](https://github.com/yCodeTech/auto-comment-blocks/releases/tag/v1.2.1) - 2026-09-07
 
 ### Changed
 
