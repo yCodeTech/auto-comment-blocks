@@ -8,9 +8,9 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
 
 ### Added
 
-- Added introduce new icon artwork and differentiate the extension from the original ([#40](https://github.com/yCodeTech/auto-comment-blocks/pull/40)) by @yCodeTech
+- Added new icon artwork and differentiate the extension from the original ([#40](https://github.com/yCodeTech/auto-comment-blocks/pull/40)) by @yCodeTech
 
-    This pull request introduces a new and improved icon artwork with an update to the marketplace banner colour, and updates the extension description. These changes tries to prevent further confusion between the original and forked extensions, as demonstrated in #36 and https://github.com/kevb34ns/auto-comment-blocks/issues/47, by establishing differentiating factors in the marketplace.
+    This pull request introduces a new and improved icon artwork with an update to the marketplace banner colour, and updates the extension description. These changes tries to prevent further confusion between the original and forked extensions, as demonstrated in [#36](https://github.com/yCodeTech/auto-comment-blocks/issues/36) and https://github.com/kevb34ns/auto-comment-blocks/issues/47, by establishing differentiating factors in the marketplace.
 
     **Visual changes:**
 
@@ -58,7 +58,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
 
 <!-- end -->
 
-- Added redact username in logging paths ([#45](https://github.com/yCodeTech/auto-comment-blocks/pull/45)) by @yCodeTech
+- Added redaction of username in logging paths ([#45](https://github.com/yCodeTech/auto-comment-blocks/pull/45)) by @yCodeTech
 
     This pull request introduces a new warning log level and improves logging safety by redacting OS usernames in paths from log output. It also refines the handling of extension discovery paths and updates log level descriptions for clarity.
 
@@ -78,7 +78,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
 
 <!-- end -->
 
-- Added support auto commenting on closed linked issues after release ([#50](https://github.com/yCodeTech/auto-comment-blocks/pull/50)) by @yCodeTech
+- Added support for auto commenting on closed linked issues after release ([#50](https://github.com/yCodeTech/auto-comment-blocks/pull/50)) by @yCodeTech
 
     This PR adds automation to comment on closed issues that are referenced in a release's changelog entry, notifying users that their issues have been resolved and released. The main changes include introducing a new script to identify and comment on relevant issues, and integrating this script into the publish workflow.
 
@@ -213,7 +213,7 @@ This Changelog uses the [Keep a Changelog](http://keepachangelog.com/) structure
 
 ### Fixed
 
-- Fixed ensure PR list is in numerical order in the update changelog CI ([#52](https://github.com/yCodeTech/auto-comment-blocks/pull/52)) by @yCodeTech
+- Fixed PR list is in numerical order in the update changelog CI ([#52](https://github.com/yCodeTech/auto-comment-blocks/pull/52)) by @yCodeTech
 
     This PR fixes the changelog CI to sort the PR list in numerical order in the existing update changelog PR body, ensuring that PR numbers will always be in numerical order no matter the order they were added. This is so that if a CI run fails and a concurrent run succeeds, the PR number won't be in the wrong order when re-running the failed run.
 
